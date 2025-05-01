@@ -1,30 +1,35 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="MusicPlayer.MainPage">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="30,0" Spacing="25">
+    <VerticalStackLayout Spacing="25">
+        <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout>
 
-            <CollectionView x:Name="TabBar"
-                    ItemsSource="{Binding TabItems}"
-                    SelectionMode="Single"
-                    SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
-                    ItemsLayout="HorizontalList"
-                    HeightRequest="50">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame BorderColor="Transparent" BackgroundColor="Transparent" Padding="10">
-                            <Label Text="{Binding Title}" />
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                <Frame x:Name="LeftPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
+                <Label x:Name="FavLabel" TextColor="WhiteSmoke" Text="Favourites" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Label x:Name="PlayLabel" TextColor="WhiteSmoke" Text="Playlists" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Label x:Name="SongLabel" TextColor="WhiteSmoke" Text="Songs" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Label x:Name="AlbLabel" TextColor="WhiteSmoke" Text="Albums" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Label x:Name="IntLabel" TextColor="WhiteSmoke" Text="Interprets" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                <Frame x:Name="RightPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
 
-            <!-- Content View that changes -->
-            <ContentView x:Name="TabContentView" />
+            </HorizontalStackLayout>
+        </ScrollView>
+        <ScrollView x:Name="ViewScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout>
+                
+                <ContentView x:Name="FavouritesView" />
+                <ContentView x:Name="PlaylistsView" />
+                <ContentView x:Name="SongsView" />
+                <ContentView x:Name="AlbumsView" />
+                <ContentView x:Name="InterpretsView" />
+                
+            </HorizontalStackLayout>
+        </ScrollView>
 
-        </VerticalStackLayout>
-    </ScrollView>
+    </VerticalStackLayout>
 
 </ContentPage>

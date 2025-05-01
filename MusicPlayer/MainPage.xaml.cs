@@ -1,46 +1,71 @@
-﻿using System.Collections.ObjectModel;
+﻿using CommunityToolkit.Maui.Core;
+using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 
 namespace MusicPlayer
 {
     public partial class MainPage : ContentPage
     {
-        public ObservableCollection<TabItem> TabItems { get; set; } = new();
-        public TabItem SelectedTab { get; set; }
-
         public MainPage()
         {
             InitializeComponent();
-            BindingContext = this;
-
-            TabItems.Add(new TabItem("Page 1", new Favourites()));
-            /*TabItems.Add(new TabItem("Page 2", new Page2()));
-            TabItems.Add(new TabItem("Page 3", new Page3()));
-            TabItems.Add(new TabItem("Page 4", new Page4()));
-            TabItems.Add(new TabItem("Page 5", new Page5()));
-            TabItems.Add(new TabItem("Page 6", new Page6()));*/
-
-            SelectedTab = TabItems.First();
-            
-
-            TabBar.SelectionChanged += (s, e) => UpdateContent();
-            UpdateContent();
+            SetCorrectWidthRequest();
+            FavouritesView.Content = new Favourites().Content;
+            PlaylistsView.Content = new Playlists().Content;
         }
 
-        private void UpdateContent()
+        private void UserScrolled(object sender, ScrolledEventArgs e)
         {
-            TabContentView.Content = SelectedTab?.Content.Content;
+            double curScrollX = e.ScrollX;
+            double ViewScrollX = curScrollX * 2;
+            _ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
+
+            _ = CheckScrollChange(curScrollX);
         }
-    }
 
-    public class TabItem
-    {
-        public string Title { get; set; }
-        public ContentPage Content { get; set; }
 
-        public TabItem(string title, ContentPage content)
+
+        //Help methods
+        private void SetCorrectWidthRequest()
         {
-            Title = title;
-            Content = content;
+            double ViewRequest = (DeviceDisplay.MainDisplayInfo.Width) / (DeviceDisplay.MainDisplayInfo.Density);
+            double LabelRequest = ViewRequest * 0.5;
+            double PaddingRequest = (ViewRequest - LabelRequest) / 2;
+
+            LeftPadding.WidthRequest = PaddingRequest;
+            RightPadding.WidthRequest = PaddingRequest;
+
+            FavLabel.WidthRequest = LabelRequest;
+            PlayLabel.WidthRequest = LabelRequest;
+            SongLabel.WidthRequest = LabelRequest;
+            AlbLabel.WidthRequest = LabelRequest;
+            IntLabel.WidthRequest = LabelRequest;
+
+            FavouritesView.WidthRequest = ViewRequest;
+            PlaylistsView.WidthRequest = ViewRequest;
+            SongsView.WidthRequest = ViewRequest;
+            AlbumsView.WidthRequest = ViewRequest;
+            InterpretsView.WidthRequest = ViewRequest;
+        }
+
+        private async Task CheckScrollChange(double scrollX)
+        {
+            await Task.Delay(10);
+
+            double curX = TabScroll.ScrollX;
+
+            bool hasntChanged = AreCloseEnough(curX, scrollX);
+
+            if (hasntChanged)
+            {
+
+            }
+        }
+
+        private bool AreCloseEnough(double a, double b)
+        {
+            return Math.Abs(a - b) == 0.0;
         }
     }
 }
