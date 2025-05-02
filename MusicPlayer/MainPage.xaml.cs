@@ -4,30 +4,46 @@ namespace MusicPlayer
 {
     public partial class MainPage : ContentPage
     {
+        private bool CanScroll = true;
+        private Favourites Favourites = Favourites.Instance();
+        private Playlists Playlists = Playlists.Instance();
+        private Songs Songs = Songs.Instance();
+        private Albums Albums = Albums.Instance();
+        private Interprets Interprets = Interprets.Instance();
+
         public MainPage()
         {
             InitializeComponent();
             SetCorrectWidthRequest();
-            FavouritesView.Content = new Favourites().Content;
-            PlaylistsView.Content = new Playlists().Content;
+            FavouritesView.Content = Favourites.Content;
+            PlaylistsView.Content = Playlists.Content;
+            SongsView.Content = Songs.Content;
+            AlbumsView.Content = Albums.Content;
+            InterpretsView.Content = Interprets.Content;
         }
 
         private void UserScrolled(object sender, ScrolledEventArgs e)
         {
             double curScrollX = e.ScrollX;
             double ViewScrollX = curScrollX * 2;
-            _ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
+            if (CanScroll)
+            {
+                _ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
 
-            _ = CheckScrollChange(curScrollX, TabScroll);
+                _ = CheckScrollChange(curScrollX, TabScroll);
+            }
         }
 
         private void ViewScrolled(object sender, ScrolledEventArgs e)
         {
             double curScrollX = e.ScrollX;
             double TabScrollX = curScrollX * 0.5;
-            _ = TabScroll.ScrollToAsync(TabScrollX, 0, false);
+            if (CanScroll)
+            {
+                _ = TabScroll.ScrollToAsync(TabScrollX, 0, false);
 
-            _ = CheckScrollChange(curScrollX, ViewScroll);
+                _ = CheckScrollChange(curScrollX, ViewScroll);
+            }
         }
 
         //Help methods
@@ -61,9 +77,12 @@ namespace MusicPlayer
 
             bool hasntChanged = AreCloseEnough(curX, scrollX);
 
-            if (hasntChanged)
+            if (hasntChanged && CanScroll)
             {
+                CanScroll = false;
                 await ViewScroll.ScrollToAsync(GetClosestView(), ScrollToPosition.Center, false);
+                await TabScroll.ScrollToAsync(ViewScroll.ScrollX * 0.5, 0, false);
+                CanScroll = true;
             }
         }
 
@@ -94,6 +113,36 @@ namespace MusicPlayer
                 {
                     smallestDistance = distance;
                     closest = (ContentView)child;
+                }
+
+                runningX += child.Width;
+            }
+
+            return closest;
+        }
+
+        private Label GetClosestLabel()
+        {
+            double scrollX = TabScroll.ScrollX;
+            double scrollWidth = TabScroll.Width;
+            double viewportCenter = scrollX + scrollWidth / 2;
+
+            var stack = (HorizontalStackLayout)TabScroll.Content;
+
+            Label closest = null;
+            double smallestDistance = double.MaxValue;
+
+            double runningX = 0;
+
+            foreach (var child in stack.Children)
+            {
+                double childCenter = runningX + child.Width / 2;
+
+                double distance = Math.Abs(viewportCenter - childCenter);
+                if (distance < smallestDistance)
+                {
+                    smallestDistance = distance;
+                    closest = (Label)child;
                 }
 
                 runningX += child.Width;

@@ -20,13 +20,13 @@
         </ScrollView>
         <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
             <HorizontalStackLayout>
-                
+
                 <ContentView x:Name="FavouritesView" />
                 <ContentView x:Name="PlaylistsView" />
                 <ContentView x:Name="SongsView" />
                 <ContentView x:Name="AlbumsView" />
                 <ContentView x:Name="InterpretsView" />
-                
+
             </HorizontalStackLayout>
         </ScrollView>
 
