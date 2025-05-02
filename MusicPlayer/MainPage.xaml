@@ -18,7 +18,7 @@
 
             </HorizontalStackLayout>
         </ScrollView>
-        <ScrollView x:Name="ViewScroll" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+        <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
             <HorizontalStackLayout>
                 
                 <ContentView x:Name="FavouritesView" />

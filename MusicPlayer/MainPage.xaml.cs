@@ -1,7 +1,4 @@
-﻿using CommunityToolkit.Maui.Core;
-using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+﻿using Microsoft.Maui;
 
 namespace MusicPlayer
 {
@@ -21,10 +18,17 @@ namespace MusicPlayer
             double ViewScrollX = curScrollX * 2;
             _ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
 
-            _ = CheckScrollChange(curScrollX);
+            _ = CheckScrollChange(curScrollX, TabScroll);
         }
 
+        private void ViewScrolled(object sender, ScrolledEventArgs e)
+        {
+            double curScrollX = e.ScrollX;
+            double TabScrollX = curScrollX * 0.5;
+            _ = TabScroll.ScrollToAsync(TabScrollX, 0, false);
 
+            _ = CheckScrollChange(curScrollX, ViewScroll);
+        }
 
         //Help methods
         private void SetCorrectWidthRequest()
@@ -49,23 +53,53 @@ namespace MusicPlayer
             InterpretsView.WidthRequest = ViewRequest;
         }
 
-        private async Task CheckScrollChange(double scrollX)
+        private async Task CheckScrollChange(double scrollX, ScrollView sender)
         {
-            await Task.Delay(10);
+            await Task.Delay(100);
 
-            double curX = TabScroll.ScrollX;
+            double curX = sender.ScrollX;
 
             bool hasntChanged = AreCloseEnough(curX, scrollX);
 
             if (hasntChanged)
             {
-
+                await ViewScroll.ScrollToAsync(GetClosestView(), ScrollToPosition.Center, false);
             }
         }
 
         private bool AreCloseEnough(double a, double b)
         {
             return Math.Abs(a - b) == 0.0;
+        }
+
+        private ContentView GetClosestView()
+        {
+            double scrollX = ViewScroll.ScrollX;
+            double scrollWidth = ViewScroll.Width;
+            double viewportCenter = scrollX + scrollWidth / 2;
+
+            var stack = (HorizontalStackLayout)ViewScroll.Content;
+
+            ContentView closest = null;
+            double smallestDistance = double.MaxValue;
+
+            double runningX = 0;
+
+            foreach (var child in stack.Children)
+            {
+                double childCenter = runningX + child.Width / 2;
+
+                double distance = Math.Abs(viewportCenter - childCenter);
+                if (distance < smallestDistance)
+                {
+                    smallestDistance = distance;
+                    closest = (ContentView)child;
+                }
+
+                runningX += child.Width;
+            }
+
+            return closest;
         }
     }
 }
