@@ -5,6 +5,8 @@ namespace MusicPlayer
     public partial class MainPage : ContentPage
     {
         private bool CanScroll = true;
+        private Label LastTab;
+
         private Favourites Favourites = Favourites.Instance();
         private Playlists Playlists = Playlists.Instance();
         private Songs Songs = Songs.Instance();
@@ -15,6 +17,9 @@ namespace MusicPlayer
         {
             InitializeComponent();
             SetCorrectWidthRequest();
+            LastTab = FavLabel;
+            LastTab.FontAttributes = FontAttributes.Bold;
+            SetCorrectFontSize();
             FavouritesView.Content = Favourites.Content;
             PlaylistsView.Content = Playlists.Content;
             SongsView.Content = Songs.Content;
@@ -26,9 +31,27 @@ namespace MusicPlayer
         {
             double curScrollX = e.ScrollX;
             double ViewScrollX = curScrollX * 2;
+
+            double screenCenter = TabScroll.Width / 2;
+
+            foreach (var child in LabelStack.Children)
+            {
+                if (child is Label label)
+                {
+                    double labelCenter = label.X + (label.Width / 2) - TabScroll.ScrollX;
+                    double distance = Math.Abs(screenCenter - labelCenter);
+
+                    double maxFont = 30;
+                    double minFont = 15;
+                    double maxDistance = TabScroll.Width / 2;
+
+                    double factor = 1 - Math.Min(distance / maxDistance, 1);
+                    label.FontSize = minFont + (maxFont - minFont) * factor;
+                }
+            }
             if (CanScroll)
             {
-                _ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
+                //_ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
 
                 _ = CheckScrollChange(curScrollX, TabScroll);
             }
@@ -80,8 +103,11 @@ namespace MusicPlayer
             if (hasntChanged && CanScroll)
             {
                 CanScroll = false;
-                await ViewScroll.ScrollToAsync(GetClosestView(), ScrollToPosition.Center, false);
-                await TabScroll.ScrollToAsync(ViewScroll.ScrollX * 0.5, 0, false);
+                await TabScroll.ScrollToAsync(GetClosestLabel(), ScrollToPosition.Center, false);
+                await ViewScroll.ScrollToAsync(TabScroll.ScrollX * 2, 0, false);
+                LastTab.FontAttributes = FontAttributes.None;
+                LastTab = GetClosestLabel();
+                LastTab.FontAttributes = FontAttributes.Bold;
                 CanScroll = true;
             }
         }
@@ -127,7 +153,7 @@ namespace MusicPlayer
             double scrollWidth = TabScroll.Width;
             double viewportCenter = scrollX + scrollWidth / 2;
 
-            var stack = (HorizontalStackLayout)TabScroll.Content;
+            HorizontalStackLayout stack = LabelStack;
 
             Label closest = null;
             double smallestDistance = double.MaxValue;
@@ -141,14 +167,31 @@ namespace MusicPlayer
                 double distance = Math.Abs(viewportCenter - childCenter);
                 if (distance < smallestDistance)
                 {
-                    smallestDistance = distance;
-                    closest = (Label)child;
+                    if (child is Label label)
+                    {
+                        smallestDistance = distance;
+                        closest = (Label)child;
+                    }
                 }
 
                 runningX += child.Width;
             }
 
             return closest;
+        }
+
+        private void SetCorrectFontSize()
+        {
+            foreach (var child in LabelStack.Children)
+            {
+                if (child is Label label)
+                {
+                    if (child != LastTab)
+                    {
+                        label.FontSize = 20;
+                    }
+                }
+            }
         }
     }
 }

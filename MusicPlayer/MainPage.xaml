@@ -5,8 +5,16 @@
              x:Class="MusicPlayer.MainPage">
 
     <VerticalStackLayout Spacing="25">
+
+        <FlexLayout Padding="25,30,25,0" HeightRequest="65">
+            <Label Text="Axis Music" FontAttributes="Bold" FontSize="25" FlexLayout.Grow="1" FontFamily="Poppins" VerticalOptions="Center"/>
+            <ImageButton Source="plus.png" WidthRequest="45" Padding="10,0"/>
+            <ImageButton Source="magglass.png" WidthRequest="45" Padding="10,0"/>
+            <ImageButton Source="setting.png" WidthRequest="35" Padding="10,0,0,0"/>
+        </FlexLayout>
+        
         <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never">
-            <HorizontalStackLayout>
+            <HorizontalStackLayout x:Name="LabelStack">
 
                 <Frame x:Name="LeftPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
                 <Label x:Name="FavLabel" TextColor="WhiteSmoke" Text="Favourites" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
