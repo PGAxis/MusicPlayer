@@ -42,7 +42,7 @@ namespace MusicPlayer
                     double distance = Math.Abs(screenCenter - labelCenter);
 
                     double maxFont = 30;
-                    double minFont = 15;
+                    double minFont = 20;
                     double maxDistance = TabScroll.Width / 2;
 
                     double factor = 1 - Math.Min(distance / maxDistance, 1);
@@ -72,7 +72,8 @@ namespace MusicPlayer
         //Help methods
         private void SetCorrectWidthRequest()
         {
-            double ViewRequest = (DeviceDisplay.MainDisplayInfo.Width) / (DeviceDisplay.MainDisplayInfo.Density);
+            double ViewHeightRequest = (DeviceDisplay.MainDisplayInfo.Height / DeviceDisplay.MainDisplayInfo.Density) - 160;
+            double ViewRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
             double LabelRequest = ViewRequest * 0.5;
             double PaddingRequest = (ViewRequest - LabelRequest) / 2;
 

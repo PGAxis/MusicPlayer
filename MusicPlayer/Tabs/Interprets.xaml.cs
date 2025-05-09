@@ -23,6 +23,6 @@ public partial class Interprets : ContentPage
 	private Interprets()
 	{
 		InitializeComponent();
-        MainStack.WidthRequest = (DeviceDisplay.MainDisplayInfo.Width) / (DeviceDisplay.MainDisplayInfo.Density);
+        MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     }
 }

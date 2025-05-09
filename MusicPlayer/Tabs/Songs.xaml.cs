@@ -23,6 +23,6 @@ public partial class Songs : ContentPage
 	private Songs()
 	{
 		InitializeComponent();
-        MainStack.WidthRequest = (DeviceDisplay.MainDisplayInfo.Width) / (DeviceDisplay.MainDisplayInfo.Density);
+        MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     }
 }

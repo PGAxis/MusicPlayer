@@ -4,16 +4,18 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="MusicPlayer.MainPage">
 
-    <VerticalStackLayout Spacing="25">
+    <VerticalStackLayout>
 
-        <FlexLayout Padding="25,30,25,0" HeightRequest="65">
+        <FlexLayout Padding="25,30,25,25" HeightRequest="90">
             <Label Text="Axis Music" FontAttributes="Bold" FontSize="25" FlexLayout.Grow="1" FontFamily="Poppins" VerticalOptions="Center"/>
-            <ImageButton Source="plus.png" WidthRequest="45" Padding="10,0"/>
-            <ImageButton Source="magglass.png" WidthRequest="45" Padding="10,0"/>
-            <ImageButton Source="setting.png" WidthRequest="35" Padding="10,0,0,0"/>
+            <ImageButton Source="plus.png" WidthRequest="25"/>
+            <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
+            <ImageButton Source="magglass.png" WidthRequest="25"/>
+            <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
+            <ImageButton Source="setting.png" WidthRequest="25"/>
         </FlexLayout>
-        
-        <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never">
+
+        <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never" HeightRequest="70">
             <HorizontalStackLayout x:Name="LabelStack">
 
                 <Frame x:Name="LeftPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
@@ -26,6 +28,7 @@
 
             </HorizontalStackLayout>
         </ScrollView>
+
         <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
             <HorizontalStackLayout>
 
