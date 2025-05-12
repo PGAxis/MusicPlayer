@@ -1,11 +1,17 @@
 ﻿using Microsoft.Maui;
+#if ANDROID
+    using MusicPlayer.Platforms.Android;
+#endif
 
 namespace MusicPlayer
 {
     public partial class MainPage : ContentPage
     {
         private bool CanScroll = true;
+        private bool JustResized = false;
+        private Dictionary<Label, ContentView> Tabs = new Dictionary<Label, ContentView>();
         private Label LastTab;
+        private List<IResizablePage> Pages = new List<IResizablePage>();
 
         private Favourites Favourites = Favourites.Instance();
         private Playlists Playlists = Playlists.Instance();
@@ -20,11 +26,29 @@ namespace MusicPlayer
             LastTab = FavLabel;
             LastTab.FontAttributes = FontAttributes.Bold;
             SetCorrectFontSize();
+
+            Tabs.Add(FavLabel, FavouritesView);
+            Tabs.Add(PlayLabel, PlaylistsView);
+            Tabs.Add(SongLabel, SongsView);
+            Tabs.Add(AlbLabel, AlbumsView);
+            Tabs.Add(IntLabel, InterpretsView);
+
+            Pages.Add(Favourites);
+            Pages.Add(Playlists);
+            Pages.Add(Songs);
+            Pages.Add(Albums);
+            Pages.Add(Interprets);
+
             FavouritesView.Content = Favourites.Content;
             PlaylistsView.Content = Playlists.Content;
             SongsView.Content = Songs.Content;
             AlbumsView.Content = Albums.Content;
             InterpretsView.Content = Interprets.Content;
+
+#if ANDROID
+            NotificationHelper.CreateNotificationChannel(Android.App.Application.Context);
+            NotificationHelper.ShowNotification(Android.App.Application.Context, "Hello", "TestNotification");
+#endif
         }
 
         private void UserScrolled(object sender, ScrolledEventArgs e)
@@ -86,11 +110,14 @@ namespace MusicPlayer
             AlbLabel.WidthRequest = LabelRequest;
             IntLabel.WidthRequest = LabelRequest;
 
-            FavouritesView.WidthRequest = ViewRequest;
-            PlaylistsView.WidthRequest = ViewRequest;
-            SongsView.WidthRequest = ViewRequest;
-            AlbumsView.WidthRequest = ViewRequest;
-            InterpretsView.WidthRequest = ViewRequest;
+            foreach (var child in ViewStack.Children)
+            {
+                if (child is ContentView contentView)
+                {
+                    contentView.WidthRequest = ViewRequest;
+                    contentView.HeightRequest = ViewHeightRequest;
+                }
+            }
         }
 
         private async Task CheckScrollChange(double scrollX, ScrollView sender)
@@ -103,11 +130,17 @@ namespace MusicPlayer
 
             if (hasntChanged && CanScroll)
             {
+                if (JustResized)
+                {
+                    await Task.Delay(100);
+                    JustResized = false;
+                }
+                Label closest = GetClosestLabel();
                 CanScroll = false;
-                await TabScroll.ScrollToAsync(GetClosestLabel(), ScrollToPosition.Center, false);
-                await ViewScroll.ScrollToAsync(TabScroll.ScrollX * 2, 0, false);
+                await TabScroll.ScrollToAsync(closest, ScrollToPosition.Center, false);
+                await ViewScroll.ScrollToAsync(Tabs[closest], ScrollToPosition.Center, false);
                 LastTab.FontAttributes = FontAttributes.None;
-                LastTab = GetClosestLabel();
+                LastTab = closest;
                 LastTab.FontAttributes = FontAttributes.Bold;
                 CanScroll = true;
             }
@@ -118,7 +151,7 @@ namespace MusicPlayer
             return Math.Abs(a - b) == 0.0;
         }
 
-        private ContentView GetClosestView()
+        /*private ContentView GetClosestView()
         {
             double scrollX = ViewScroll.ScrollX;
             double scrollWidth = ViewScroll.Width;
@@ -146,7 +179,7 @@ namespace MusicPlayer
             }
 
             return closest;
-        }
+        }*/
 
         private Label GetClosestLabel()
         {

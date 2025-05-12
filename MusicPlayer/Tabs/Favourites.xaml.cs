@@ -1,6 +1,6 @@
 namespace MusicPlayer;
 
-public partial class Favourites : ContentPage
+public partial class Favourites : ContentPage, IResizablePage
 {
 	private static Favourites instance;
 	private static object instanceLock = new object();
@@ -25,4 +25,9 @@ public partial class Favourites : ContentPage
 		InitializeComponent();
         MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
 	}
+
+	public void ChangeWidth()
+	{
+        MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+    }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace MusicPlayer;
 
-public partial class Playlists : ContentPage
+public partial class Playlists : ContentPage, IResizablePage
 {
 	private static Playlists instance;
 	private static object instanceLock = new object();
@@ -58,5 +58,10 @@ public partial class Playlists : ContentPage
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public void ChangeWidth()
+    {
+        MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     }
 }

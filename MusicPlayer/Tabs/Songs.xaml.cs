@@ -1,6 +1,6 @@
 namespace MusicPlayer;
 
-public partial class Songs : ContentPage
+public partial class Songs : ContentPage, IResizablePage
 {
 	private static Songs instance;
 	private static object instanceLock = new object();
@@ -23,6 +23,11 @@ public partial class Songs : ContentPage
 	private Songs()
 	{
 		InitializeComponent();
+        MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+    }
+
+    public void ChangeWidth()
+    {
         MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
     }
 }

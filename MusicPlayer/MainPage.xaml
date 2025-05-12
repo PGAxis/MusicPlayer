@@ -30,7 +30,7 @@
         </ScrollView>
 
         <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
-            <HorizontalStackLayout>
+            <HorizontalStackLayout x:Name="ViewStack">
 
                 <ContentView x:Name="FavouritesView" />
                 <ContentView x:Name="PlaylistsView" />

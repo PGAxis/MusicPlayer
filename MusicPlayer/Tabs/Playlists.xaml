@@ -3,25 +3,28 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MusicPlayer.Playlists"
              Title="Playlists">
-    <VerticalStackLayout x:Name="MainStack">
 
-        <ScrollView Orientation="Vertical">
-            <CollectionView x:Name="PlaylistsColView" ItemsSource="{Binding Templates}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <VerticalStackLayout>
-                            <FlexLayout>
-                                <Frame Padding="10,10,10,0" BackgroundColor="Transparent" BorderColor="Transparent">
-                                    <Image Source="{Binding Image}" HeightRequest="50" WidthRequest="50" VerticalOptions="Center"/>
-                                </Frame>
-                                <Label Text="{Binding Title}" FontSize="20" FontFamily="Poppins" TextColor="White" VerticalOptions="Center" Margin="0,5,0,0" FlexLayout.Grow="1"/>
-                                <Label Text="{Binding SongCount}" FontSize="15" FontFamily="Poppins" TextColor="Gray" VerticalOptions="Center" Padding="0,5,30,0"/>
-                            </FlexLayout>
-                            <BoxView HeightRequest="1" Color="Gray" Margin="70,0,10,0"/>
-                        </VerticalStackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </ScrollView>
-    </VerticalStackLayout>
+    <Frame BorderColor="Transparent" BackgroundColor="Transparent" CornerRadius="20" Padding="0">
+        <VerticalStackLayout x:Name="MainStack" BackgroundColor="#2f2f2f">
+
+            <ScrollView Orientation="Vertical">
+                <CollectionView x:Name="PlaylistsColView" ItemsSource="{Binding Templates}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout>
+                                <FlexLayout>
+                                    <Frame Padding="10,10,10,0" BackgroundColor="Transparent" BorderColor="Transparent">
+                                        <Image Source="{Binding Image}" HeightRequest="50" WidthRequest="50" VerticalOptions="Center"/>
+                                    </Frame>
+                                    <Label Text="{Binding Title}" FontSize="20" FontFamily="Poppins" TextColor="White" VerticalOptions="Center" Margin="0,5,0,0" FlexLayout.Grow="1"/>
+                                    <Label Text="{Binding SongCount}" FontSize="15" FontFamily="Poppins" TextColor="Gray" VerticalOptions="Center" Padding="0,5,30,0"/>
+                                </FlexLayout>
+                                <BoxView HeightRequest="1" Color="Gray" Margin="70,0,10,0"/>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </ScrollView>
+        </VerticalStackLayout>
+    </Frame>
 </ContentPage>
