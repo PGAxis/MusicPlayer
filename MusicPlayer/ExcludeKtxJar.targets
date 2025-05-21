@@ -1,7 +1,0 @@
-<Project>
-	<Target Name="RemoveDuplicateAndroidJars" BeforeTargets="Build">
-		<ItemGroup>
-			<AndroidJavaLibrary Remove="@(AndroidJavaLibrary)" Condition=" '%(Filename)' == 'xamarin.androidx.collection.collection-ktx' " />
-		</ItemGroup>
-	</Target>
-</Project>
