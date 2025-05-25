@@ -1,4 +1,4 @@
-﻿//using Plugin.LocalNotification;
+﻿using Plugin.LocalNotification;
 
 namespace MusicPlayer
 {
@@ -54,6 +54,13 @@ namespace MusicPlayer
             SongsView.Content = Songs.Content;
             AlbumsView.Content = Albums.Content;
             InterpretsView.Content = Interprets.Content;
+
+            LocalNotificationCenter.Current.NotificationActionTapped += Current_NotificationActionTapped;
+        }
+
+        private void Current_NotificationActionTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void UserScrolled(object sender, ScrolledEventArgs e)
@@ -237,12 +244,28 @@ namespace MusicPlayer
 
         private void NotificationPls(object sender, EventArgs e)
         {
-            /*var request = new NotificationRequest
+            var request = new NotificationRequest
             {
                 NotificationId = 1,
                 Title = "SongsPlaying",
-                Subtitle = "Sup man, this is a notification",
-            };*/
+                Description = "Sup man, this is a notification",
+                CategoryType = NotificationCategoryType.Service,
+                Android = new Plugin.LocalNotification.AndroidOption.AndroidOptions
+                {
+                    LaunchAppWhenTapped = true,
+                    Priority = Plugin.LocalNotification.AndroidOption.AndroidPriority.Max,
+                    VisibilityType = Plugin.LocalNotification.AndroidOption.AndroidVisibilityType.Public,
+                    AutoCancel = false,
+                    Ongoing = true,
+                    ProgressBar = new Plugin.LocalNotification.AndroidOption.AndroidProgressBar
+                    {
+                        Max = 100,
+                        Progress = 30,
+                    },
+                },  //TO-DO: MauiProgram.cs -> dodelej vsechny tlacidla a jejich sprity, navod mas tuto: https://github.com/thudugala/Plugin.LocalNotification/wiki/5.-Notification-with-Action
+            };
+
+            LocalNotificationCenter.Current.Show(request);
         }
     }
 }

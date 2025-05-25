@@ -1,6 +1,9 @@
-﻿using Android.App;
+﻿using Android;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using AndroidX.Core.App;
+using Plugin.LocalNotification.AndroidOption;
 
 namespace MusicPlayer
 {
@@ -15,6 +18,28 @@ namespace MusicPlayer
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
             {
                 Window.SetStatusBarColor(Android.Graphics.Color.Transparent);
+            }
+
+            var channel = new NotificationChannelRequest
+            {
+                Importance = AndroidImportance.High,
+                EnableVibration = true,
+                ShowBadge = false,
+                Id = "persistent_channel",
+                LockScreenVisibility = AndroidVisibilityType.Public,
+            };
+
+            RequestNotificationPermission();
+        }
+
+        void RequestNotificationPermission()
+        {
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+                if (CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
+                {
+                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.PostNotifications }, 101);
+                }
             }
         }
     }

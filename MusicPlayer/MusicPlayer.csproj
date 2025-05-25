@@ -70,10 +70,19 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-android'">
 		<PackageReference Include="Xamarin.AndroidX.Collection" Version="1.5.0.1" />
 		<PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.5.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel" Version="2.8.7.3" />
 		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Android" Version="2.8.7.3" />
 		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModelSavedState" Version="2.8.7.3" />
 		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.8.7.3" />
 		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Android" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core.Ktx" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.Process" Version="2.8.7.3" />
+		<PackageReference Include="Xamarin.AndroidX.Activity" Version="1.10.1.1" />
+		<PackageReference Include="Xamarin.AndroidX.Activity.Ktx" Version="1.10.1.1" />
   	</ItemGroup>
 
 </Project>
