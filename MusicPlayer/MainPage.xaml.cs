@@ -1,4 +1,7 @@
-﻿using Plugin.LocalNotification;
+﻿#if ANDROID
+    using Android.Content;
+#endif
+using Plugin.LocalNotification;
 
 namespace MusicPlayer
 {
@@ -55,12 +58,27 @@ namespace MusicPlayer
             AlbumsView.Content = Albums.Content;
             InterpretsView.Content = Interprets.Content;
 
-            LocalNotificationCenter.Current.NotificationActionTapped += Current_NotificationActionTapped;
-        }
-
-        private void Current_NotificationActionTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
-        {
-            throw new NotImplementedException();
+            MessagingCenter.Subscribe<object, string>(this, "MediaAction", (sender, action) =>
+            {
+                switch (action)
+                {
+                    case "PLAY":
+                        //PlayMusic();
+                        break;
+                    case "PAUSE":
+                        //PauseMusic();
+                        break;
+                    case "NEXT":
+                        //SkipToNext();
+                        break;
+                    case "PREVIOUS":
+                        //SkipToPrevious();
+                        break;
+                    case "SHUFFLE":
+                        //ToggleShuffle();
+                        break;
+                }
+            });
         }
 
         private void UserScrolled(object sender, ScrolledEventArgs e)
@@ -244,7 +262,7 @@ namespace MusicPlayer
 
         private void NotificationPls(object sender, EventArgs e)
         {
-            var request = new NotificationRequest
+            /*var request = new NotificationRequest
             {
                 NotificationId = 1,
                 Title = "SongsPlaying",
@@ -265,7 +283,13 @@ namespace MusicPlayer
                 },  //TO-DO: MauiProgram.cs -> dodelej vsechny tlacidla a jejich sprity, navod mas tuto: https://github.com/thudugala/Plugin.LocalNotification/wiki/5.-Notification-with-Action
             };
 
-            LocalNotificationCenter.Current.Show(request);
+            LocalNotificationCenter.Current.Show(request);*/
+
+#if ANDROID
+    var context = Android.App.Application.Context;
+    var intent = new Intent(context, typeof(MediaPlayerNotificationService));
+    context.StartForegroundService(intent);
+#endif
         }
     }
 }
