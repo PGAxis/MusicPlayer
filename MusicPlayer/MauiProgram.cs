@@ -12,39 +12,6 @@ namespace MusicPlayer
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
-                .UseLocalNotification(config =>
-                {
-                    config.AddCategory(new NotificationCategory(NotificationCategoryType.Service)
-                    {
-                        ActionList = new HashSet<NotificationAction>(new List<NotificationAction>()
-                        {
-                            new NotificationAction(100)
-                            {
-                                Title = "",
-                                Android =
-                                {
-                                    LaunchAppWhenTapped = false,
-                                    IconName =
-                                    {
-                                        ResourceName = "shuffle"
-                                    }
-                                }
-                            },
-                            new NotificationAction(101)
-                            {
-                                Title = "Previous",
-                                Android =
-                                {
-                                    LaunchAppWhenTapped = false,
-                                    IconName =
-                                    {
-                                        ResourceName = ""
-                                    }
-                                }
-                            }
-                        })
-                    });
-                })
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
