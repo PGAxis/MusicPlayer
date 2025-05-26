@@ -33,11 +33,14 @@ namespace MusicPlayer
 
         Notification BuildNotification()
         {
+            Intent intent = new Intent(this, typeof(MainActivity));
+            intent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+            PendingIntent pendingIntent = PendingIntent.GetActivity(this, 0, intent, PendingIntentFlags.Immutable);
+
             var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .SetContentTitle("Song Name")
                 .SetContentText("Song Artist")
                 .SetSmallIcon(Resource.Drawable.small_icon)
-                .SetLargeIcon(BitmapFactory.DecodeResource(Resources, Resource.Drawable.large_icon))
                 .SetStyle(new AndroidX.Media.App.NotificationCompat.MediaStyle()
                     .SetShowActionsInCompactView(1, 2, 3))
                 .AddAction(new NotificationCompat.Action(Resource.Drawable.shuffle, "Shuffle", GetActionIntent("SHUFFLE", 100)))
@@ -48,6 +51,8 @@ namespace MusicPlayer
                 .SetProgress(100, 50, false)
                 .SetOngoing(true)
                 .SetOnlyAlertOnce(true)
+                .SetContentIntent(pendingIntent)
+                .SetStyle(new AndroidX.Media.App.NotificationCompat.MediaStyle())
                 .SetVisibility(NotificationCompat.VisibilityPublic)
                 .SetPriority((int)NotificationPriority.Max);
 
@@ -65,7 +70,7 @@ namespace MusicPlayer
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                var channel = new NotificationChannel(CHANNEL_ID, "Media Playback", NotificationImportance.High)
+                var channel = new NotificationChannel(CHANNEL_ID, "Media Playback", NotificationImportance.Max)
                 {
                     Description = "Playback controls",
                     LockscreenVisibility = NotificationVisibility.Public
