@@ -3,7 +3,6 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using AndroidX.Core.App;
-using Plugin.LocalNotification.AndroidOption;
 
 namespace MusicPlayer
 {
@@ -19,15 +18,6 @@ namespace MusicPlayer
             {
                 Window.SetStatusBarColor(Android.Graphics.Color.Transparent);
             }
-
-            var channel = new NotificationChannelRequest
-            {
-                Importance = AndroidImportance.High,
-                EnableVibration = true,
-                ShowBadge = false,
-                Id = "persistent_channel",
-                LockScreenVisibility = AndroidVisibilityType.Public,
-            };
 
             RequestNotificationPermission();
         }

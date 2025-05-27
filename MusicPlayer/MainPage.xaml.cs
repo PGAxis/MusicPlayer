@@ -1,7 +1,6 @@
 ﻿#if ANDROID
     using Android.Content;
 #endif
-using Plugin.LocalNotification;
 
 namespace MusicPlayer
 {
@@ -183,36 +182,6 @@ namespace MusicPlayer
             return Math.Abs(a - b) == 0.0;
         }
 
-        /*private ContentView GetClosestView()
-        {
-            double scrollX = ViewScroll.ScrollX;
-            double scrollWidth = ViewScroll.Width;
-            double viewportCenter = scrollX + scrollWidth / 2;
-
-            var stack = (HorizontalStackLayout)ViewScroll.Content;
-
-            ContentView closest = null;
-            double smallestDistance = double.MaxValue;
-
-            double runningX = 0;
-
-            foreach (var child in stack.Children)
-            {
-                double childCenter = runningX + child.Width / 2;
-
-                double distance = Math.Abs(viewportCenter - childCenter);
-                if (distance < smallestDistance)
-                {
-                    smallestDistance = distance;
-                    closest = (ContentView)child;
-                }
-
-                runningX += child.Width;
-            }
-
-            return closest;
-        }*/
-
         private Label GetClosestLabel()
         {
             double scrollX = TabScroll.ScrollX;
@@ -262,33 +231,10 @@ namespace MusicPlayer
 
         private void NotificationPls(object sender, EventArgs e)
         {
-            /*var request = new NotificationRequest
-            {
-                NotificationId = 1,
-                Title = "SongsPlaying",
-                Description = "Sup man, this is a notification",
-                CategoryType = NotificationCategoryType.Service,
-                Android = new Plugin.LocalNotification.AndroidOption.AndroidOptions
-                {
-                    LaunchAppWhenTapped = true,
-                    Priority = Plugin.LocalNotification.AndroidOption.AndroidPriority.Max,
-                    VisibilityType = Plugin.LocalNotification.AndroidOption.AndroidVisibilityType.Public,
-                    AutoCancel = false,
-                    Ongoing = true,
-                    ProgressBar = new Plugin.LocalNotification.AndroidOption.AndroidProgressBar
-                    {
-                        Max = 100,
-                        Progress = 30,
-                    },
-                },  //TO-DO: MauiProgram.cs -> dodelej vsechny tlacidla a jejich sprity, navod mas tuto: https://github.com/thudugala/Plugin.LocalNotification/wiki/5.-Notification-with-Action
-            };
-
-            LocalNotificationCenter.Current.Show(request);*/
-
 #if ANDROID
-    var context = Android.App.Application.Context;
-    var intent = new Intent(context, typeof(MediaPlayerNotificationService));
-    context.StartForegroundService(intent);
+            var context = Android.App.Application.Context;
+            var intent = new Intent(context, typeof(MediaPlayerNotificationService));
+            context.StartForegroundService(intent);
 #endif
         }
     }
