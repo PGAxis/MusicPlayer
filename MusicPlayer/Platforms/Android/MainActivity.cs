@@ -1,5 +1,6 @@
 ﻿using Android;
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using AndroidX.Core.App;
@@ -20,6 +21,8 @@ namespace MusicPlayer
             }
 
             RequestNotificationPermission();
+
+            //Test();
         }
 
         void RequestNotificationPermission()
@@ -31,6 +34,14 @@ namespace MusicPlayer
                     ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.PostNotifications }, 101);
                 }
             }
+        }
+
+        void Test()
+        {
+            Intent testIntent = new Intent("PLAY");
+            testIntent.SetClass(this, typeof(NotificationActionReceiver));
+            testIntent.SetPackage(PackageName);
+            SendBroadcast(testIntent);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Android.App;
 using Android.Content;
+using Android.Support.V4.Media.Session;
 using Android.Widget;
 using System;
 using System.Collections.Generic;
@@ -10,14 +11,28 @@ using System.Threading.Tasks;
 namespace MusicPlayer
 {
     [BroadcastReceiver(Enabled = true, Exported = true)]
-    [IntentFilter(new[] { "SHUFFLE", "PLAY", "PAUSE", "NEXT", "PREVIOUS", "REPEAT" })]
+    [IntentFilter(new[] { "PREVIOUS", "PLAY", "PAUSE", "NEXT" })]
     public class NotificationActionReceiver : BroadcastReceiver
     {
         public override void OnReceive(Context context, Intent intent)
         {
             var action = intent.Action;
 
-            Microsoft.Maui.Controls.MessagingCenter.Send<object, string>(this, "MediaAction", action);
+            if (action != null )
+            {
+                switch (action)
+                {
+                    case "PAUSE":
+                        MediaPlayerNotificationService.Pause();
+                        break;
+
+                    case "PLAY":
+                        MediaPlayerNotificationService.Play();
+                        break;
+                }
+            }
+
+            MessagingCenter.Send<object, string>(this, "MediaAction", action);
 
             Toast.MakeText(context, $"Action: {action}", ToastLength.Short).Show();
         }

@@ -87,8 +87,4 @@
 		</PackageReference>
   	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Platforms\Android\Resources\layout\" />
-	</ItemGroup>
-
 </Project>
