@@ -4,45 +4,68 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="MusicPlayer.MainPage">
 
-    <VerticalStackLayout>
+    <Grid>
+        <VerticalStackLayout>
 
-        <FlexLayout Padding="25,30,25,25" HeightRequest="90">
-            <Label Text="Axis Music" FontAttributes="Bold" FontSize="25" FlexLayout.Grow="1" FontFamily="Poppins" VerticalOptions="Center"/>
-            <ImageButton Source="plus.png" WidthRequest="25"/>
-            <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
-            <ImageButton Source="magglass.png" WidthRequest="25"/>
-            <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
-            <ImageButton Source="setting.png" WidthRequest="25"/>
-        </FlexLayout>
+            <FlexLayout Padding="25,30,25,25" HeightRequest="90">
+                <Label Text="Axis Music" FontAttributes="Bold" FontSize="25" FlexLayout.Grow="1" FontFamily="Poppins" VerticalOptions="Center"/>
+                <ImageButton Source="plus.png" WidthRequest="25"/>
+                <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
+                <ImageButton Source="magglass.png" WidthRequest="25" Clicked="SearchSongs"/>
+                <Frame WidthRequest="20" BackgroundColor="Transparent" BorderColor="Transparent"/>
+                <ImageButton Source="setting.png" WidthRequest="25"/>
+            </FlexLayout>
 
-        <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never" HeightRequest="70">
-            <HorizontalStackLayout x:Name="LabelStack">
+            <ScrollView x:Name="TabScroll" Orientation="Horizontal" Scrolled="UserScrolled" HorizontalScrollBarVisibility="Never" HeightRequest="70">
+                <HorizontalStackLayout x:Name="LabelStack">
 
-                <Frame x:Name="LeftPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
-                <Label x:Name="FavLabel" TextColor="WhiteSmoke" Text="Favourites" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                <Label x:Name="PlayLabel" TextColor="WhiteSmoke" Text="Playlists" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                <Label x:Name="SongLabel" TextColor="WhiteSmoke" Text="Songs" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                <Label x:Name="AlbLabel" TextColor="WhiteSmoke" Text="Albums" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                <Label x:Name="IntLabel" TextColor="WhiteSmoke" Text="Interprets" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
-                <Frame x:Name="RightPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
+                    <Frame x:Name="LeftPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
+                    <Label x:Name="FavLabel" TextColor="WhiteSmoke" Text="Favourites" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    <Label x:Name="PlayLabel" TextColor="WhiteSmoke" Text="Playlists" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    <Label x:Name="SongLabel" TextColor="WhiteSmoke" Text="Songs" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    <Label x:Name="AlbLabel" TextColor="WhiteSmoke" Text="Albums" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    <Label x:Name="IntLabel" TextColor="WhiteSmoke" Text="Interprets" FontSize="30" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                    <Frame x:Name="RightPadding" BackgroundColor="Transparent" BorderColor="Transparent"/>
 
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <Button Text="Send Notification" Clicked="NotificationPls"/>
+
+            <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout x:Name="ViewStack">
+
+                    <ContentView x:Name="FavouritesView" />
+                    <ContentView x:Name="PlaylistsView" />
+                    <ContentView x:Name="SongsView" />
+                    <ContentView x:Name="AlbumsView" />
+                    <ContentView x:Name="InterpretsView" />
+
+                </HorizontalStackLayout>
+            </ScrollView>
+
+        </VerticalStackLayout>
+
+        <Frame CornerRadius="30" BackgroundColor="DarkGray" BorderColor="Transparent" HeightRequest="55" Padding="5" VerticalOptions="End" HorizontalOptions="Fill" Margin="0,10" HasShadow="True" TranslationY="10">
+            <HorizontalStackLayout Spacing="5">
+                <Frame Padding="0" BackgroundColor="Transparent" WidthRequest="40" HeightRequest="40" BorderColor="Transparent" CornerRadius="40">
+                    <Image Source="default_playlist.png" WidthRequest="40" HeightRequest="40" HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Frame>
+                <VerticalStackLayout x:Name="SongMetadataStack" VerticalOptions="Center" HorizontalOptions="Fill">
+                    <ScrollView x:Name="TitleScrollView" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalOptions="Fill" HorizontalOptions="Fill">
+                        <Label x:Name="SongTitle" Text="Name that is very quite long" TextColor="WhiteSmoke" FontAttributes="Bold" HorizontalOptions="Start" FontFamily="Poppins" FontSize="12" LineBreakMode="TailTruncation" MaxLines="1" />
+                    </ScrollView>
+                    <Label Text="Author" TextColor="WhiteSmoke" HorizontalOptions="Start" FontFamily="Poppins" FontSize="10" LineBreakMode="TailTruncation" MaxLines="1"/>
+                </VerticalStackLayout>
+
+                <HorizontalStackLayout Spacing="5" VerticalOptions="Center" HorizontalOptions="End">
+                    <ImageButton WidthRequest="30" HeightRequest="30" Padding="7" Source="previous.png"/>
+                    <ImageButton WidthRequest="30" HeightRequest="30" Padding="7" Source="play.png"/>
+                    <ImageButton WidthRequest="30" HeightRequest="30" Padding="7" Source="next.png"/>
+                    <ImageButton WidthRequest="30" HeightRequest="30" Padding="7" Source="setting.png"/>
+                </HorizontalStackLayout>
             </HorizontalStackLayout>
-        </ScrollView>
-
-        <Button Text="Send Notification" Clicked="NotificationPls"/>
-
-        <ScrollView x:Name="ViewScroll" Orientation="Horizontal" Scrolled="ViewScrolled" HorizontalScrollBarVisibility="Never">
-            <HorizontalStackLayout x:Name="ViewStack">
-
-                <ContentView x:Name="FavouritesView" />
-                <ContentView x:Name="PlaylistsView" />
-                <ContentView x:Name="SongsView" />
-                <ContentView x:Name="AlbumsView" />
-                <ContentView x:Name="InterpretsView" />
-
-            </HorizontalStackLayout>
-        </ScrollView>
-
-    </VerticalStackLayout>
+        </Frame>
+    </Grid>
 
 </ContentPage>

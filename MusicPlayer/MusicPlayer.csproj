@@ -64,6 +64,7 @@
 
 	<ItemGroup>
 	  	<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
+	  	<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-android'">
@@ -86,5 +87,11 @@
 		  <Version>1.7.0.10</Version>
 		</PackageReference>
   	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Screens\SongSelector.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
 
 </Project>

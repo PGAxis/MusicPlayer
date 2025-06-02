@@ -9,12 +9,7 @@ using Android.Support.V4.Media.Session;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Core.App;
-using AndroidX.Media.Session;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Resource = Microsoft.Maui.Controls.Resource;
 
 namespace MusicPlayer
 {
@@ -24,6 +19,8 @@ namespace MusicPlayer
         public const string CHANNEL_ID = "media_playback_channel";
 
         public const string ACTION_UPDATE_NOTIFICATION = "UPDATE_NOTIFICATION";
+
+        private static bool Notification_started = false;
 
         public static MediaSessionCompat mediaSession;
 
@@ -35,6 +32,7 @@ namespace MusicPlayer
             CreateNotificationChannel();
 
             mediaSession = new MediaSessionCompat(this, "MusicPlayerSession");
+            mediaSession.SetCallback(new MediaSessionCallback());
             mediaSession.Active = true;            
         }
 
@@ -50,6 +48,12 @@ namespace MusicPlayer
                 return StartCommandResult.Sticky;
             }
 
+            if (Notification_started)
+            {
+                notificationManager.Notify(16, notification);
+                return StartCommandResult.Sticky;
+            }
+
             var metadata = new MediaMetadataCompat.Builder()
                 .PutString(MediaMetadata.MetadataKeyTitle, "Song Title")
                 .PutString(MediaMetadata.MetadataKeyArtist, "Artist Name")
@@ -59,7 +63,9 @@ namespace MusicPlayer
             mediaSession.SetMetadata(metadata);
 
             var playbackState = new PlaybackStateCompat.Builder()
-                .SetActions(PlaybackStateCompat.ActionPlay |
+                .SetActions(PlaybackStateCompat.ActionSetShuffleMode |
+                            PlaybackStateCompat.ActionSetRepeatMode |
+                            PlaybackStateCompat.ActionPlay |
                             PlaybackStateCompat.ActionPause |
                             PlaybackStateCompat.ActionSkipToNext |
                             PlaybackStateCompat.ActionSkipToPrevious)
@@ -71,6 +77,8 @@ namespace MusicPlayer
             notificationManager.Notify(16, notification);
 
             StartForeground(16, notification);
+
+            Notification_started = true;
 
             return StartCommandResult.Sticky;
         }
@@ -86,34 +94,35 @@ namespace MusicPlayer
                 .SetContentText("Song Artist")
                 .SetSmallIcon(Resource.Drawable.small_icon)
                 .SetStyle(new AndroidX.Media.App.NotificationCompat.DecoratedMediaCustomViewStyle().SetMediaSession(mediaSession.SessionToken).SetShowActionsInCompactView(0, 1, 2))
-                .AddAction(new NotificationCompat.Action(Resource.Drawable.previous, "Previous", GetActionIntent("PREVIOUS", 101)))
-                .AddAction(new NotificationCompat.Action(Resource.Drawable.play, "Play", GetActionIntent(IsPlaying ? "PLAY" : "PAUSE", 102)))
-                .AddAction(new NotificationCompat.Action(Resource.Drawable.next, "Next", GetActionIntent("NEXT", 103)))
+                .AddAction(new NotificationCompat.Action(0, "Previous", CreateMediaButtonPendingIntent(this, Keycode.MediaPrevious)))
+                .AddAction(new NotificationCompat.Action(0, "Play", CreateMediaButtonPendingIntent(this, Keycode.MediaPlayPause)))
+                .AddAction(new NotificationCompat.Action(0, "Next", CreateMediaButtonPendingIntent(this, Keycode.MediaNext)))
                 .SetOngoing(true)
                 .SetAutoCancel(false)
                 .SetContentIntent(pendingIntent)
-                .SetPriority(NotificationCompat.PriorityMin)
+                .SetPriority(NotificationCompat.PriorityLow)
                 .SetVisibility(NotificationCompat.VisibilityPublic);
 
             return builder.Build();
         }
 
-        PendingIntent GetActionIntent(string action, int requestCode)
+        private PendingIntent CreateMediaButtonPendingIntent(Context context, Keycode keyCode)
         {
-            Intent intent = new Intent(this, typeof(NotificationActionReceiver));
-            intent.SetAction(action);
-            intent.SetPackage(PackageName);
-            return PendingIntent.GetBroadcast(this, requestCode, intent, PendingIntentFlags.Immutable);
+            var intent = new Intent(Intent.ActionMediaButton);
+            intent.SetPackage(context.PackageName);
+            intent.PutExtra(Intent.ExtraKeyEvent, new KeyEvent(KeyEventActions.Down, keyCode));
+            return PendingIntent.GetBroadcast(context, (int)keyCode, intent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
         }
 
         public static void Pause()
         {
             var playbackState = new PlaybackStateCompat.Builder()
-                .SetActions(
-                    PlaybackStateCompat.ActionPlay |
-                    PlaybackStateCompat.ActionPause |
-                    PlaybackStateCompat.ActionSkipToNext |
-                    PlaybackStateCompat.ActionSkipToPrevious
+                .SetActions(PlaybackStateCompat.ActionSetShuffleMode |
+                            PlaybackStateCompat.ActionSetRepeatMode |
+                            PlaybackStateCompat.ActionPlay |
+                            PlaybackStateCompat.ActionPause |
+                            PlaybackStateCompat.ActionSkipToNext |
+                            PlaybackStateCompat.ActionSkipToPrevious
                 )
                 .SetState(PlaybackStateCompat.StatePaused, PlaybackStateCompat.PlaybackPositionUnknown, 1.0f)
                 .Build();
@@ -126,11 +135,12 @@ namespace MusicPlayer
         public static void Play()
         {
             var playbackState = new PlaybackStateCompat.Builder()
-                .SetActions(
-                    PlaybackStateCompat.ActionPlay |
-                    PlaybackStateCompat.ActionPause |
-                    PlaybackStateCompat.ActionSkipToNext |
-                    PlaybackStateCompat.ActionSkipToPrevious
+                .SetActions(PlaybackStateCompat.ActionSetShuffleMode |
+                            PlaybackStateCompat.ActionSetRepeatMode |
+                            PlaybackStateCompat.ActionPlay |
+                            PlaybackStateCompat.ActionPause |
+                            PlaybackStateCompat.ActionSkipToNext |
+                            PlaybackStateCompat.ActionSkipToPrevious
                 )
                 .SetState(PlaybackStateCompat.StatePlaying, PlaybackStateCompat.PlaybackPositionUnknown, 1.0f)
                 .Build();
@@ -159,5 +169,32 @@ namespace MusicPlayer
         }
 
         public override IBinder OnBind(Intent intent) => null;
+    }
+
+    class MediaSessionCallback : MediaSessionCompat.Callback
+    {
+        public override void OnPlay()
+        {
+            var context = Android.App.Application.Context;
+            MediaPlayerNotificationService.Play();
+            //Toast.MakeText(context, $"Action: {action}", ToastLength.Short).Show();
+            Toast.MakeText(context, "Action: Play", ToastLength.Short).Show();
+        }
+        public override void OnPause()
+        {
+            var context = Android.App.Application.Context;
+            MediaPlayerNotificationService.Pause();
+            Toast.MakeText(context, "Action: Pause", ToastLength.Short).Show();
+        }
+        public override void OnSkipToNext()
+        {
+            var context = Android.App.Application.Context;
+            Toast.MakeText(context, "Action: Next", ToastLength.Short).Show();
+        }
+        public override void OnSkipToPrevious()
+        {
+            var context = Android.App.Application.Context;
+            Toast.MakeText(context, "Action: Previous", ToastLength.Short).Show();
+        }
     }
 }

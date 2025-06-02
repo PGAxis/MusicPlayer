@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MusicPlayer.SongSelector"
+             xmlns:model="clr-namespace:MusicPlayer"
+             Title="SongSelector">
+
+    <VerticalStackLayout Padding="10">
+
+        <VerticalStackLayout Spacing="10" Margin="0,0,0,10">
+            <SearchBar x:Name="searchBar" Placeholder="Search..." TextChanged="SearchBar_TextChanged" />
+            <HorizontalStackLayout>
+                <RadioButton x:Name="SellectAllButton" CheckedChanged="ChangeSelection"/>
+                <Label x:Name="SongCountLabel"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <CollectionView x:Name="SongsCollection"
+                        SelectionMode="Multiple"
+                        ItemsSource="{Binding FilteredSongs}"
+                        SelectionChanged="SongsCollection_SelectionChanged"
+                        ItemTemplate="{StaticResource SongTemplate}"
+                        ItemSizingStrategy="MeasureFirstItem">
+
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical"/>
+            </CollectionView.ItemsLayout>
+        </CollectionView>
+    </VerticalStackLayout>
+
+    <ContentPage.Resources>
+        <DataTemplate x:Key="SongTemplate" x:DataType="model:Song">
+            <Grid Padding="10" ColumnDefinitions="Auto,*,Auto">
+                <Image Source="default_playlist.png"
+                WidthRequest="40" HeightRequest="40"
+                VerticalOptions="Center" />
+                <VerticalStackLayout Grid.Column="1" Padding="10,0">
+                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="{Binding Artist}" FontSize="12" TextColor="Gray"/>
+                </VerticalStackLayout>
+                <ImageButton Source="setting.png"
+                        Grid.Column="2"
+                        WidthRequest="30" HeightRequest="30"
+                        BackgroundColor="Transparent"
+                        Clicked="OnContextMenuClicked"/>
+            </Grid>
+        </DataTemplate>
+    </ContentPage.Resources>
+</ContentPage>

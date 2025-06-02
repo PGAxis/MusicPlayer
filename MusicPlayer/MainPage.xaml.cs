@@ -1,16 +1,23 @@
 ﻿#if ANDROID
     using Android.Content;
+    using Android.Provider;
 #endif
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MusicPlayer
 {
     public partial class MainPage : ContentPage
     {
         private bool CanScroll = true;
+        public bool isScrollingPaused = false;
+        CancellationTokenSource scrollCts;
         private Dictionary<Label, ContentView> Tabs = new Dictionary<Label, ContentView>();
         private List<Label> JustLabelsTabs = new List<Label>();
         public Label LastTab;
         private List<IResizablePage> Pages = new List<IResizablePage>();
+
+        //TO-DO: chat ti vygenerovl nejakej dezign toho song selectoru, tak to implementni, nezapomeň, že se z té obrazovky musíš umět i vrátit :D
 
         private Favourites Favourites = Favourites.Instance();
         private Playlists Playlists = Playlists.Instance();
@@ -19,6 +26,22 @@ namespace MusicPlayer
         private Interprets Interprets = Interprets.Instance();
 
         private Settings settings = Settings.Instance();
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+#if ANDROID
+            await SyncSongsAsync();
+#endif
+        }
+
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+
+            _ = MainThread.InvokeOnMainThreadAsync(async () => await ScrollToTab(LastTab));
+            StartScrollingTitle();
+        }
 
         public MainPage()
         {
@@ -47,7 +70,6 @@ namespace MusicPlayer
 
             LastTab = JustLabelsTabs[settings.LastTabIndex];
             LastTab.FontAttributes = FontAttributes.Bold;
-            Task.Run(async () => await ScrollToTab(LastTab));
 
             SetCorrectFontSize();
 
@@ -56,28 +78,6 @@ namespace MusicPlayer
             SongsView.Content = Songs.Content;
             AlbumsView.Content = Albums.Content;
             InterpretsView.Content = Interprets.Content;
-
-            MessagingCenter.Subscribe<object, string>(this, "MediaAction", (sender, action) =>
-            {
-                switch (action)
-                {
-                    case "PLAY":
-                        //PlayMusic();
-                        break;
-                    case "PAUSE":
-                        //PauseMusic();
-                        break;
-                    case "NEXT":
-                        //SkipToNext();
-                        break;
-                    case "PREVIOUS":
-                        //SkipToPrevious();
-                        break;
-                    case "SHUFFLE":
-                        //ToggleShuffle();
-                        break;
-                }
-            });
         }
 
         private void UserScrolled(object sender, ScrolledEventArgs e)
@@ -129,6 +129,7 @@ namespace MusicPlayer
             double ViewRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
             double LabelRequest = ViewRequest * 0.5;
             double PaddingRequest = (ViewRequest - LabelRequest) / 2;
+            double SongMetadataRequest = ViewRequest - 200;
 
             LeftPadding.WidthRequest = PaddingRequest;
             RightPadding.WidthRequest = PaddingRequest;
@@ -138,6 +139,8 @@ namespace MusicPlayer
             SongLabel.WidthRequest = LabelRequest;
             AlbLabel.WidthRequest = LabelRequest;
             IntLabel.WidthRequest = LabelRequest;
+
+            SongMetadataStack.WidthRequest = SongMetadataRequest;
 
             foreach (var child in ViewStack.Children)
             {
@@ -173,8 +176,10 @@ namespace MusicPlayer
 
         private async Task ScrollToTab(Label tab)
         {
+            CanScroll = false;
             await TabScroll.ScrollToAsync(tab, ScrollToPosition.Center, false);
             await ViewScroll.ScrollToAsync(Tabs[tab], ScrollToPosition.Center, false);
+            CanScroll = true;
         }
 
         private bool AreCloseEnough(double a, double b)
@@ -229,6 +234,41 @@ namespace MusicPlayer
             }
         }
 
+        public async void StartScrollingTitle()
+        {
+            await Task.Delay(300);
+
+            double labelWidth = SongTitle.Width;
+            double scrollViewWidth = SongMetadataStack.Width;
+
+            if (labelWidth <= scrollViewWidth)
+                return;
+
+            scrollCts = new CancellationTokenSource();
+
+            try
+            {
+                while (!scrollCts.IsCancellationRequested)
+                {
+                    if (!isScrollingPaused)
+                    {
+                        await TitleScrollView.ScrollToAsync(labelWidth - scrollViewWidth, 0, true);
+                        await Task.Delay(2000, scrollCts.Token);
+                        await TitleScrollView.ScrollToAsync(0, 0, true);
+                        await Task.Delay(2000, scrollCts.Token);
+                    }
+                    else
+                    {
+                        await Task.Delay(500);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
         private void NotificationPls(object sender, EventArgs e)
         {
 #if ANDROID
@@ -236,6 +276,81 @@ namespace MusicPlayer
             var intent = new Intent(context, typeof(MediaPlayerNotificationService));
             context.StartForegroundService(intent);
 #endif
+        }
+
+#if ANDROID
+        public async Task<List<Song>> ScanAudioFilesAsync(Context context)
+        {
+            List<Song> songs = new List<Song>();
+
+            var uri = MediaStore.Audio.Media.ExternalContentUri;
+            string[] projection =
+            {
+                MediaStore.Audio.Media.InterfaceConsts.Title,
+                MediaStore.Audio.Media.InterfaceConsts.Artist,
+                MediaStore.Audio.Media.InterfaceConsts.Album,
+                MediaStore.Audio.Media.InterfaceConsts.Data,
+                MediaStore.Audio.Media.InterfaceConsts.Duration
+            };
+
+            var cursor = context.ContentResolver.Query(uri, projection, null, null, null);
+
+            if (cursor != null && cursor.MoveToFirst())
+            {
+                int titleIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Title);
+                int artistIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Artist);
+                int albumIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Album);
+                int pathIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Data);
+                int durationIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Duration);
+
+                do
+                {
+                    string title = cursor.GetString(titleIndex) ?? "Unknown";
+                    string artist = cursor.GetString(artistIndex) ?? "Unknown";
+                    string album = cursor.GetString(albumIndex) ?? "Unknown";
+                    string path = cursor.GetString(pathIndex);
+                    double durationSec = cursor.GetLong(durationIndex) / 1000.0;
+
+                    if (System.IO.File.Exists(path))
+                    {
+                        songs.Add(new Song(title, artist, album, path, durationSec));
+                    }
+                }
+                while (cursor.MoveToNext());
+
+                cursor.Close();
+            }
+
+            return songs;
+        }
+
+        public async Task SyncSongsAsync()
+        {
+            var context = Android.App.Application.Context;
+
+            var scannedSongs = await ScanAudioFilesAsync(context);
+            var existingSongs = await App.SongDatabase.GetSongsAsync();
+
+            var scannedPaths = scannedSongs.ToDictionary(s => s.Path);
+            var existingPaths = existingSongs.ToDictionary(s => s.Path);
+
+            foreach (var song in scannedSongs)
+            {
+                if (!existingPaths.ContainsKey(song.Path))
+                    await App.SongDatabase.SaveSongAsync(song);
+            }
+
+            foreach (var song in existingSongs)
+            {
+                if (!scannedPaths.ContainsKey(song.Path))
+                    await App.SongDatabase.DeleteSongAsync(song);
+            }
+        }
+
+#endif
+        private async void SearchSongs(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(SongSelector));
         }
     }
 }

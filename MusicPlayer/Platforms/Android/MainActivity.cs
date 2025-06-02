@@ -4,6 +4,7 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using AndroidX.Core.App;
+using System.Threading.Tasks;
 
 namespace MusicPlayer
 {
@@ -21,11 +22,9 @@ namespace MusicPlayer
             }
 
             RequestNotificationPermission();
-
-            //Test();
         }
 
-        void RequestNotificationPermission()
+        async Task RequestNotificationPermission()
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
@@ -33,15 +32,15 @@ namespace MusicPlayer
                 {
                     ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.PostNotifications }, 101);
                 }
+                if (CheckSelfPermission(Manifest.Permission.ReadMediaAudio) != Permission.Granted)
+                {
+                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.ReadMediaAudio }, 101);
+                }
+                if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) != Permission.Granted)
+                {
+                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.ReadExternalStorage }, 101);
+                }
             }
-        }
-
-        void Test()
-        {
-            Intent testIntent = new Intent("PLAY");
-            testIntent.SetClass(this, typeof(NotificationActionReceiver));
-            testIntent.SetPackage(PackageName);
-            SendBroadcast(testIntent);
         }
     }
 }

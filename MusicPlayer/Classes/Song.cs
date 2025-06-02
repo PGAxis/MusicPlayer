@@ -1,19 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SQLite;
 
 namespace MusicPlayer
 {
     public class Song
     {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
         public string Title { get; set; }
         public string Artist { get; set; }
         public string Album { get; set; }
         public string Path { get; set; }
         public double LengthInSec { get; set; }
         public string LengthInString { get; set; }
+
+        public Song()
+        {
+
+        }
 
         public Song(string title, string artist, string album, string path, double length)
         {
@@ -31,14 +34,7 @@ namespace MusicPlayer
             byte minutes = Convert.ToByte((song.LengthInSec % 3600) / 60);
             byte seconds = Convert.ToByte(song.LengthInSec % 60);
 
-            if (hours > 0)
-            {
-                return $"{hours}:{minutes:D2}:{seconds:D2}";
-            }
-            else
-            {
-                return $"{minutes:D2}:{seconds:D2}";
-            }
+            return (hours > 0 ? $"{hours}:{minutes:D2}:{seconds:D2}" : $"{minutes:D2}:{seconds:D2}");
         }
     }
 }
