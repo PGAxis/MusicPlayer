@@ -27,6 +27,9 @@ namespace MusicPlayer
             return instance;
         }
 
+        public bool FirstLoadSinceClosed = true;
+
+
         public byte LastTabIndex = 0;
 
         public void SaveSettings()

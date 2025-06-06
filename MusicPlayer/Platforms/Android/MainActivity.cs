@@ -28,17 +28,20 @@ namespace MusicPlayer
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
+                var permissionsToRequest = new List<string>();
+
                 if (CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
-                {
-                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.PostNotifications }, 101);
-                }
+                    permissionsToRequest.Add(Manifest.Permission.PostNotifications);
+
                 if (CheckSelfPermission(Manifest.Permission.ReadMediaAudio) != Permission.Granted)
-                {
-                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.ReadMediaAudio }, 101);
-                }
+                    permissionsToRequest.Add(Manifest.Permission.ReadMediaAudio);
+
                 if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) != Permission.Granted)
+                    permissionsToRequest.Add(Manifest.Permission.ReadExternalStorage);
+
+                if (permissionsToRequest.Count > 0)
                 {
-                    ActivityCompat.RequestPermissions(this, new[] { Manifest.Permission.ReadExternalStorage }, 101);
+                    ActivityCompat.RequestPermissions(this, permissionsToRequest.ToArray(), 101);
                 }
             }
         }

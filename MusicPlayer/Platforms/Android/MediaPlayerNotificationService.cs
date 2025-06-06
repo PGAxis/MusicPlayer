@@ -177,7 +177,6 @@ namespace MusicPlayer
         {
             var context = Android.App.Application.Context;
             MediaPlayerNotificationService.Play();
-            //Toast.MakeText(context, $"Action: {action}", ToastLength.Short).Show();
             Toast.MakeText(context, "Action: Play", ToastLength.Short).Show();
         }
         public override void OnPause()

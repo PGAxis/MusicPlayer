@@ -11,6 +11,8 @@ public partial class SongSelector : ContentPage
     public SongSelector()
 	{
 		InitializeComponent();
+        MainStack.HeightRequest = DeviceDisplay.MainDisplayInfo.Height / DeviceDisplay.MainDisplayInfo.Density;
+        SetHeight();
         BindingContext = this;
     }
 
@@ -89,5 +91,23 @@ public partial class SongSelector : ContentPage
         {
             SongsCollection.SelectedItems.Clear();
         }
+    }
+
+    private void SetHeight()
+    {
+        double paddingTop = MainStack.Padding.Top;
+        double paddingBottom = MainStack.Padding.Bottom;
+
+        double searchBarHeight = searchBar.Height;
+        double nameStackHeight = NameStack.Height;
+
+        double spacing = 10;
+        double marginBottom = 10;
+
+        double totalUsedHeight = paddingTop + searchBarHeight + spacing + nameStackHeight + marginBottom + paddingBottom;
+        double screenHeight = DeviceDisplay.MainDisplayInfo.Height / DeviceDisplay.MainDisplayInfo.Density;
+
+        double remainingHeight = screenHeight - totalUsedHeight;
+        SongsCollection.HeightRequest = remainingHeight;
     }
 }

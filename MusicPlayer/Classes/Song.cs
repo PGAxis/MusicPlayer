@@ -9,6 +9,7 @@ namespace MusicPlayer
         public string Title { get; set; }
         public string Artist { get; set; }
         public string Album { get; set; }
+        public string AlbumArtPath { get; set; }
         public string Path { get; set; }
         public double LengthInSec { get; set; }
         public string LengthInString { get; set; }
@@ -18,11 +19,15 @@ namespace MusicPlayer
 
         }
 
-        public Song(string title, string artist, string album, string path, double length)
+        public Song(string title, string artist, string album, string album_art, string path, double length)
         {
             this.Title = title;
             this.Artist = artist;
             this.Album = album;
+            if (album_art != null)
+                this.AlbumArtPath = album_art;
+            else
+                this.AlbumArtPath = "default_playlist.png";
             this.Path = path;
             this.LengthInSec = length;
             this.LengthInString = getLengthInNormalTime(this);

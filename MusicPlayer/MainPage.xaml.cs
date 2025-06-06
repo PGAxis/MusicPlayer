@@ -17,8 +17,6 @@ namespace MusicPlayer
         public Label LastTab;
         private List<IResizablePage> Pages = new List<IResizablePage>();
 
-        //TO-DO: chat ti vygenerovl nejakej dezign toho song selectoru, tak to implementni, nezapomeň, že se z té obrazovky musíš umět i vrátit :D
-
         private Favourites Favourites = Favourites.Instance();
         private Playlists Playlists = Playlists.Instance();
         private Songs Songs = Songs.Instance();
@@ -31,7 +29,11 @@ namespace MusicPlayer
         {
             base.OnAppearing();
 #if ANDROID
-            await SyncSongsAsync();
+            if(settings.FirstLoadSinceClosed)
+            {
+                await SyncSongsAsync();
+                settings.FirstLoadSinceClosed = false;
+            }
 #endif
         }
 
@@ -289,17 +291,19 @@ namespace MusicPlayer
                 MediaStore.Audio.Media.InterfaceConsts.Title,
                 MediaStore.Audio.Media.InterfaceConsts.Artist,
                 MediaStore.Audio.Media.InterfaceConsts.Album,
+                MediaStore.Audio.Media.InterfaceConsts.AlbumId,
                 MediaStore.Audio.Media.InterfaceConsts.Data,
                 MediaStore.Audio.Media.InterfaceConsts.Duration
             };
 
-            var cursor = context.ContentResolver.Query(uri, projection, null, null, null);
+            using var cursor = context.ContentResolver.Query(uri, projection, null, null, null);
 
             if (cursor != null && cursor.MoveToFirst())
             {
                 int titleIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Title);
                 int artistIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Artist);
-                int albumIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Album);
+                int albumNameIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Album);
+                int albumIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.AlbumId);
                 int pathIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Data);
                 int durationIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Duration);
 
@@ -307,13 +311,15 @@ namespace MusicPlayer
                 {
                     string title = cursor.GetString(titleIndex) ?? "Unknown";
                     string artist = cursor.GetString(artistIndex) ?? "Unknown";
-                    string album = cursor.GetString(albumIndex) ?? "Unknown";
+                    string album = cursor.GetString(albumNameIndex) ?? "Unknown";
+                    long albumId = cursor.GetLong(albumIndex);
+                    string? albumArtPath = GetAlbumArtPath(context, albumId);
                     string path = cursor.GetString(pathIndex);
                     double durationSec = cursor.GetLong(durationIndex) / 1000.0;
 
                     if (System.IO.File.Exists(path))
                     {
-                        songs.Add(new Song(title, artist, album, path, durationSec));
+                        songs.Add(new Song(title, artist, album, albumArtPath, path, durationSec));
                     }
                 }
                 while (cursor.MoveToNext());
@@ -322,6 +328,23 @@ namespace MusicPlayer
             }
 
             return songs;
+        }
+
+        public static string? GetAlbumArtPath(Context context, long albumId)
+        {
+            var albumUri = MediaStore.Audio.Albums.ExternalContentUri;
+            string[] projection = new[] { MediaStore.Audio.Albums.InterfaceConsts.AlbumArt };
+            string selection = $"{MediaStore.Audio.Albums.InterfaceConsts.Id} = ?";
+            string[] selectionArgs = new[] { albumId.ToString() };
+
+            using var cursor = context.ContentResolver.Query(albumUri, projection, selection, selectionArgs, null);
+
+            if (cursor != null && cursor.MoveToFirst())
+            {
+                return cursor.GetString(0);
+            }
+
+            return null;
         }
 
         public async Task SyncSongsAsync()
