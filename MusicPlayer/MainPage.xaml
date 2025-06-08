@@ -5,7 +5,7 @@
              x:Class="MusicPlayer.MainPage">
 
     <Grid>
-        <VerticalStackLayout>
+        <VerticalStackLayout x:Name="MainStack">
 
             <FlexLayout Padding="25,30,25,25" HeightRequest="90">
                 <Label Text="Axis Music" FontAttributes="Bold" FontSize="25" FlexLayout.Grow="1" FontFamily="Poppins" VerticalOptions="Center"/>

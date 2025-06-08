@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-
 namespace MusicPlayer;
 
 public partial class SongSelector : ContentPage
@@ -13,6 +10,7 @@ public partial class SongSelector : ContentPage
 		InitializeComponent();
         MainStack.HeightRequest = DeviceDisplay.MainDisplayInfo.Height / DeviceDisplay.MainDisplayInfo.Density;
         SetHeight();
+        SetWidth();
         BindingContext = this;
     }
 
@@ -24,9 +22,9 @@ public partial class SongSelector : ContentPage
 
     private async void LoadSongs()
     {
-        var songs = await App.SongDatabase.GetSongsAsync();
+        List<Song> songs = await App.SongDatabase.GetSongsAsync();
 
-        SongCountLabel.Text = songs.Count.ToString();
+        songs = songs.OrderBy(s => s.Title).ToList();
 
         AllSongs.ReplaceRange(songs);
 
@@ -57,14 +55,6 @@ public partial class SongSelector : ContentPage
     private void SongsCollection_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         // You can handle multi-selection logic here
-    }
-
-    private void OnAddToPlaylistClicked(object sender, EventArgs e)
-    {
-        if (sender is SwipeItem swipeItem && swipeItem.BindingContext is Song song)
-        {
-            DisplayAlert("Add to Playlist", $"Add {song.Title} to a playlist.", "OK");
-        }
     }
 
     private void OnContextMenuClicked(object sender, EventArgs e)
@@ -104,10 +94,21 @@ public partial class SongSelector : ContentPage
         double spacing = 10;
         double marginBottom = 10;
 
-        double totalUsedHeight = paddingTop + searchBarHeight + spacing + nameStackHeight + marginBottom + paddingBottom;
+        double totalUsedHeight = paddingTop + searchBarHeight + spacing + nameStackHeight + marginBottom + paddingBottom + 75;
         double screenHeight = DeviceDisplay.MainDisplayInfo.Height / DeviceDisplay.MainDisplayInfo.Density;
 
         double remainingHeight = screenHeight - totalUsedHeight;
         SongsCollection.HeightRequest = remainingHeight;
+    }
+
+    private void SetWidth()
+    {
+        double screenWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+        searchBar.WidthRequest = screenWidth - 107;
+    }
+
+    private async void ReturnBack(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("///MainPage");
     }
 }

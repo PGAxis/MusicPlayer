@@ -11,7 +11,7 @@ namespace MusicPlayer
     [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, ScreenOrientation = ScreenOrientation.Portrait)]
     public class MainActivity : MauiAppCompatActivity
     {
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
@@ -21,10 +21,10 @@ namespace MusicPlayer
                 Window.SetStatusBarColor(Android.Graphics.Color.Transparent);
             }
 
-            RequestNotificationPermission();
+            await RequestNotificationPermission();
         }
 
-        async Task RequestNotificationPermission()
+        public async Task RequestNotificationPermission()
         {
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
@@ -36,12 +36,29 @@ namespace MusicPlayer
                 if (CheckSelfPermission(Manifest.Permission.ReadMediaAudio) != Permission.Granted)
                     permissionsToRequest.Add(Manifest.Permission.ReadMediaAudio);
 
-                if (CheckSelfPermission(Manifest.Permission.ReadExternalStorage) != Permission.Granted)
-                    permissionsToRequest.Add(Manifest.Permission.ReadExternalStorage);
-
                 if (permissionsToRequest.Count > 0)
                 {
                     ActivityCompat.RequestPermissions(this, permissionsToRequest.ToArray(), 101);
+                }
+                else
+                {
+                    await MainPage.SyncSongsAsync();
+                }
+            }
+        }
+
+        public override async void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+        {
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+            if (101 == requestCode)
+            {
+                for (byte i = 0; i < permissions.Length; i++)
+                {
+                    if (permissions[i] == Manifest.Permission.ReadMediaAudio && grantResults[i] == Permission.Granted)
+                    {
+                        await MainPage.SyncSongsAsync();
+                    }
                 }
             }
         }

@@ -12,10 +12,11 @@ namespace MusicPlayer
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var path = value as string;
+            //Console.WriteLine(path);
             if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
                 return ImageSource.FromFile(path);
 
-            return "default_playlist.png";
+            return "default_cover.png";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

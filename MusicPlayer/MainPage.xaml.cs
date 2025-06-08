@@ -1,6 +1,7 @@
 ﻿#if ANDROID
-    using Android.Content;
-    using Android.Provider;
+using Android.Content;
+using Android.Media;
+using Android.Provider;
 #endif
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,18 +25,6 @@ namespace MusicPlayer
         private Interprets Interprets = Interprets.Instance();
 
         private Settings settings = Settings.Instance();
-
-        protected override async void OnAppearing()
-        {
-            base.OnAppearing();
-#if ANDROID
-            if(settings.FirstLoadSinceClosed)
-            {
-                await SyncSongsAsync();
-                settings.FirstLoadSinceClosed = false;
-            }
-#endif
-        }
 
         protected override void OnSizeAllocated(double width, double height)
         {
@@ -106,8 +95,6 @@ namespace MusicPlayer
             }
             if (CanScroll)
             {
-                //_ = ViewScroll.ScrollToAsync(ViewScrollX, 0, false);
-
                 _ = CheckScrollChange(curScrollX, TabScroll);
             }
         }
@@ -281,7 +268,7 @@ namespace MusicPlayer
         }
 
 #if ANDROID
-        public async Task<List<Song>> ScanAudioFilesAsync(Context context)
+        public static async Task<List<Song>> ScanAudioFilesAsync(Context context)
         {
             List<Song> songs = new List<Song>();
 
@@ -291,7 +278,6 @@ namespace MusicPlayer
                 MediaStore.Audio.Media.InterfaceConsts.Title,
                 MediaStore.Audio.Media.InterfaceConsts.Artist,
                 MediaStore.Audio.Media.InterfaceConsts.Album,
-                MediaStore.Audio.Media.InterfaceConsts.AlbumId,
                 MediaStore.Audio.Media.InterfaceConsts.Data,
                 MediaStore.Audio.Media.InterfaceConsts.Duration
             };
@@ -303,7 +289,6 @@ namespace MusicPlayer
                 int titleIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Title);
                 int artistIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Artist);
                 int albumNameIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Album);
-                int albumIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.AlbumId);
                 int pathIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Data);
                 int durationIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Duration);
 
@@ -312,9 +297,8 @@ namespace MusicPlayer
                     string title = cursor.GetString(titleIndex) ?? "Unknown";
                     string artist = cursor.GetString(artistIndex) ?? "Unknown";
                     string album = cursor.GetString(albumNameIndex) ?? "Unknown";
-                    long albumId = cursor.GetLong(albumIndex);
-                    string? albumArtPath = GetAlbumArtPath(context, albumId);
                     string path = cursor.GetString(pathIndex);
+                    string albumArtPath = ExtractAlbumArtFromFile(context, path);
                     double durationSec = cursor.GetLong(durationIndex) / 1000.0;
 
                     if (System.IO.File.Exists(path))
@@ -330,24 +314,40 @@ namespace MusicPlayer
             return songs;
         }
 
-        public static string? GetAlbumArtPath(Context context, long albumId)
+        public static string ExtractAlbumArtFromFile(Context context, string audioFilePath)
         {
-            var albumUri = MediaStore.Audio.Albums.ExternalContentUri;
-            string[] projection = new[] { MediaStore.Audio.Albums.InterfaceConsts.AlbumArt };
-            string selection = $"{MediaStore.Audio.Albums.InterfaceConsts.Id} = ?";
-            string[] selectionArgs = new[] { albumId.ToString() };
-
-            using var cursor = context.ContentResolver.Query(albumUri, projection, selection, selectionArgs, null);
-
-            if (cursor != null && cursor.MoveToFirst())
+            try
             {
-                return cursor.GetString(0);
+                var mmr = new MediaMetadataRetriever();
+                mmr.SetDataSource(audioFilePath);
+
+                byte[]? artBytes = mmr.GetEmbeddedPicture();
+                if (artBytes != null)
+                {
+                    string cacheDir = context.CacheDir.AbsolutePath;
+                    string fileName = $"{Path.GetFileNameWithoutExtension(audioFilePath)}_cover.jpg";
+                    string fullPath = Path.Combine(cacheDir, fileName);
+                    if (!File.Exists(fullPath))
+                    {
+                        File.WriteAllBytes(fullPath, artBytes);
+                    }
+
+                    return fullPath;
+                }
+                else
+                {
+                    return "default_cover.png";
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
 
-            return null;
+            return "default_cover.png";
         }
 
-        public async Task SyncSongsAsync()
+        public static async Task SyncSongsAsync()
         {
             var context = Android.App.Application.Context;
 
