@@ -40,6 +40,9 @@ namespace MusicPlayer
             SetCorrectWidthRequest();
 
             settings.LoadSettings();
+            settings.Source = "play.png";
+
+            PlayPauseButton.BindingContext = settings;
 
             JustLabelsTabs.Add(FavLabel);
             JustLabelsTabs.Add(PlayLabel);
@@ -61,6 +64,16 @@ namespace MusicPlayer
 
             LastTab = JustLabelsTabs[settings.LastTabIndex];
             LastTab.FontAttributes = FontAttributes.Bold;
+            if (LastTab == PlayLabel)
+            {
+                PlaylistAdder.Opacity = 1;
+                PlaylistAdder.InputTransparent = false;
+            }
+            else
+            {
+                PlaylistAdder.Opacity = 0;
+                PlaylistAdder.InputTransparent = true;
+            }
 
             SetCorrectFontSize();
 
@@ -118,7 +131,7 @@ namespace MusicPlayer
             double ViewRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
             double LabelRequest = ViewRequest * 0.5;
             double PaddingRequest = (ViewRequest - LabelRequest) / 2;
-            double SongMetadataRequest = ViewRequest - 200;
+            double SongMetadataRequest = ViewRequest - 235;
 
             LeftPadding.WidthRequest = PaddingRequest;
             RightPadding.WidthRequest = PaddingRequest;
@@ -158,6 +171,16 @@ namespace MusicPlayer
                 settings.SaveSettings(Convert.ToByte(JustLabelsTabs.IndexOf(closest)));
                 LastTab.FontAttributes = FontAttributes.None;
                 LastTab = closest;
+                if (LastTab == PlayLabel)
+                {
+                    PlaylistAdder.Opacity = 1;
+                    PlaylistAdder.InputTransparent = false;
+                }
+                else
+                {
+                    PlaylistAdder.Opacity = 0;
+                    PlaylistAdder.InputTransparent = true;
+                }
                 LastTab.FontAttributes = FontAttributes.Bold;
                 CanScroll = true;
             }
@@ -166,6 +189,16 @@ namespace MusicPlayer
         private async Task ScrollToTab(Label tab)
         {
             CanScroll = false;
+            if (tab == PlayLabel)
+            {
+                PlaylistAdder.Opacity = 1;
+                PlaylistAdder.InputTransparent = false;
+            }
+            else
+            {
+                PlaylistAdder.Opacity = 0;
+                PlaylistAdder.InputTransparent = true;
+            }
             await TabScroll.ScrollToAsync(tab, ScrollToPosition.Center, false);
             await ViewScroll.ScrollToAsync(Tabs[tab], ScrollToPosition.Center, false);
             CanScroll = true;
@@ -254,7 +287,7 @@ namespace MusicPlayer
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -271,6 +304,9 @@ namespace MusicPlayer
         public static async Task<List<Song>> ScanAudioFilesAsync(Context context)
         {
             List<Song> songs = new List<Song>();
+
+            List<Song> existingSongs = await App.SongDatabase.GetSongsAsync();
+            HashSet<string> existingPaths = existingSongs.Select(s => s.Path).ToHashSet();
 
             var uri = MediaStore.Audio.Media.ExternalContentUri;
             string[] projection =
@@ -292,21 +328,36 @@ namespace MusicPlayer
                 int pathIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Data);
                 int durationIndex = cursor.GetColumnIndex(MediaStore.Audio.Media.InterfaceConsts.Duration);
 
+                var tempList = new List<(string title, string artist, string album, string path, double duration, bool isNew)>();
+
                 do
                 {
                     string title = cursor.GetString(titleIndex) ?? "Unknown";
                     string artist = cursor.GetString(artistIndex) ?? "Unknown";
                     string album = cursor.GetString(albumNameIndex) ?? "Unknown";
                     string path = cursor.GetString(pathIndex);
-                    string albumArtPath = ExtractAlbumArtFromFile(context, path);
                     double durationSec = cursor.GetLong(durationIndex) / 1000.0;
 
-                    if (System.IO.File.Exists(path))
+                    if (File.Exists(path))
                     {
-                        songs.Add(new Song(title, artist, album, albumArtPath, path, durationSec));
+                        bool isNew = !existingPaths.Contains(path);
+                        tempList.Add((title, artist, album, path, durationSec, isNew));
+                        //songs.Add(new Song(title, artist, album, albumArtPath, path, durationSec));
                     }
                 }
                 while (cursor.MoveToNext());
+
+                var tasks = tempList.Select(songData => Task.Run(() =>
+                {
+                    string albumArtPath = songData.isNew
+                        ? ExtractAlbumArtFromFile(context, songData.path)
+                        : existingSongs.FirstOrDefault(s => s.Path == songData.path)?.AlbumArt ?? "default_cover.png";
+
+                    return new Song(songData.title, songData.artist, songData.album, albumArtPath, songData.path, songData.duration);
+                })).ToList();
+
+                var completedSongs = await Task.WhenAll(tasks);
+                songs.AddRange(completedSongs);
 
                 cursor.Close();
             }
@@ -341,7 +392,7 @@ namespace MusicPlayer
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
 
             return "default_cover.png";
@@ -374,6 +425,45 @@ namespace MusicPlayer
         private async void SearchSongs(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync(nameof(SongSelector));
+        }
+
+        private async void PlaySong(object sender, EventArgs e)
+        {
+#if ANDROID
+            if (MediaPlayerNotificationService.IsPlaying == false)
+            {
+                Song song = await App.SongDatabase.GetSongByIdAsync(357);
+
+                settings.LastSongPath = song.Path;
+                settings.LastSongName = song.Title;
+                settings.LastSongArtist = song.Artist;
+                settings.LastSongCoverPath = song.AlbumArt;
+
+                settings.SaveSettings();
+
+                SongTitle.Text = song.Title;
+                SongArtist.Text = song.Artist;
+                SongCoverImage.Source = song.AlbumArt;
+
+                MediaPlayerNotificationService.StartPlayback(settings.LastSongPath);
+
+                var context = Android.App.Application.Context;
+                var intent = new Intent(context, typeof(MediaPlayerNotificationService));
+                context.StartForegroundService(intent);                
+
+                settings.Source = "pause.png";
+            }
+            else
+            {
+                MediaPlayerNotificationService.Pause();
+                settings.Source = "play.png";
+            }
+#endif
+        }
+
+        private void AddPlaylist(object sender, EventArgs e)
+        {
+
         }
     }
 }

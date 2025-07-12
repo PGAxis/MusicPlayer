@@ -9,7 +9,6 @@ using Android.Support.V4.Media.Session;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Core.App;
-using Resource = Microsoft.Maui.Controls.Resource;
 
 namespace MusicPlayer
 {
@@ -24,7 +23,11 @@ namespace MusicPlayer
 
         public static MediaSessionCompat mediaSession;
 
-        public static bool IsPlaying = true;
+        public static MediaPlayer mediaPlayer;
+
+        private static Settings settings = Settings.Instance();
+
+        public static bool IsPlaying = false;
 
         public override void OnCreate()
         {
@@ -33,7 +36,7 @@ namespace MusicPlayer
 
             mediaSession = new MediaSessionCompat(this, "MusicPlayerSession");
             mediaSession.SetCallback(new MediaSessionCallback());
-            mediaSession.Active = true;            
+            mediaSession.Active = true;
         }
 
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
@@ -55,9 +58,10 @@ namespace MusicPlayer
             }
 
             var metadata = new MediaMetadataCompat.Builder()
-                .PutString(MediaMetadata.MetadataKeyTitle, "Song Title")
-                .PutString(MediaMetadata.MetadataKeyArtist, "Artist Name")
-                .PutBitmap(MediaMetadata.MetadataKeyAlbumArt, BitmapFactory.DecodeResource(Resources, Resource.Drawable.default_playlist))
+                .PutString(MediaMetadata.MetadataKeyTitle, settings.LastSongName)
+                .PutString(MediaMetadata.MetadataKeyArtist, settings.LastSongArtist)
+                .PutBitmap(MediaMetadata.MetadataKeyAlbumArt, BitmapFactory.DecodeFile(settings.LastSongCoverPath))
+                .PutLong(MediaMetadata.MetadataKeyDuration, mediaPlayer.Duration)
                 .Build();
 
             mediaSession.SetMetadata(metadata);
@@ -69,7 +73,7 @@ namespace MusicPlayer
                             PlaybackStateCompat.ActionPause |
                             PlaybackStateCompat.ActionSkipToNext |
                             PlaybackStateCompat.ActionSkipToPrevious)
-                .SetState(PlaybackStateCompat.StatePlaying, 0, 1f)
+                .SetState(PlaybackStateCompat.StatePlaying, settings.LastSongTime, 1f)
                 .Build();
 
             mediaSession.SetPlaybackState(playbackState);
@@ -79,6 +83,10 @@ namespace MusicPlayer
             StartForeground(16, notification);
 
             Notification_started = true;
+
+            IsPlaying = true;
+
+            settings.Source = "pause.png";
 
             return StartCommandResult.Sticky;
         }
@@ -90,8 +98,8 @@ namespace MusicPlayer
             PendingIntent pendingIntent = PendingIntent.GetActivity(this, 0, intent, PendingIntentFlags.Immutable);
 
             var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .SetContentTitle("Song Name")
-                .SetContentText("Song Artist")
+                .SetContentTitle(settings.LastSongName)
+                .SetContentText(settings.LastSongArtist)
                 .SetSmallIcon(Resource.Drawable.small_icon)
                 .SetStyle(new AndroidX.Media.App.NotificationCompat.DecoratedMediaCustomViewStyle().SetMediaSession(mediaSession.SessionToken).SetShowActionsInCompactView(0, 1, 2))
                 .AddAction(new NotificationCompat.Action(0, "Previous", CreateMediaButtonPendingIntent(this, Keycode.MediaPrevious)))
@@ -116,6 +124,14 @@ namespace MusicPlayer
 
         public static void Pause()
         {
+            if (mediaPlayer != null && mediaPlayer.IsPlaying)
+            {
+                mediaPlayer.Pause();
+                settings.LastSongTime = mediaPlayer.CurrentPosition;
+                settings.SaveSettings();
+                IsPlaying = false;
+            }
+
             var playbackState = new PlaybackStateCompat.Builder()
                 .SetActions(PlaybackStateCompat.ActionSetShuffleMode |
                             PlaybackStateCompat.ActionSetRepeatMode |
@@ -124,16 +140,23 @@ namespace MusicPlayer
                             PlaybackStateCompat.ActionSkipToNext |
                             PlaybackStateCompat.ActionSkipToPrevious
                 )
-                .SetState(PlaybackStateCompat.StatePaused, PlaybackStateCompat.PlaybackPositionUnknown, 1.0f)
+                .SetState(PlaybackStateCompat.StatePaused, settings.LastSongTime, 1.0f)
                 .Build();
 
             mediaSession.SetPlaybackState(playbackState);
 
-            IsPlaying = false;
+            settings.Source = "play.png";
         }
 
         public static void Play()
         {
+            if (mediaPlayer != null && !mediaPlayer.IsPlaying)
+            {
+                mediaPlayer.SeekTo(settings.LastSongTime);
+                mediaPlayer.Start();
+                IsPlaying = true;
+            }
+
             var playbackState = new PlaybackStateCompat.Builder()
                 .SetActions(PlaybackStateCompat.ActionSetShuffleMode |
                             PlaybackStateCompat.ActionSetRepeatMode |
@@ -142,12 +165,12 @@ namespace MusicPlayer
                             PlaybackStateCompat.ActionSkipToNext |
                             PlaybackStateCompat.ActionSkipToPrevious
                 )
-                .SetState(PlaybackStateCompat.StatePlaying, PlaybackStateCompat.PlaybackPositionUnknown, 1.0f)
+                .SetState(PlaybackStateCompat.StatePlaying, settings.LastSongTime, 1.0f)
                 .Build();
 
             mediaSession.SetPlaybackState(playbackState);
 
-            IsPlaying = true;
+            settings.Source = "pause.png";
         }
 
         void CreateNotificationChannel()
@@ -169,6 +192,27 @@ namespace MusicPlayer
         }
 
         public override IBinder OnBind(Intent intent) => null;
+
+        public static void StartPlayback(string path)
+        {
+            if (mediaPlayer != null)
+            {
+                mediaPlayer.Release();
+                mediaPlayer = null;
+            }
+
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.SetDataSource(path);
+            mediaPlayer.Prepared += (s, e) =>
+            {
+                mediaPlayer.SeekTo(settings.LastSongTime);
+                mediaPlayer.Start();
+            };
+            mediaPlayer.PrepareAsync();
+
+            settings.LastSongPath = path;
+            IsPlaying = true;
+        }
     }
 
     class MediaSessionCallback : MediaSessionCompat.Callback

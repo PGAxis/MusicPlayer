@@ -40,7 +40,7 @@ public partial class SongSelector : ContentPage
         else
         {
             query = query.ToLower();
-            var filteredList = AllSongs.AsParallel().Where(song => song.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || song.Artist.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+            List<Song> filteredList = AllSongs.AsParallel().Where(song => song.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || song.Artist.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
 
             FilteredSongs.ReplaceRange(filteredList);
         }

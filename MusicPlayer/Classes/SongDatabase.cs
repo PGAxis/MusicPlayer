@@ -26,5 +26,16 @@ namespace MusicPlayer
         {
             return _database.DeleteAsync(song);
         }
+
+        public Task<Song> GetSongByIdAsync(int id)
+        {
+            return _database.Table<Song>().Where(s => s.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<string> GetSongCoverFromIdAsync(int id)
+        {
+            Song song = await GetSongByIdAsync(id);
+            return song.AlbumArt;
+        }
     }
 }

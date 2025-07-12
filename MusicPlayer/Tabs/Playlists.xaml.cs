@@ -8,7 +8,7 @@ public partial class Playlists : ContentPage, IResizablePage
 	private static Playlists instance;
 	private static object instanceLock = new object();
 
-    public ObservableCollection<PlaylistTemplate> Templates { get; set; }
+    public ObservableCollection<PlaylistTemplate> PlaylistList { get; set; }
 
     public static Playlists Instance()
 	{
@@ -29,35 +29,20 @@ public partial class Playlists : ContentPage, IResizablePage
 	{
 		InitializeComponent();
         MainStack.WidthRequest = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
-		Templates = new ObservableCollection<PlaylistTemplate>
+		PlaylistList = new ObservableCollection<PlaylistTemplate>
 		{
-			new PlaylistTemplate {Image = "default_playlist.png", Title = "Playlist 1", SongCount = "1"},
-            new PlaylistTemplate {Image = "default_playlist.png", Title = "Playlist 2", SongCount = "1"},
+			new PlaylistTemplate {PlaylistCover = "default_cover.png", Title = "Playlist 1", Songs = new List<Song>{ new Song("Jaj", "ToCo", "album", "album art", "path", 3000) } },
+            //new PlaylistTemplate {Image = "default_cover.png", Title = "Playlist 2", SongCount = "1"},
         };
         PlaylistsColView.BindingContext = this;
     }
 
-	public class PlaylistTemplate : INotifyPropertyChanged
+	public class PlaylistTemplate
 	{
-		public string Image {  get; set; }
-		public string Title { get; set; }
-
-		private string songCount;
-		public string SongCount
-		{
-			get => songCount;
-			set
-			{
-				if (songCount != value)
-				{
-					songCount = value;
-					OnPropertyChanged(nameof(SongCount));
-				}
-			}
-		}
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        public string Title { get; set; }
+        public List<Song> Songs { get; set; }
+        public string PlaylistCover { get; set; }
+        public string LengthInString { get; set; }
     }
 
     public void ChangeWidth()

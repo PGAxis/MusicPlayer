@@ -16,6 +16,9 @@ namespace MusicPlayer
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                     fonts.AddFont("Poppins-Regular.ttf", "Poppins");
+                    fonts.AddFont("Roboto_Condensed-Regular.ttf", "Roboto");
+                    fonts.AddFont("FiraSans-Regular.ttf", "FiraSans");
+                    fonts.AddFont("Inder-Regular.ttf", "Inder");
                 });
 
 #if DEBUG
