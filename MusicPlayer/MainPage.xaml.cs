@@ -31,13 +31,13 @@ namespace MusicPlayer
             base.OnSizeAllocated(width, height);
 
             _ = MainThread.InvokeOnMainThreadAsync(async () => await ScrollToTab(LastTab));
-            StartScrollingTitle();
         }
 
         public MainPage()
         {
             InitializeComponent();
             SetCorrectWidthRequest();
+            StartScrollingTitle();
 
             settings.LoadSettings();
             settings.Source = "play.png";
@@ -266,6 +266,9 @@ namespace MusicPlayer
             if (labelWidth <= scrollViewWidth)
                 return;
 
+            SongTitle.Text += "      ";
+            SongTitle.Text += SongTitle.Text;
+
             scrollCts = new CancellationTokenSource();
 
             try
@@ -274,10 +277,10 @@ namespace MusicPlayer
                 {
                     if (!isScrollingPaused)
                     {
-                        await TitleScrollView.ScrollToAsync(labelWidth - scrollViewWidth, 0, true);
-                        await Task.Delay(2000, scrollCts.Token);
-                        await TitleScrollView.ScrollToAsync(0, 0, true);
-                        await Task.Delay(2000, scrollCts.Token);
+                        await SlowScrollToAsync(TitleScrollView, SongTitle.Width / 2);
+                        await Task.Delay(750, scrollCts.Token);
+                        await TitleScrollView.ScrollToAsync(0, 0, false);
+                        await Task.Delay(750, scrollCts.Token);
                     }
                     else
                     {
@@ -288,6 +291,22 @@ namespace MusicPlayer
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        private async Task SlowScrollToAsync(ScrollView scrollView, double scrollToDistance)
+        {
+            double x = 0;
+
+            while (x < scrollToDistance)
+            {
+                x += 0.25;
+                if (x > scrollToDistance)
+                {
+                    x = scrollToDistance;
+                }
+                await scrollView.ScrollToAsync(x, 0, false);
+                await Task.Delay(1);
             }
         }
 
