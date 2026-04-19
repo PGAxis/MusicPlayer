@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Musicaxs.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1c1c1c</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Musicaxs</item>
+    </style>
+
+    <style name="Theme.Musicaxs" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#0D1117</item>
+        <item name="android:statusBarColor">#0D1117</item>
+        <item name="android:navigationBarColor">#0D1117</item>
+    </style>
+</resources>
