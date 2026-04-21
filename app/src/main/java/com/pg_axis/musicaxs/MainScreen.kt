@@ -29,6 +29,8 @@ import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.pg_axis.musicaxs.tabs.FavouritesScreen
+import com.pg_axis.musicaxs.tabs.PlaylistsScreen
 import com.pg_axis.musicaxs.tabs.SongsScreen
 import com.pg_axis.musicaxs.ui.theme.*
 import kotlinx.coroutines.launch
@@ -53,7 +55,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
 
     BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
         val screenWidthDp = maxWidth
-        val tabWidthDp = screenWidthDp * 0.3f
+        val tabWidthDp = screenWidthDp * 0.275f
         val padDp = (screenWidthDp - tabWidthDp) / 2f
         val tabWidthPx = with(density) { tabWidthDp.toPx() }
 
@@ -161,15 +163,13 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                     contentAlignment = Alignment.Center
                 ) {
                     when (page) {
-                        0 -> Text(text = vm.tabs[page], color = Color.White)
-                        1 -> Text(text = vm.tabs[page], color = Color.White)
+                        0 -> FavouritesScreen()
+                        1 -> PlaylistsScreen()
                         2 -> SongsScreen()
                         3 -> Text(text = vm.tabs[page], color = Color.White)
                         4 -> Text(text = vm.tabs[page], color = Color.White)
                     }
                     // TODO: replace with actual page composables
-                    //   0 -> FavouritesPage()
-                    //   1 -> PlaylistsPage()
                     //   3 -> AlbumsPage()
                     //   4 -> InterpretsPage()
 

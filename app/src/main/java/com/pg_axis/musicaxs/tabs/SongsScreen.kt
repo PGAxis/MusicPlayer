@@ -18,14 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.R
@@ -68,20 +71,20 @@ fun SongsScreen(
     onSongClick: (Song) -> Unit = {},
     vm: SongsViewModel = viewModel()
 ) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+
+    val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        Manifest.permission.READ_MEDIA_AUDIO
+    else
+        Manifest.permission.READ_EXTERNAL_STORAGE
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) vm.scanSongs()
+    }
+
     TabSurface {
-        val uiState by vm.uiState.collectAsStateWithLifecycle()
-
-        val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            Manifest.permission.READ_MEDIA_AUDIO
-        else
-            Manifest.permission.READ_EXTERNAL_STORAGE
-
-        val permissionLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { granted ->
-            if (granted) vm.scanSongs()
-        }
-
         when (val state = uiState) {
             is SongsUiState.Loading -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -95,7 +98,7 @@ fun SongsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Storage permission is required to show your songs.")
+                    Text("Storage permission is required to show your songs.", textAlign = TextAlign.Center)
                     Spacer(Modifier.height(12.dp))
                     Button(onClick = { permissionLauncher.launch(readPermission) }) {
                         Text("Grant Permission")
@@ -169,7 +172,7 @@ fun SongsScreen(
                         // Scrub popup — large letter shown in center while dragging
                         activeLetter?.let { letter ->
                             Box(
-                                modifier         = Modifier
+                                modifier = Modifier
                                     .align(Alignment.Center)
                                     .size(90.dp)
                                     .clip(RoundedCornerShape(16.dp))
@@ -179,10 +182,10 @@ fun SongsScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text       = letter,
-                                    fontSize   = 48.sp,
+                                    text = letter,
+                                    fontSize = 48.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color      = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }
@@ -222,7 +225,11 @@ private fun SongRow(
     ) {
         // Album art — same size/shape as the bottom bar thumbnail
         AsyncImage(
-            model = song.albumArtUri ?: R.drawable.default_cover,
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(song.albumArtUri ?: R.drawable.default_cover)
+                .size(44.dp.value.toInt())
+                .crossfade(true)
+                .build(),
             contentDescription = "Album art",
             error = painterResource(R.drawable.default_cover),
             placeholder = painterResource(R.drawable.default_cover),

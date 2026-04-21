@@ -1,12 +1,15 @@
 package com.pg_axis.musicaxs.tabs
 
+import android.Manifest
 import android.app.Application
 import android.content.ContentUris
+import android.content.pm.PackageManager
 import android.database.ContentObserver
-import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pg_axis.musicaxs.models.Song
@@ -15,8 +18,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
-// MIME types that Android handles natively — no software decoder required
+// MIME types
 private val SUPPORTED_MIME_TYPES = setOf(
     "audio/mpeg",       // mp3
     "audio/wav",        // wav
@@ -47,13 +51,27 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun hasPermission(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            Manifest.permission.READ_MEDIA_AUDIO
+        else
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        return ContextCompat.checkSelfPermission(
+            getApplication(), permission
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     init {
         getApplication<Application>().contentResolver.registerContentObserver(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             true,
             mediaObserver
         )
-        scanSongs()
+        if (hasPermission()) {
+            scanSongs()
+        } else {
+            _uiState.value = SongsUiState.PermissionRequired
+        }
     }
 
     fun scanSongs() {
@@ -63,7 +81,7 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val songs = querySongs()
                 _uiState.value = SongsUiState.Ready(songs)
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 // READ_MEDIA_AUDIO / READ_EXTERNAL_STORAGE not granted yet
                 _uiState.value = SongsUiState.PermissionRequired
             } catch (e: Exception) {
@@ -119,7 +137,7 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
                             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id),
                         durationMs = cursor.getLong(durationCol),
                         albumArtUri = ContentUris.withAppendedId(
-                            Uri.parse("content://media/external/audio/albumart"), albumId)
+                            "content://media/external/audio/albumart".toUri(), albumId)
                     )
                 )
             }
