@@ -40,8 +40,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(vm: MainViewModel = viewModel()) {
-    val currentSong by vm.currentSong.collectAsStateWithLifecycle()
-    val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
+    val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(initialPage = initialPage) { vm.tabs.size }
@@ -53,7 +52,9 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
         vm.onPageChanged(pagerState.settledPage)
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
+    BoxWithConstraints(Modifier
+        .fillMaxSize()
+        .windowInsetsPadding(WindowInsets.systemBars)) {
         val screenWidthDp = maxWidth
         val tabWidthDp = screenWidthDp * 0.275f
         val padDp = (screenWidthDp - tabWidthDp) / 2f
@@ -165,7 +166,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                     when (page) {
                         0 -> FavouritesScreen()
                         1 -> PlaylistsScreen()
-                        2 -> SongsScreen()
+                        2 -> SongsScreen(mainViewModel = vm)
                         3 -> Text(text = vm.tabs[page], color = Color.White)
                         4 -> Text(text = vm.tabs[page], color = Color.White)
                     }
@@ -178,82 +179,89 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
         }
 
         // -- Now Playing bar ------------------------------------------------------
-        Card(
-            modifier  = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = PlayerBarDefaults.VerticalMargin)
-                .height(PlayerBarDefaults.Height),
-            shape = RoundedCornerShape(30.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 6.dp, end = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+        if (currentSong != null) {
+            Card(
+                modifier  = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = PlayerBarDefaults.VerticalMargin)
+                    .height(PlayerBarDefaults.Height),
+                shape = RoundedCornerShape(30.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                // Album art
-                AsyncImage(
-                    model = currentSong.albumArtPath ?: R.drawable.default_cover,
-                    contentDescription = "Album art",
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Song info - title marquees when too long, artist truncates
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = currentSong.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        modifier = Modifier.basicMarquee(),
-                        color = Color.White
-                    )
-                    Text(
-                        text = currentSong.artist,
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        color = Color.White
-                    )
-                }
-
-                // Playback controls - right-aligned naturally by weight(1f) on metadata
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 6.dp, end = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    IconButton(onClick = vm::onPrevious, modifier = Modifier.size(35.dp)) {
-                        Icon(
-                            painterResource(R.drawable.prev),
-                            contentDescription = "Previous",
-                            modifier = Modifier.padding(8.dp),
-                            tint = Color.White
-                        )
+                    // Album art
+                    AsyncImage(
+                        model = currentSong?.songUri,
+                        error = painterResource(R.drawable.default_cover),
+                        placeholder = painterResource(R.drawable.default_cover),
+                        fallback = painterResource(R.drawable.default_cover),
+                        contentDescription = "Album art",
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Song info - title marquees when too long, artist truncates
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        currentSong?.let {
+                            Text(
+                                text = it.title,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                maxLines = 1,
+                                modifier = Modifier.basicMarquee(),
+                                color = Color.White
+                            )
+                            Text(
+                                text = it.artist,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                color = Color.White
+                            )
+                        }
                     }
-                    IconButton(onClick = vm::onPlayPause, modifier = Modifier.size(35.dp)) {
-                        Icon(
-                            painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            modifier = Modifier.padding(8.dp),
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = vm::onNext, modifier = Modifier.size(35.dp)) {
-                        Icon(
-                            painterResource(R.drawable.next),
-                            contentDescription = "Next",
-                            modifier = Modifier.padding(8.dp),
-                            tint = Color.White
-                        )
+
+                    // Playback controls - right-aligned naturally by weight(1f) on metadata
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = vm::onPrevious, modifier = Modifier.size(35.dp)) {
+                            Icon(
+                                painterResource(R.drawable.prev),
+                                contentDescription = "Previous",
+                                modifier = Modifier.padding(8.dp),
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = vm::onPlayPause, modifier = Modifier.size(35.dp)) {
+                            Icon(
+                                painter = painterResource(if (vm.isPlaying) R.drawable.pause else R.drawable.play),
+                                contentDescription = if (vm.isPlaying) "Pause" else "Play",
+                                modifier = Modifier.padding(8.dp),
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = vm::onNext, modifier = Modifier.size(35.dp)) {
+                            Icon(
+                                painterResource(R.drawable.next),
+                                contentDescription = "Next",
+                                modifier = Modifier.padding(8.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }

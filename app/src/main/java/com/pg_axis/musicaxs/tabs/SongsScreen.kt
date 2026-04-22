@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.pg_axis.musicaxs.MainViewModel
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.R
@@ -68,10 +68,11 @@ private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, 
 
 @Composable
 fun SongsScreen(
-    onSongClick: (Song) -> Unit = {},
-    vm: SongsViewModel = viewModel()
+    mainViewModel: MainViewModel,
+    vm: SongsViewModel = viewModel(),
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         Manifest.permission.READ_MEDIA_AUDIO
@@ -144,7 +145,7 @@ fun SongsScreen(
                                     is SongListItem.Header -> SectionHeader(item.letter)
                                     is SongListItem.Item -> SongRow(
                                         song = item.song,
-                                        onClick = { onSongClick(item.song) },
+                                        onClick = { vm.onPlaySong(mainViewModel, context, item.song) },
                                         onOptions = { /* TODO */ }
                                     )
                                 }
@@ -226,16 +227,17 @@ private fun SongRow(
         // Album art — same size/shape as the bottom bar thumbnail
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(song.albumArtUri ?: R.drawable.default_cover)
+                .data(song.uri)
                 .size(44.dp.value.toInt())
                 .crossfade(true)
                 .build(),
             contentDescription = "Album art",
             error = painterResource(R.drawable.default_cover),
             placeholder = painterResource(R.drawable.default_cover),
+            fallback = painterResource(R.drawable.default_cover),
             modifier = Modifier
                 .size(44.dp)
-                .clip(CircleShape),
+                .clip(RoundedCornerShape(10.dp)),
             contentScale = ContentScale.Crop
         )
 

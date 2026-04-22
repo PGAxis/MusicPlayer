@@ -3,6 +3,7 @@ package com.pg_axis.musicaxs.tabs
 import android.Manifest
 import android.app.Application
 import android.content.ContentUris
+import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.os.Build
@@ -19,6 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.pg_axis.musicaxs.MainViewModel
+import com.pg_axis.musicaxs.services.MusicService
 
 // MIME types
 private val SUPPORTED_MIME_TYPES = setOf(
@@ -149,5 +152,10 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         super.onCleared()
         getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver)
+    }
+
+    fun onPlaySong(vm: MainViewModel, context: Context, song: Song) {
+        vm.setSong(song)
+        MusicService.play(context, song)
     }
 }
