@@ -10,7 +10,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +28,9 @@ import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.pg_axis.musicaxs.tabs.AlbumsScreen
 import com.pg_axis.musicaxs.tabs.FavouritesScreen
+import com.pg_axis.musicaxs.tabs.ArtistsScreen
 import com.pg_axis.musicaxs.tabs.PlaylistsScreen
 import com.pg_axis.musicaxs.tabs.SongsScreen
 import com.pg_axis.musicaxs.ui.theme.*
@@ -68,12 +69,13 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
             }
         }
 
+        // -- Header -------------------
         Column(Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 15.dp, vertical = 20.dp)
-                    .height(45.dp),
+                    .height(35.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -88,7 +90,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                 IconButton(
                     onClick = { vm.onAddPlaylist() },
                     enabled = onPlaylists,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(35.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.plus),
@@ -100,7 +102,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
 
                 Spacer(Modifier.width(4.dp))
 
-                IconButton(onClick = vm::onSearch, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = vm::onSearch, modifier = Modifier.size(35.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.magglass),
                         contentDescription = "Search",
@@ -110,7 +112,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
 
                 Spacer(Modifier.width(4.dp))
 
-                IconButton(onClick = vm::onSettings, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = vm::onSettings, modifier = Modifier.size(35.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.settings),
                         contentDescription = "Settings",
@@ -119,11 +121,12 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                 }
             }
 
+            // -- Tab titles -------------------------------------------------------------------------
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
-                    .horizontalScroll(tabScrollState, enabled = false)
+                    .horizontalScroll(tabScrollState, enabled = true)
             ) {
                 Spacer(Modifier.width(padDp))
 
@@ -152,7 +155,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                 Spacer(Modifier.width(padDp))
             }
 
-            // -- Content pager ----------------------------------------------------
+            // -- Content pager --------------------------------------
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -166,34 +169,34 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                     when (page) {
                         0 -> FavouritesScreen()
                         1 -> PlaylistsScreen()
-                        2 -> SongsScreen(mainViewModel = vm)
-                        3 -> Text(text = vm.tabs[page], color = Color.White)
-                        4 -> Text(text = vm.tabs[page], color = Color.White)
+                        2 -> SongsScreen(playSong = vm::setSong )
+                        3 -> AlbumsScreen(playSong = vm::setSong )
+                        4 -> ArtistsScreen(playSong = vm::setSong )
                     }
                     // TODO: replace with actual page composables
                     //   3 -> AlbumsPage()
-                    //   4 -> InterpretsPage()
+                    //   4 -> ArtistsPage()
 
                 }
             }
         }
 
-        // -- Now Playing bar ------------------------------------------------------
+        // -- Now Playing bar -------------------------------------------------------------------------------------
         if (currentSong != null) {
             Card(
                 modifier  = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = PlayerBarDefaults.VerticalMargin)
+                    .padding(horizontal = 10.dp, vertical = PlayerBarDefaults.VerticalMargin)
                     .height(PlayerBarDefaults.Height),
-                shape = RoundedCornerShape(30.dp),
+                shape = CircleShape,
                 colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 6.dp, end = 10.dp),
+                        .padding(start = 10.dp, end = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {

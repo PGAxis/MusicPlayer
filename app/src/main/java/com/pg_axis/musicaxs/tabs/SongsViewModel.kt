@@ -3,9 +3,9 @@ package com.pg_axis.musicaxs.tabs
 import android.Manifest
 import android.app.Application
 import android.content.ContentUris
-import android.content.Context
 import android.content.pm.PackageManager
 import android.database.ContentObserver
+import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -20,8 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import com.pg_axis.musicaxs.MainViewModel
-import com.pg_axis.musicaxs.services.MusicService
+import java.io.File
 
 // MIME types
 private val SUPPORTED_MIME_TYPES = setOf(
@@ -84,6 +83,8 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val songs = querySongs()
                 _uiState.value = SongsUiState.Ready(songs)
+
+                prewarmAlbumArtCache(songs)
             } catch (_: SecurityException) {
                 // READ_MEDIA_AUDIO / READ_EXTERNAL_STORAGE not granted yet
                 _uiState.value = SongsUiState.PermissionRequired
@@ -91,6 +92,44 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.value = SongsUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private fun prewarmAlbumArtCache(songs: List<Song>) {
+        val context = getApplication<Application>()
+        val cacheDir = File(context.cacheDir, "album_art").also { it.mkdirs() }
+
+        val toProcess = songs.filter { it.albumArtUri != null }.distinctBy { it.albumArtUri } +
+                songs.filter { it.albumArtUri == null }
+
+        toProcess
+            .filter { song ->
+                val songId = song.uri.lastPathSegment ?: return@filter false
+                !File(cacheDir, "song_$songId.jpg").exists()
+            }
+            .forEach { song ->
+                val songId = song.uri.lastPathSegment ?: return@forEach
+                val cacheFile = File(cacheDir, "song_$songId.jpg")
+
+                try {
+                    song.albumArtUri?.let { artUri ->
+                        context.contentResolver.openInputStream(artUri)?.use { stream ->
+                            val bytes = stream.readBytes()
+                            if (bytes.isNotEmpty()) {
+                                cacheFile.writeBytes(bytes)
+                                return@forEach
+                            }
+                        }
+                    }
+
+                    val mmr = MediaMetadataRetriever()
+                    mmr.setDataSource(context, song.uri)
+                    val art = mmr.embeddedPicture
+                    mmr.release()
+                    if (art != null && art.isNotEmpty()) {
+                        cacheFile.writeBytes(art)
+                    }
+                } catch (_: Exception) { }
+            }
     }
 
     private fun querySongs(): List<Song> {
@@ -152,10 +191,5 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         super.onCleared()
         getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver)
-    }
-
-    fun onPlaySong(vm: MainViewModel, context: Context, song: Song) {
-        vm.setSong(song)
-        MusicService.play(context, song)
     }
 }

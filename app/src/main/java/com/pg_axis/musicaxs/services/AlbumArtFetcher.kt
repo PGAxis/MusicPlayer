@@ -97,6 +97,8 @@ class AlbumArtFetcher(
     class Factory(private val context: Context) : Fetcher.Factory<Uri> {
         override fun create(data: Uri, options: Options, imageLoader: ImageLoader): Fetcher? {
             if (data.authority != "media") return null
+            val segments = data.pathSegments
+            if (!segments.contains("audio")) return null
             return AlbumArtFetcher(data, context)
         }
     }

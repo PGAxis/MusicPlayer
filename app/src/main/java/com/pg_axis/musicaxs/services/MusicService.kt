@@ -21,6 +21,7 @@ import com.pg_axis.musicaxs.models.Song
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import com.google.common.collect.ImmutableList
+import com.pg_axis.musicaxs.settings.SettingsSave
 
 class MusicService : MediaSessionService() {
 
@@ -40,12 +41,13 @@ class MusicService : MediaSessionService() {
         var isLiked = false
             private set
 
-        fun play(context: Context, song: Song) {
-            instance?.setAndPlay(song) ?: run {
+        fun play(context: Context, song: Song, startPositionMs: Long = 0L) {
+            instance?.setAndPlay(song, startPositionMs) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
                     putExtra(EXTRA_URI, song.uri.toString())
                     putExtra(EXTRA_TITLE, song.title)
                     putExtra(EXTRA_ARTIST, song.artist)
+                    putExtra(EXTRA_POSITION_MS, startPositionMs)
                 }
                 context.startForegroundService(intent)
             }
@@ -54,18 +56,28 @@ class MusicService : MediaSessionService() {
         //fun pause() { instance?.mediaSession?.player?.pause() }
         //fun resume() { instance?.mediaSession?.player?.play() }
         //fun next() { instance?.mediaSession?.player?.seekToNextMediaItem() }
-        //fun previous() { instance?.mediaSession?.player?.seekToPreviousMediaItem() }
+        fun previous() {
+            val player = instance?.mediaSession?.player
+            player?.currentPosition?.let {
+                if (it > 3000) {
+                    player.seekTo(0)
+                } else {
+                    player.seekToPreviousMediaItem()
+                }
+            }
+        }
 
         //val isPlaying get() = instance?.mediaSession?.player?.isPlaying ?: false
 
         private const val EXTRA_URI = "extra_uri"
         private const val EXTRA_TITLE = "extra_title"
         private const val EXTRA_ARTIST = "extra_artist"
+        private const val EXTRA_POSITION_MS = "extra_position_ms"
     }
 
+    @OptIn(UnstableApi::class)
     private inner class MusicSessionCallback : MediaSession.Callback {
 
-        @OptIn(UnstableApi::class)
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo
@@ -97,18 +109,43 @@ class MusicService : MediaSessionService() {
                 COMMAND_SHUFFLE.customAction -> {
                     isShuffleOn = !isShuffleOn
                     session.player.shuffleModeEnabled = isShuffleOn
-                    updateNotificationButtons(session)
                 }
                 COMMAND_LIKE.customAction -> {
                     isLiked = !isLiked
-                    updateNotificationButtons(session)
                     // TODO: persist liked state
                 }
-                COMMAND_PREVIOUS.customAction -> session.player.seekToPreviousMediaItem()
+                COMMAND_PREVIOUS.customAction -> { previous() }
                 COMMAND_NEXT.customAction -> session.player.seekToNextMediaItem()
             }
             updateNotificationButtons(session)
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            val settings = SettingsSave.getInstance(this@MusicService)
+            val lastUri = settings.lastSongUri
+
+            if (lastUri.isEmpty()) {
+                return Futures.immediateFailedFuture(
+                    UnsupportedOperationException("No last song saved")
+                )
+            }
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(lastUri)
+                .build()
+
+            return Futures.immediateFuture(
+                MediaSession.MediaItemsWithStartPosition(
+                    listOf(mediaItem),
+                    /* startIndex = */ 0,
+                    /* startPositionMs = */ settings.lastPositionMs
+                )
+            )
         }
     }
 
@@ -155,6 +192,12 @@ class MusicService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 updateNotificationButtons(mediaSession!!)
+
+                if (!isPlaying) {
+                    val settings = SettingsSave.getInstance(this@MusicService)
+                    settings.lastPositionMs = player.currentPosition
+                    settings.save()
+                }
             }
         })
 
@@ -168,7 +211,8 @@ class MusicService : MediaSessionService() {
             val uri = it.getStringExtra(EXTRA_URI) ?: return@let
             val title = it.getStringExtra(EXTRA_TITLE) ?: "Unknown"
             val artist = it.getStringExtra(EXTRA_ARTIST) ?: "Unknown"
-            setAndPlay(uri, title, artist)
+            val position = it.getLongExtra(EXTRA_POSITION_MS, 0L)
+            setAndPlay(uri, title, artist, position)
         }
 
         return START_NOT_STICKY
@@ -177,6 +221,12 @@ class MusicService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
     override fun onDestroy() {
+        mediaSession?.player?.let { player ->
+            val settings = SettingsSave.getInstance(this)
+            settings.lastPositionMs = player.currentPosition
+            settings.save()
+        }
+
         instance = null
         mediaSession?.run {
             player.release()
@@ -186,13 +236,14 @@ class MusicService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private fun setAndPlay(song: Song) = setAndPlay(
+    private fun setAndPlay(song: Song, startPositionMs: Long = 0L) = setAndPlay(
         uri = song.uri.toString(),
         title = song.title,
-        artist = song.artist
+        artist = song.artist,
+        startPositionMs = startPositionMs
     )
 
-    private fun setAndPlay(uri: String, title: String, artist: String) {
+    private fun setAndPlay(uri: String, title: String, artist: String, startPositionMs: Long = 0L) {
         mediaSession?.player?.apply {
             setMediaItem(
                 MediaItem.Builder()
@@ -203,7 +254,8 @@ class MusicService : MediaSessionService() {
                             .setArtist(artist)
                             .build()
                     )
-                    .build()
+                    .build(),
+                startPositionMs
             )
             prepare()
             play()
@@ -244,7 +296,6 @@ class MusicService : MediaSessionService() {
                 .build()
         )
 
-        session.setCustomLayout(buttons)
         session.setMediaButtonPreferences(buttons)
     }
 }

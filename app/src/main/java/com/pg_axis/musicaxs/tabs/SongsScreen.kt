@@ -28,7 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.pg_axis.musicaxs.MainViewModel
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.R
@@ -68,11 +67,10 @@ private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, 
 
 @Composable
 fun SongsScreen(
-    mainViewModel: MainViewModel,
-    vm: SongsViewModel = viewModel(),
+    playSong: (song: Song) -> Unit,
+    vm: SongsViewModel = viewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         Manifest.permission.READ_MEDIA_AUDIO
@@ -145,7 +143,9 @@ fun SongsScreen(
                                     is SongListItem.Header -> SectionHeader(item.letter)
                                     is SongListItem.Item -> SongRow(
                                         song = item.song,
-                                        onClick = { vm.onPlaySong(mainViewModel, context, item.song) },
+                                        onClick = {
+                                            playSong(item.song)
+                                        },
                                         onOptions = { /* TODO */ }
                                     )
                                 }
