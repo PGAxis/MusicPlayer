@@ -2,6 +2,7 @@ package com.pg_axis.musicaxs.services
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
@@ -9,6 +10,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
@@ -23,17 +25,19 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import com.google.common.collect.ImmutableList
 import com.pg_axis.musicaxs.settings.FavouritesSave
 import com.pg_axis.musicaxs.settings.SettingsSave
+import kotlinx.coroutines.flow.MutableStateFlow
+
+enum class QueueSource { PLAYLIST, MANUAL }
 
 class MusicService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
-    private val favourites by lazy {
-        FavouritesSave.getInstance(applicationContext)
-    }
-    private val settings by lazy {
-        SettingsSave.getInstance(applicationContext)
-    }
+    // ── Queue state ───────────────────────────────────────────────────────────
+    private var currentSource: QueueSource = QueueSource.MANUAL
+
+    private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
+    private val settings by lazy { SettingsSave.getInstance(applicationContext) }
 
     companion object {
         private var instance: MusicService? = null
@@ -42,15 +46,24 @@ class MusicService : MediaSessionService() {
         val COMMAND_LIKE = SessionCommand("ACTION_LIKE", Bundle.EMPTY)
         val COMMAND_PREVIOUS = SessionCommand("ACTION_PREVIOUS", Bundle.EMPTY)
         val COMMAND_NEXT = SessionCommand("ACTION_NEXT", Bundle.EMPTY)
+        val currentUri: Uri? get() = instance?.mediaSession?.player?.currentMediaItem?.localConfiguration?.uri
+        val queueState = MutableStateFlow<List<MediaItem>>(emptyList())
+        val currentIndexState = MutableStateFlow(-1)
 
-        // State — toggled by the buttons
         var isShuffleOn = false
             private set
         var isLiked = false
             private set
 
-        fun play(context: Context, song: Song, startPositionMs: Long = 0L) {
-            instance?.setAndPlay(song, startPositionMs) ?: run {
+        // ── Public queue API ──────────────────────────────────────────────────
+
+        /**
+         * Play a single song.
+         * - PLAYLIST mode: clears queue, plays only this song, switches to MANUAL.
+         * - MANUAL mode: inserts at index 0, plays from there, rest of queue follows.
+         */
+        fun playSingular(context: Context, song: Song, startPositionMs: Long = 0L) {
+            instance?.playSingularInternal(song, startPositionMs) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
                     putExtra(EXTRA_URI, song.uri.toString())
                     putExtra(EXTRA_TITLE, song.title)
@@ -61,35 +74,122 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        //fun pause() { instance?.mediaSession?.player?.pause() }
-        //fun resume() { instance?.mediaSession?.player?.play() }
-        //fun next() { instance?.mediaSession?.player?.seekToNextMediaItem() }
-        fun previous() {
-            val player = instance?.mediaSession?.player
-            player?.currentPosition?.let {
-                if (it > 3000) {
-                    player.seekTo(0)
-                } else {
-                    player.seekToPreviousMediaItem()
+        /**
+         * Replace the current queue with a playlist and start playback from the first item.
+         */
+        fun replaceQueue(context: Context, songs: List<Song>) {
+            if (songs.isEmpty()) return
+            instance?.replaceQueueInternal(songs) ?: run {
+                val intent = Intent(context, MusicService::class.java).apply {
+                    putStringArrayListExtra(EXTRA_QUEUE_URIS, ArrayList(songs.map { it.uri.toString() }))
+                    putStringArrayListExtra(EXTRA_QUEUE_TITLES, ArrayList(songs.map { it.title }))
+                    putStringArrayListExtra(EXTRA_QUEUE_ARTISTS, ArrayList(songs.map { it.artist }))
                 }
+                context.startForegroundService(intent)
             }
         }
 
-        fun like(favourites: FavouritesSave) {
+        /**
+         * Append a song to the end of the current queue without interrupting playback.
+         * Falls back to playSingular if the service isn't running.
+         */
+        fun addToQueue(context: Context, song: Song) {
+            instance?.addToQueueInternal(song) ?: playSingular(context, song)
+        }
+
+        fun like(favourites: FavouritesSave, updateNotification: Boolean = true) {
+            val inst = instance ?: return
             val player = instance?.mediaSession?.player
+
             player?.currentMediaItem?.localConfiguration?.uri?.let {
                 isLiked = !isLiked
                 favourites.toggle(it, isLiked)
+                if (updateNotification) inst.mediaSession?.let { session -> inst.updateNotificationButtons(session) }
             }
         }
 
-        //val isPlaying get() = instance?.mediaSession?.player?.isPlaying ?: false
+        fun previous() {
+            val player = instance?.mediaSession?.player
+            player?.currentPosition?.let {
+                if (it > 3000) player.seekTo(0)
+                else player.seekToPreviousMediaItem()
+            }
+        }
 
         private const val EXTRA_URI = "extra_uri"
         private const val EXTRA_TITLE = "extra_title"
         private const val EXTRA_ARTIST = "extra_artist"
         private const val EXTRA_POSITION_MS = "extra_position_ms"
+        private const val EXTRA_QUEUE_URIS = "extra_queue_uris"
+        private const val EXTRA_QUEUE_TITLES  = "extra_queue_titles"
+        private const val EXTRA_QUEUE_ARTISTS = "extra_queue_artists"
     }
+
+    // ── Internal queue operations ─────────────────────────────────────────────
+
+    private fun Song.toMediaItem() = MediaItem.Builder()
+        .setUri(uri)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(title)
+                .setArtist(artist)
+                .build()
+        )
+        .build()
+
+    private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
+        val player = mediaSession?.player ?: return
+
+        when (currentSource) {
+            QueueSource.PLAYLIST -> {
+                currentSource = QueueSource.MANUAL
+                player.setMediaItem(song.toMediaItem(), startPositionMs)
+            }
+            QueueSource.MANUAL -> {
+                player.addMediaItem(0, song.toMediaItem())
+                player.seekTo(0, startPositionMs)
+            }
+        }
+        player.prepare()
+        player.play()
+    }
+
+    private fun replaceQueueInternal(songs: List<Song>) {
+        val player = mediaSession?.player ?: return
+        currentSource = QueueSource.PLAYLIST
+        player.setMediaItems(songs.map { it.toMediaItem() })
+        player.prepare()
+        player.play()
+    }
+
+    private fun addToQueueInternal(song: Song) {
+        mediaSession?.player?.addMediaItem(song.toMediaItem())
+    }
+
+    private fun replaceQueueFromExtras(
+        uris: List<String>,
+        titles: List<String>,
+        artists: List<String>
+    ) {
+        val player = mediaSession?.player ?: return
+        val items = uris.mapIndexed { i, uri ->
+            MediaItem.Builder()
+                .setUri(uri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(titles.getOrElse(i) { "Unknown" })
+                        .setArtist(artists.getOrElse(i) { "Unknown" })
+                        .build()
+                )
+                .build()
+        }
+        currentSource = QueueSource.PLAYLIST
+        player.setMediaItems(items)
+        player.prepare()
+        player.play()
+    }
+
+    // ── Session callback ──────────────────────────────────────────────────────
 
     @OptIn(UnstableApi::class)
     private inner class MusicSessionCallback : MediaSession.Callback {
@@ -122,14 +222,12 @@ class MusicService : MediaSessionService() {
             args: Bundle
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
-                COMMAND_SHUFFLE.customAction -> {
+                COMMAND_SHUFFLE.customAction  -> {
                     isShuffleOn = !isShuffleOn
                     session.player.shuffleModeEnabled = isShuffleOn
                 }
-                COMMAND_LIKE.customAction -> {
-                    like(favourites)
-                }
-                COMMAND_PREVIOUS.customAction -> { previous() }
+                COMMAND_LIKE.customAction -> like(favourites, false)
+                COMMAND_PREVIOUS.customAction -> previous()
                 COMMAND_NEXT.customAction -> session.player.seekToNextMediaItem()
             }
             updateNotificationButtons(session)
@@ -142,26 +240,22 @@ class MusicService : MediaSessionService() {
             controller: MediaSession.ControllerInfo
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
             val lastUri = settings.lastSongUri
-
             if (lastUri.isEmpty()) {
                 return Futures.immediateFailedFuture(
                     UnsupportedOperationException("No last song saved")
                 )
             }
-
-            val mediaItem = MediaItem.Builder()
-                .setUri(lastUri)
-                .build()
-
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(
-                    listOf(mediaItem),
+                    listOf(MediaItem.Builder().setUri(lastUri).build()),
                     0,
                     settings.lastPositionMs
                 )
             )
         }
     }
+
+    // ── Notification ──────────────────────────────────────────────────────────
 
     @OptIn(UnstableApi::class)
     private class CustomNotificationProvider(context: Context)
@@ -181,6 +275,7 @@ class MusicService : MediaSessionService() {
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
+
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
@@ -206,7 +301,6 @@ class MusicService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 updateNotificationButtons(mediaSession!!)
-
                 if (!isPlaying) {
                     val settings = SettingsSave.getInstance(this@MusicService)
                     settings.lastPositionMs = player.currentPosition
@@ -214,14 +308,17 @@ class MusicService : MediaSessionService() {
                 }
             }
 
-            override fun onMediaItemTransition(
-                mediaItem: MediaItem?,
-                reason: Int
-            ) {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 mediaItem ?: return
-
                 val uri = mediaItem.localConfiguration?.uri ?: return
                 isLiked = favourites.isFavourite(uri)
+                currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                val player = instance?.mediaSession?.player ?: return
+                queueState.value = (0 until player.mediaItemCount)
+                    .map { player.getMediaItemAt(it) }
             }
         })
 
@@ -232,6 +329,16 @@ class MusicService : MediaSessionService() {
         super.onStartCommand(intent, flags, startId)
 
         intent?.let {
+            // Queue replacement via intent (service was not running)
+            val queueUris = it.getStringArrayListExtra(EXTRA_QUEUE_URIS)
+            if (queueUris != null) {
+                val titles = it.getStringArrayListExtra(EXTRA_QUEUE_TITLES)  ?: arrayListOf()
+                val artists = it.getStringArrayListExtra(EXTRA_QUEUE_ARTISTS) ?: arrayListOf()
+                replaceQueueFromExtras(queueUris, titles, artists)
+                return@let
+            }
+
+            // Single song (playSingular / cold start)
             val uri = it.getStringExtra(EXTRA_URI) ?: return@let
             val title = it.getStringExtra(EXTRA_TITLE) ?: "Unknown"
             val artist = it.getStringExtra(EXTRA_ARTIST) ?: "Unknown"
@@ -250,7 +357,6 @@ class MusicService : MediaSessionService() {
             settings.lastPositionMs = player.currentPosition
             settings.save()
         }
-
         instance = null
         mediaSession?.run {
             player.release()
@@ -260,12 +366,7 @@ class MusicService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private fun setAndPlay(song: Song, startPositionMs: Long = 0L) = setAndPlay(
-        uri = song.uri.toString(),
-        title = song.title,
-        artist = song.artist,
-        startPositionMs = startPositionMs
-    )
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun setAndPlay(uri: String, title: String, artist: String, startPositionMs: Long = 0L) {
         mediaSession?.player?.apply {
@@ -289,37 +390,22 @@ class MusicService : MediaSessionService() {
     @OptIn(UnstableApi::class)
     private fun updateNotificationButtons(session: MediaSession) {
         val buttons = listOf(
-            // Shuffle
             CommandButton.Builder(
                 if (isShuffleOn) CommandButton.ICON_SHUFFLE_ON
                 else CommandButton.ICON_SHUFFLE_OFF
-            )
-                .setSessionCommand(COMMAND_SHUFFLE)
-                .setDisplayName("Shuffle")
-                .build(),
+            ).setSessionCommand(COMMAND_SHUFFLE).setDisplayName("Shuffle").build(),
 
-            // Previous
             CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-                .setSessionCommand(COMMAND_PREVIOUS)
-                .setDisplayName("Previous")
-                .build(),
+                .setSessionCommand(COMMAND_PREVIOUS).setDisplayName("Previous").build(),
 
-            // Next
             CommandButton.Builder(CommandButton.ICON_NEXT)
-                .setSessionCommand(COMMAND_NEXT)
-                .setDisplayName("Next")
-                .build(),
+                .setSessionCommand(COMMAND_NEXT).setDisplayName("Next").build(),
 
-            // Like
             CommandButton.Builder(
                 if (isLiked) CommandButton.ICON_HEART_FILLED
                 else CommandButton.ICON_HEART_UNFILLED
-            )
-                .setSessionCommand(COMMAND_LIKE)
-                .setDisplayName("Like")
-                .build()
+            ).setSessionCommand(COMMAND_LIKE).setDisplayName("Like").build()
         )
-
         session.setMediaButtonPreferences(buttons)
     }
 }

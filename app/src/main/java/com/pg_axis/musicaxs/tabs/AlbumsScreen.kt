@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,13 +28,13 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Album
 import com.pg_axis.musicaxs.models.Song
-import com.pg_axis.musicaxs.services.MusicService
+import com.pg_axis.musicaxs.templates.SongRow
 
 @Composable
 fun AlbumsScreen(
+    goToDetail: (uri: String) -> Unit,
     vm: AlbumsViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val selected by vm.selectedAlbum.collectAsStateWithLifecycle()
     val albumSongs by vm.albumSongs.collectAsStateWithLifecycle()
@@ -51,9 +50,7 @@ fun AlbumsScreen(
                 album = selected!!,
                 songs = albumSongs,
                 onBack = vm::onBackFromDetail,
-                onSongClick = { song ->
-                    MusicService.play(context, song)
-                }
+                onShowDetails = goToDetail
             )
 
             else -> when (val state = uiState) {
@@ -143,7 +140,7 @@ private fun AlbumDetailScreen(
     album: Album,
     songs: List<Song>,
     onBack: () -> Unit,
-    onSongClick: (Song) -> Unit
+    onShowDetails: (uri: String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
 
@@ -209,47 +206,13 @@ private fun AlbumDetailScreen(
                 )
             ) {
                 items(songs, key = { it.id }) { song ->
-                    AlbumSongRow(
+                    SongRow(
                         song = song,
-                        onClick = { onSongClick(song) }
+                        onSeeDetails = onShowDetails,
+                        showsImage = false
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun AlbumSongRow(song: Song, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text       = song.title,
-                fontWeight = FontWeight.Medium,
-                fontSize   = 15.sp,
-                maxLines   = 1,
-                overflow   = TextOverflow.Ellipsis
-            )
-            Text(
-                text = song.artist,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        IconButton(onClick = { /* TODO: song options */ }) {
-            Icon(
-                painter = painterResource(R.drawable.settings),
-                contentDescription = "Song options"
-            )
         }
     }
 }

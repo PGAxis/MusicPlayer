@@ -185,16 +185,12 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     when (page) {
-                        0 -> FavouritesScreen()
+                        0 -> FavouritesScreen(goToDetail = goToDetail )
                         1 -> PlaylistsScreen()
                         2 -> SongsScreen(goToDetail = goToDetail )
-                        3 -> AlbumsScreen()
-                        4 -> ArtistsScreen()
+                        3 -> AlbumsScreen(goToDetail = goToDetail )
+                        4 -> ArtistsScreen(goToDetail = goToDetail )
                     }
-                    // TODO: replace with actual page composables
-                    //   3 -> AlbumsPage()
-                    //   4 -> ArtistsPage()
-
                 }
             }
         }

@@ -1,12 +1,10 @@
 package com.pg_axis.musicaxs.tabs
 
 import android.Manifest
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,23 +15,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
-import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.AlphabetScroller
-import com.pg_axis.musicaxs.services.MusicService
+import com.pg_axis.musicaxs.templates.SongRow
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -72,7 +63,6 @@ fun SongsScreen(
     goToDetail: (uri: String) -> Unit,
     vm: SongsViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -148,13 +138,7 @@ fun SongsScreen(
                                     is SongListItem.Header -> SectionHeader(item.letter)
                                     is SongListItem.Item -> SongRow(
                                         song = item.song,
-                                        onClick = {
-                                            MusicService.play(context, item.song)
-                                        },
-                                        onSeeDetails = {
-                                            val encoded = Uri.encode(item.song.uri.toString())
-                                            goToDetail(encoded)
-                                        }
+                                        onSeeDetails = goToDetail
                                     )
                                 }
                             }
@@ -218,89 +202,4 @@ private fun SectionHeader(letter: String) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
     )
-}
-
-@Composable
-private fun SongRow(
-    song: Song,
-    onClick: () -> Unit,
-    onSeeDetails: () -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(song.uri)
-                .size(44)
-                .crossfade(true)
-                .build(),
-            contentDescription = "Album art",
-            error = painterResource(R.drawable.default_cover),
-            placeholder = painterResource(R.drawable.default_cover),
-            fallback = painterResource(R.drawable.default_cover),
-            modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(10.dp)),
-            contentScale = ContentScale.Crop
-        )
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = song.title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = song.artist,
-                fontSize = 14.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Box {
-            IconButton(
-                onClick = { expanded = true },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.settings),
-                    contentDescription = "Song options"
-                )
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("See details") },
-                    onClick = {
-                        expanded = false
-                        onSeeDetails()
-                    }
-                )
-
-                DropdownMenuItem(
-                    text = { Text("Add to") },
-                    onClick = { expanded = false }
-                )
-
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    onClick = { expanded = false }
-                )
-            }
-        }
-    }
 }

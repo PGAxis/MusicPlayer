@@ -13,8 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,21 +20,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.AlphabetScroller
 import com.pg_axis.musicaxs.models.Artist
-import com.pg_axis.musicaxs.models.Song
-import com.pg_axis.musicaxs.services.MusicService
+import com.pg_axis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun ArtistsScreen(
+    goToDetail: (uri: String) -> Unit,
     vm: ArtistsViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val selected by vm.selectedInterpret.collectAsStateWithLifecycle()
     val detail by vm.detailItems.collectAsStateWithLifecycle()
@@ -49,9 +45,7 @@ fun ArtistsScreen(
                 interpret = selected!!,
                 items = detail,
                 onBack = vm::onBackFromDetail,
-                playSong = { song ->
-                    MusicService.play(context, song)
-                }
+                goToDetail = goToDetail
             )
 
             else -> when (val state = uiState) {
@@ -215,7 +209,7 @@ private fun ArtistDetailScreen(
     interpret: Artist,
     items: List<ArtistDetailItem>,
     onBack: () -> Unit,
-    playSong: (song: Song) -> Unit
+    goToDetail: (uri: String) -> Unit
 ) {
 
     Column(Modifier.fillMaxSize()) {
@@ -284,49 +278,10 @@ private fun ArtistDetailScreen(
                             )
                         }
                         is ArtistDetailItem.SongItem -> {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        playSong(item.song)
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                AsyncImage(
-                                    model = item.song.uri,
-                                    contentDescription = null,
-                                    error = painterResource(R.drawable.default_cover),
-                                    placeholder = painterResource(R.drawable.default_cover),
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(RoundedCornerShape(10.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = item.song.title,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 15.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = item.song.artist,
-                                        fontSize = 13.sp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                IconButton(onClick = { /* TODO: song options */ }) {
-                                    Icon(
-                                        painterResource(R.drawable.settings),
-                                        contentDescription = "Song options"
-                                    )
-                                }
-                            }
+                            SongRow(
+                                song = item.song,
+                                onSeeDetails = goToDetail
+                            )
                         }
                     }
                 }
