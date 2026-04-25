@@ -54,7 +54,8 @@ fun AlphabetScroller(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                lineHeight = 12.sp
+                lineHeight = 12.sp,
+                modifier = Modifier.padding(vertical = 2.dp)
             )
         }
     }

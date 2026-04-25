@@ -21,11 +21,19 @@ import com.pg_axis.musicaxs.models.Song
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import com.google.common.collect.ImmutableList
+import com.pg_axis.musicaxs.settings.FavouritesSave
 import com.pg_axis.musicaxs.settings.SettingsSave
 
 class MusicService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
+
+    private val favourites by lazy {
+        FavouritesSave.getInstance(applicationContext)
+    }
+    private val settings by lazy {
+        SettingsSave.getInstance(applicationContext)
+    }
 
     companion object {
         private var instance: MusicService? = null
@@ -64,6 +72,14 @@ class MusicService : MediaSessionService() {
                 } else {
                     player.seekToPreviousMediaItem()
                 }
+            }
+        }
+
+        fun like(favourites: FavouritesSave) {
+            val player = instance?.mediaSession?.player
+            player?.currentMediaItem?.localConfiguration?.uri?.let {
+                isLiked = !isLiked
+                favourites.toggle(it, isLiked)
             }
         }
 
@@ -111,8 +127,7 @@ class MusicService : MediaSessionService() {
                     session.player.shuffleModeEnabled = isShuffleOn
                 }
                 COMMAND_LIKE.customAction -> {
-                    isLiked = !isLiked
-                    // TODO: persist liked state
+                    like(favourites)
                 }
                 COMMAND_PREVIOUS.customAction -> { previous() }
                 COMMAND_NEXT.customAction -> session.player.seekToNextMediaItem()
@@ -126,7 +141,6 @@ class MusicService : MediaSessionService() {
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
-            val settings = SettingsSave.getInstance(this@MusicService)
             val lastUri = settings.lastSongUri
 
             if (lastUri.isEmpty()) {
@@ -142,8 +156,8 @@ class MusicService : MediaSessionService() {
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(
                     listOf(mediaItem),
-                    /* startIndex = */ 0,
-                    /* startPositionMs = */ settings.lastPositionMs
+                    0,
+                    settings.lastPositionMs
                 )
             )
         }
@@ -198,6 +212,16 @@ class MusicService : MediaSessionService() {
                     settings.lastPositionMs = player.currentPosition
                     settings.save()
                 }
+            }
+
+            override fun onMediaItemTransition(
+                mediaItem: MediaItem?,
+                reason: Int
+            ) {
+                mediaItem ?: return
+
+                val uri = mediaItem.localConfiguration?.uri ?: return
+                isLiked = favourites.isFavourite(uri)
             }
         })
 

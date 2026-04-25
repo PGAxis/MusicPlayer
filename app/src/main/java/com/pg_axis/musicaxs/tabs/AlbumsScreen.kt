@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,12 +29,13 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Album
 import com.pg_axis.musicaxs.models.Song
+import com.pg_axis.musicaxs.services.MusicService
 
 @Composable
 fun AlbumsScreen(
-    playSong: (song: Song) -> Unit,
     vm: AlbumsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val selected by vm.selectedAlbum.collectAsStateWithLifecycle()
     val albumSongs by vm.albumSongs.collectAsStateWithLifecycle()
@@ -50,7 +52,7 @@ fun AlbumsScreen(
                 songs = albumSongs,
                 onBack = vm::onBackFromDetail,
                 onSongClick = { song ->
-                    playSong(song)
+                    MusicService.play(context, song)
                 }
             )
 

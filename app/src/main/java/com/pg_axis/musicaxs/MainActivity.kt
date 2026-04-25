@@ -35,8 +35,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MusicaxsTheme {
-                val mainViewModel: MainViewModel = viewModel()
-                MainScreen(vm = mainViewModel)
+                AppNavigation()
             }
         }
     }
@@ -47,6 +46,6 @@ class MainActivity : ComponentActivity() {
 fun MainPreview() {
     MusicaxsTheme {
         val mainViewModel: MainViewModel = viewModel()
-        MainScreen(mainViewModel)
+        MainScreen({}, mainViewModel)
     }
 }

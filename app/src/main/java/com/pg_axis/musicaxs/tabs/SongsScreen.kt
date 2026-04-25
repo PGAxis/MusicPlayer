@@ -1,6 +1,7 @@
 package com.pg_axis.musicaxs.tabs
 
 import android.Manifest
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,7 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.AlphabetScroller
+import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,9 +69,10 @@ private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, 
 
 @Composable
 fun SongsScreen(
-    playSong: (song: Song) -> Unit,
+    goToDetail: (uri: String) -> Unit,
     vm: SongsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -130,7 +133,9 @@ fun SongsScreen(
                     Box(Modifier.fillMaxSize()) {
                         LazyColumn(
                             state = listState,
-                            modifier = Modifier.fillMaxSize().padding(end = 20.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(end = 20.dp),
                             contentPadding = PaddingValues(bottom = PlayerBarDefaults.TotalHeight)
                         ) {
                             items(listItems, key = { item ->
@@ -144,9 +149,12 @@ fun SongsScreen(
                                     is SongListItem.Item -> SongRow(
                                         song = item.song,
                                         onClick = {
-                                            playSong(item.song)
+                                            MusicService.play(context, item.song)
                                         },
-                                        onOptions = { /* TODO */ }
+                                        onSeeDetails = {
+                                            val encoded = Uri.encode(item.song.uri.toString())
+                                            goToDetail(encoded)
+                                        }
                                     )
                                 }
                             }
@@ -154,7 +162,9 @@ fun SongsScreen(
 
                         AlphabetScroller(
                             letters = letters,
-                            modifier = Modifier.align(Alignment.CenterEnd),
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(bottom = PlayerBarDefaults.TotalHeight),
                             onLetterSelected = { letter ->
                                 activeLetter = letter
                                 val index = letterIndex[letter] ?: return@AlphabetScroller
@@ -214,8 +224,10 @@ private fun SectionHeader(letter: String) {
 private fun SongRow(
     song: Song,
     onClick: () -> Unit,
-    onOptions: () -> Unit
+    onSeeDetails: () -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,11 +236,10 @@ private fun SongRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Album art — same size/shape as the bottom bar thumbnail
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(song.uri)
-                .size(44.dp.value.toInt())
+                .size(44)
                 .crossfade(true)
                 .build(),
             contentDescription = "Album art",
@@ -241,7 +252,6 @@ private fun SongRow(
             contentScale = ContentScale.Crop
         )
 
-        // Title + Artist
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
@@ -258,15 +268,39 @@ private fun SongRow(
             )
         }
 
-        // Options button — right-aligned by weight(1f) on the text column
-        IconButton(
-            onClick = onOptions,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.settings),
-                contentDescription = "Song options"
-            )
+        Box {
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.settings),
+                    contentDescription = "Song options"
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("See details") },
+                    onClick = {
+                        expanded = false
+                        onSeeDetails()
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Add to") },
+                    onClick = { expanded = false }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Delete") },
+                    onClick = { expanded = false }
+                )
+            }
         }
     }
 }

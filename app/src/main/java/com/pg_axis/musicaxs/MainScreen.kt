@@ -1,6 +1,8 @@
 package com.pg_axis.musicaxs
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -27,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.palette.graphics.Palette
 import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.tabs.AlbumsScreen
 import com.pg_axis.musicaxs.tabs.FavouritesScreen
@@ -40,7 +44,10 @@ import kotlin.math.abs
 @SuppressLint("FrequentlyChangingValue")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainScreen(vm: MainViewModel = viewModel()) {
+fun MainScreen(
+    goToDetail: (uri: String) -> Unit,
+    vm: MainViewModel = viewModel()
+) {
     val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
 
@@ -48,6 +55,17 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
     val tabScrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
+
+    var bgColor by remember { mutableStateOf(Color.DarkGray) }
+
+    fun Color.darken(factor: Float = 0.75f): Color {
+        return copy(
+            red = red * factor,
+            green = green * factor,
+            blue = blue * factor,
+            alpha = 1f
+        )
+    }
 
     LaunchedEffect(pagerState.settledPage) {
         vm.onPageChanged(pagerState.settledPage)
@@ -169,9 +187,9 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                     when (page) {
                         0 -> FavouritesScreen()
                         1 -> PlaylistsScreen()
-                        2 -> SongsScreen(playSong = vm::setSong )
-                        3 -> AlbumsScreen(playSong = vm::setSong )
-                        4 -> ArtistsScreen(playSong = vm::setSong )
+                        2 -> SongsScreen(goToDetail = goToDetail )
+                        3 -> AlbumsScreen()
+                        4 -> ArtistsScreen()
                     }
                     // TODO: replace with actual page composables
                     //   3 -> AlbumsPage()
@@ -187,10 +205,15 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                 modifier  = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = PlayerBarDefaults.VerticalMargin)
+                    .padding(
+                        horizontal = 10.dp,
+                        vertical = PlayerBarDefaults.VerticalMargin
+                    )
                     .height(PlayerBarDefaults.Height),
                 shape = CircleShape,
-                colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                colors = CardDefaults.cardColors(
+                    containerColor = bgColor
+                ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Row(
@@ -200,7 +223,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Album art
+
                     AsyncImage(
                         model = currentSong?.songUri,
                         error = painterResource(R.drawable.default_cover),
@@ -210,10 +233,25 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        onSuccess = { state ->
+                            val drawable = state.result.drawable
+                            val bitmap = (drawable as BitmapDrawable).bitmap
+
+                            val softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+
+                            Palette.from(softwareBitmap).generate { palette ->
+                                val colorInt = palette?.getDominantColor(Color.DarkGray.toArgb())
+                                if (colorInt != null) {
+                                    bgColor = Color(colorInt).darken()
+                                }
+                            }
+                        }
                     )
 
-                    // Song info - title marquees when too long, artist truncates
+                    Spacer(modifier = Modifier.width(0.dp))
+
+                    // Song info
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
@@ -236,7 +274,7 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                         }
                     }
 
-                    // Playback controls - right-aligned naturally by weight(1f) on metadata
+                    // Playback controls
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -251,7 +289,9 @@ fun MainScreen(vm: MainViewModel = viewModel()) {
                         }
                         IconButton(onClick = vm::onPlayPause, modifier = Modifier.size(35.dp)) {
                             Icon(
-                                painter = painterResource(if (vm.isPlaying) R.drawable.pause else R.drawable.play),
+                                painter = painterResource(
+                                    if (vm.isPlaying) R.drawable.pause else R.drawable.play
+                                ),
                                 contentDescription = if (vm.isPlaying) "Pause" else "Play",
                                 modifier = Modifier.padding(8.dp),
                                 tint = Color.White

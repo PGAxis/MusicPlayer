@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
-import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -71,7 +71,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSong(song: Song) {
         _currentSong.value = CurrentSong(title = song.title, artist = song.artist, songUri = song.uri.toString())
-        MusicService.play(application, song)
         settings.lastSongUri = song.uri.toString()
         settings.save()
     }
@@ -112,6 +111,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
                 }
+
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    mediaItem ?: return
+
+                    val uri = mediaItem.localConfiguration?.uri ?: return
+                    val song = resolveSongFromUri(application, uri) ?: return
+
+                    setSong(song)
+                }
             })
         }, ContextCompat.getMainExecutor(context))
 
@@ -130,7 +141,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onPrevious() { /* TODO */ }
+    fun onPrevious() {
+        MusicService.previous()
+    }
     fun onNext()     { /* TODO */ }
     fun onSearch()   { /* TODO */ }
     fun onSettings() { /* TODO */ }

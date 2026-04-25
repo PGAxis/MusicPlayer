@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,14 +28,15 @@ import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.AlphabetScroller
 import com.pg_axis.musicaxs.models.Artist
 import com.pg_axis.musicaxs.models.Song
+import com.pg_axis.musicaxs.services.MusicService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun ArtistsScreen(
-    playSong: (song: Song) -> Unit,
     vm: ArtistsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val selected by vm.selectedInterpret.collectAsStateWithLifecycle()
     val detail by vm.detailItems.collectAsStateWithLifecycle()
@@ -47,7 +49,9 @@ fun ArtistsScreen(
                 interpret = selected!!,
                 items = detail,
                 onBack = vm::onBackFromDetail,
-                playSong = playSong
+                playSong = { song ->
+                    MusicService.play(context, song)
+                }
             )
 
             else -> when (val state = uiState) {
@@ -141,7 +145,9 @@ private fun InterpretsListScreen(interprets: List<Artist>, vm: ArtistsViewModel)
 
         AlphabetScroller(
             letters = letters,
-            modifier = Modifier.align(Alignment.CenterEnd),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(bottom = PlayerBarDefaults.TotalHeight),
             onLetterSelected = { letter ->
                 activeLetter = letter
                 val index = letterIndex[letter] ?: return@AlphabetScroller
