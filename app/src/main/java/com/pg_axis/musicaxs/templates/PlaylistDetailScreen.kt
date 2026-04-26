@@ -20,6 +20,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,8 +47,9 @@ fun PlaylistDetailScreen(
     onBack: () -> Unit,
     onShowDetails: (uri: String) -> Unit
 ) {
-    Column(Modifier.fillMaxSize()) {
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
 
+    Column(Modifier.fillMaxSize()) {
         // ── Header ────────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
@@ -100,16 +105,26 @@ fun PlaylistDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    bottom = PlayerBarDefaults.TotalHeight
-                )
-            ) {
-                items(songs, key = { it.id }) { song ->
-                    SongRow(
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = PlayerBarDefaults.TotalHeight
+                    )
+                ) {
+                    items(songs, key = { it.id }) { song ->
+                        SongRow(
+                            song = song,
+                            onSeeDetails = onShowDetails,
+                            onAddTo = { selectedSong = song }
+                        )
+                    }
+                }
+
+                selectedSong?.let { song ->
+                    AddToSheet(
                         song = song,
-                        onSeeDetails = onShowDetails
+                        onDismiss = { selectedSong = null }
                     )
                 }
             }

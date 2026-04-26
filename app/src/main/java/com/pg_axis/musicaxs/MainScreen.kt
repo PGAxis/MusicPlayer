@@ -1,26 +1,19 @@
 package com.pg_axis.musicaxs
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,13 +23,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.palette.graphics.Palette
-import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.tabs.AlbumsScreen
 import com.pg_axis.musicaxs.tabs.FavouritesScreen
 import com.pg_axis.musicaxs.tabs.ArtistsScreen
 import com.pg_axis.musicaxs.tabs.PlaylistsScreen
 import com.pg_axis.musicaxs.tabs.SongsScreen
+import com.pg_axis.musicaxs.templates.ExpandablePlayer
 import com.pg_axis.musicaxs.ui.theme.*
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -57,15 +49,6 @@ fun MainScreen(
     val density = LocalDensity.current
 
     var bgColor by remember { mutableStateOf(Color.DarkGray) }
-
-    fun Color.darken(factor: Float = 0.75f): Color {
-        return copy(
-            red = red * factor,
-            green = green * factor,
-            blue = blue * factor,
-            alpha = 1f
-        )
-    }
 
     LaunchedEffect(pagerState.settledPage) {
         vm.onPageChanged(pagerState.settledPage)
@@ -196,114 +179,17 @@ fun MainScreen(
         }
 
         // -- Now Playing bar -------------------------------------------------------------------------------------
-        if (currentSong != null) {
-            Card(
-                modifier  = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 10.dp,
-                        vertical = PlayerBarDefaults.VerticalMargin
-                    )
-                    .height(PlayerBarDefaults.Height),
-                shape = CircleShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = bgColor
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 10.dp, end = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-
-                    AsyncImage(
-                        model = currentSong?.songUri,
-                        error = painterResource(R.drawable.default_cover),
-                        placeholder = painterResource(R.drawable.default_cover),
-                        fallback = painterResource(R.drawable.default_cover),
-                        contentDescription = "Album art",
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        onSuccess = { state ->
-                            val drawable = state.result.drawable
-                            val bitmap = (drawable as BitmapDrawable).bitmap
-
-                            val softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
-
-                            Palette.from(softwareBitmap).generate { palette ->
-                                val colorInt = palette?.getDominantColor(Color.DarkGray.toArgb())
-                                if (colorInt != null) {
-                                    bgColor = Color(colorInt).darken()
-                                }
-                            }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.width(0.dp))
-
-                    // Song info
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        currentSong?.let {
-                            Text(
-                                text = it.title,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                maxLines = 1,
-                                modifier = Modifier.basicMarquee(),
-                                color = Color.White
-                            )
-                            Text(
-                                text = it.artist,
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                color = Color.White
-                            )
-                        }
-                    }
-
-                    // Playback controls
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = vm::onPrevious, modifier = Modifier.size(35.dp)) {
-                            Icon(
-                                painterResource(R.drawable.prev),
-                                contentDescription = "Previous",
-                                modifier = Modifier.padding(8.dp),
-                                tint = Color.White
-                            )
-                        }
-                        IconButton(onClick = vm::onPlayPause, modifier = Modifier.size(35.dp)) {
-                            Icon(
-                                painter = painterResource(
-                                    if (vm.isPlaying) R.drawable.pause else R.drawable.play
-                                ),
-                                contentDescription = if (vm.isPlaying) "Pause" else "Play",
-                                modifier = Modifier.padding(8.dp),
-                                tint = Color.White
-                            )
-                        }
-                        IconButton(onClick = vm::onNext, modifier = Modifier.size(35.dp)) {
-                            Icon(
-                                painterResource(R.drawable.next),
-                                contentDescription = "Next",
-                                modifier = Modifier.padding(8.dp),
-                                tint = Color.White
-                            )
-                        }
-                    }
-                }
-            }
+        currentSong?.let { it1 ->
+            ExpandablePlayer(
+                currentSong = it1,
+                isPlaying = vm.isPlaying,
+                bgColor = bgColor,
+                onBgColorChange = { bgColor = it },
+                onPrevious = vm::onPrevious,
+                onPlayPause = vm::onPlayPause,
+                onNext = vm::onNext,
+                onSeeDetail = goToDetail
+            )
         }
     }
 }

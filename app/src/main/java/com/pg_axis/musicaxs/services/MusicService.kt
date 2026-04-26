@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -26,6 +27,7 @@ import com.google.common.collect.ImmutableList
 import com.pg_axis.musicaxs.settings.FavouritesSave
 import com.pg_axis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.core.net.toUri
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -56,6 +58,18 @@ class MusicService : MediaSessionService() {
             private set
 
         // ── Public queue API ──────────────────────────────────────────────────
+
+        val playerInstance get() = instance?.mediaSession?.player
+
+        fun seekTo(positionMs: Long) {
+            instance?.mediaSession?.player?.seekTo(positionMs)
+        }
+
+        fun seekBy(offsetMs: Long) {
+            instance?.mediaSession?.player?.let {
+                it.seekTo((it.currentPosition + offsetMs).coerceAtLeast(0L))
+            }
+        }
 
         /**
          * Play a single song.
@@ -97,6 +111,32 @@ class MusicService : MediaSessionService() {
             instance?.addToQueueInternal(song) ?: playSingular(context, song)
         }
 
+        fun moveQueueItem(from: Int, to: Int) {
+            instance?.mediaSession?.player?.moveMediaItem(from, to)
+        }
+
+        fun removeFromQueue(index: Int) {
+            instance?.mediaSession?.player?.removeMediaItem(index)
+        }
+
+        fun initFromSettings(context: Context) {
+            val settings = SettingsSave.getInstance(context)
+            Log.d("Settings initialized", "Queue is initialized, ${settings.lastQueueUris}")
+            if (settings.lastQueueUris.isNotEmpty()) {
+                queueState.value = settings.lastQueueUris.map { uri ->
+                    MediaItem.Builder().setUri(uri.toUri()).build()
+                }
+            }
+        }
+
+        fun initializeService(context: Context) {
+            if (instance != null) return
+            val intent = Intent(context, MusicService::class.java).apply {
+                putExtra(EXTRA_INIT_ONLY, true)
+            }
+            context.startService(intent)
+        }
+
         fun like(favourites: FavouritesSave, updateNotification: Boolean = true) {
             val inst = instance ?: return
             val player = instance?.mediaSession?.player
@@ -116,6 +156,11 @@ class MusicService : MediaSessionService() {
             }
         }
 
+        fun next() {
+            val player = instance?.mediaSession?.player
+            player?.seekToNextMediaItem()
+        }
+
         private const val EXTRA_URI = "extra_uri"
         private const val EXTRA_TITLE = "extra_title"
         private const val EXTRA_ARTIST = "extra_artist"
@@ -123,6 +168,7 @@ class MusicService : MediaSessionService() {
         private const val EXTRA_QUEUE_URIS = "extra_queue_uris"
         private const val EXTRA_QUEUE_TITLES  = "extra_queue_titles"
         private const val EXTRA_QUEUE_ARTISTS = "extra_queue_artists"
+        private const val EXTRA_INIT_ONLY = "extra_init_only"
     }
 
     // ── Internal queue operations ─────────────────────────────────────────────
@@ -228,7 +274,7 @@ class MusicService : MediaSessionService() {
                 }
                 COMMAND_LIKE.customAction -> like(favourites, false)
                 COMMAND_PREVIOUS.customAction -> previous()
-                COMMAND_NEXT.customAction -> session.player.seekToNextMediaItem()
+                COMMAND_NEXT.customAction -> next()
             }
             updateNotificationButtons(session)
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
@@ -245,10 +291,15 @@ class MusicService : MediaSessionService() {
                     UnsupportedOperationException("No last song saved")
                 )
             }
+
+            val queueUris = settings.lastQueueUris.ifEmpty { listOf(lastUri) }
+            val currentIndex = queueUris.indexOf(lastUri).coerceAtLeast(0)
+            val items = queueUris.map { MediaItem.Builder().setUri(it.toUri()).build() }
+
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(
-                    listOf(MediaItem.Builder().setUri(lastUri).build()),
-                    0,
+                    items,
+                    currentIndex,
                     settings.lastPositionMs
                 )
             )
@@ -304,6 +355,7 @@ class MusicService : MediaSessionService() {
                 if (!isPlaying) {
                     val settings = SettingsSave.getInstance(this@MusicService)
                     settings.lastPositionMs = player.currentPosition
+                    settings.lastDurationMs = player.duration.coerceAtLeast(0L)
                     settings.save()
                 }
             }
@@ -317,10 +369,21 @@ class MusicService : MediaSessionService() {
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 val player = instance?.mediaSession?.player ?: return
-                queueState.value = (0 until player.mediaItemCount)
-                    .map { player.getMediaItemAt(it) }
+                val items = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
+
+                if (items.isEmpty()) return
+
+                queueState.value = items
+                currentIndexState.value = player.currentMediaItemIndex
+
+                val settings = SettingsSave.getInstance(this@MusicService)
+                settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
+                settings.save()
             }
         })
+
+        queueState.value = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
+        currentIndexState.value = player.currentMediaItemIndex
 
         updateNotificationButtons(mediaSession!!)
     }
@@ -329,13 +392,29 @@ class MusicService : MediaSessionService() {
         super.onStartCommand(intent, flags, startId)
 
         intent?.let {
+            if (it.getBooleanExtra(EXTRA_INIT_ONLY, false)) {
+                val settings = SettingsSave.getInstance(this)
+                val uris = settings.lastQueueUris
+                if (uris.isNotEmpty()) {
+                    val currentIndex = uris.indexOf(settings.lastSongUri).coerceAtLeast(0)
+                    val items = uris.map { uri ->
+                        MediaItem.Builder().setUri(uri.toUri()).build()
+                    }
+                    mediaSession?.player?.apply {
+                        setMediaItems(items, currentIndex, settings.lastPositionMs)
+                        prepare()
+                    }
+                }
+                return START_NOT_STICKY
+            }
+
             // Queue replacement via intent (service was not running)
             val queueUris = it.getStringArrayListExtra(EXTRA_QUEUE_URIS)
             if (queueUris != null) {
                 val titles = it.getStringArrayListExtra(EXTRA_QUEUE_TITLES)  ?: arrayListOf()
                 val artists = it.getStringArrayListExtra(EXTRA_QUEUE_ARTISTS) ?: arrayListOf()
                 replaceQueueFromExtras(queueUris, titles, artists)
-                return@let
+                return START_NOT_STICKY
             }
 
             // Single song (playSingular / cold start)
@@ -355,6 +434,7 @@ class MusicService : MediaSessionService() {
         mediaSession?.player?.let { player ->
             val settings = SettingsSave.getInstance(this)
             settings.lastPositionMs = player.currentPosition
+            settings.lastDurationMs = player.duration.coerceAtLeast(0L)
             settings.save()
         }
         instance = null

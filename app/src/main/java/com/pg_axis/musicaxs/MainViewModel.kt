@@ -144,7 +144,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onPrevious() {
         MusicService.previous()
     }
-    fun onNext()     { /* TODO */ }
+    fun onNext() {
+        MusicService.next()
+    }
     fun onSearch()   { /* TODO */ }
     fun onSettings() { /* TODO */ }
     fun onAddPlaylist() { /* TODO */ }

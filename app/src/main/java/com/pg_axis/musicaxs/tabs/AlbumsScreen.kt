@@ -12,6 +12,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +31,7 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Album
 import com.pg_axis.musicaxs.models.Song
+import com.pg_axis.musicaxs.templates.AddToSheet
 import com.pg_axis.musicaxs.templates.SongRow
 
 @Composable
@@ -142,6 +146,8 @@ private fun AlbumDetailScreen(
     onBack: () -> Unit,
     onShowDetails: (uri: String) -> Unit
 ) {
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
+
     Column(Modifier.fillMaxSize()) {
 
         // ── Header ────────────────────────────────────────────────────────────
@@ -199,17 +205,27 @@ private fun AlbumDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    bottom = PlayerBarDefaults.TotalHeight
-                )
-            ) {
-                items(songs, key = { it.id }) { song ->
-                    SongRow(
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = PlayerBarDefaults.TotalHeight
+                    )
+                ) {
+                    items(songs, key = { it.id }) { song ->
+                        SongRow(
+                            song = song,
+                            onSeeDetails = onShowDetails,
+                            onAddTo = { selectedSong = song },
+                            showsImage = false
+                        )
+                    }
+                }
+
+                selectedSong?.let { song ->
+                    AddToSheet(
                         song = song,
-                        onSeeDetails = onShowDetails,
-                        showsImage = false
+                        onDismiss = { selectedSong = null }
                     )
                 }
             }

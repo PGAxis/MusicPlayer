@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.models.AlphabetScroller
+import com.pg_axis.musicaxs.templates.AddToSheet
 import com.pg_axis.musicaxs.templates.SongRow
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary
 import kotlinx.coroutines.delay
@@ -75,6 +76,8 @@ fun SongsScreen(
     ) { granted ->
         if (granted) vm.scanSongs()
     }
+
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     TabSurface {
         when (val state = uiState) {
@@ -138,7 +141,8 @@ fun SongsScreen(
                                     is SongListItem.Header -> SectionHeader(item.letter)
                                     is SongListItem.Item -> SongRow(
                                         song = item.song,
-                                        onSeeDetails = goToDetail
+                                        onSeeDetails = goToDetail,
+                                        onAddTo = { selectedSong = item.song }
                                     )
                                 }
                             }
@@ -183,6 +187,13 @@ fun SongsScreen(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
+                        }
+
+                        selectedSong?.let { song ->
+                            AddToSheet(
+                                song = song,
+                                onDismiss = { selectedSong = null }
+                            )
                         }
                     }
                 }

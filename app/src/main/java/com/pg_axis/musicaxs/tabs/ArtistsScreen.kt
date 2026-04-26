@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +25,8 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.AlphabetScroller
 import com.pg_axis.musicaxs.models.Artist
+import com.pg_axis.musicaxs.models.Song
+import com.pg_axis.musicaxs.templates.AddToSheet
 import com.pg_axis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -211,9 +214,9 @@ private fun ArtistDetailScreen(
     onBack: () -> Unit,
     goToDetail: (uri: String) -> Unit
 ) {
+    var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     Column(Modifier.fillMaxSize()) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -253,37 +256,47 @@ private fun ArtistDetailScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    bottom = PlayerBarDefaults.TotalHeight
-                )
-            ) {
-                items(items, key = { item ->
-                    when (item) {
-                        is ArtistDetailItem.AlbumHeader -> "header_${item.albumName}"
-                        is ArtistDetailItem.SongItem -> item.song.id
-                    }
-                }) { item ->
-                    when (item) {
-                        is ArtistDetailItem.AlbumHeader -> {
-                            Text(
-                                text = item.albumName,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                            )
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = PlayerBarDefaults.TotalHeight
+                    )
+                ) {
+                    items(items, key = { item ->
+                        when (item) {
+                            is ArtistDetailItem.AlbumHeader -> "header_${item.albumName}"
+                            is ArtistDetailItem.SongItem -> item.song.id
                         }
-                        is ArtistDetailItem.SongItem -> {
-                            SongRow(
-                                song = item.song,
-                                onSeeDetails = goToDetail
-                            )
+                    }) { item ->
+                        when (item) {
+                            is ArtistDetailItem.AlbumHeader -> {
+                                Text(
+                                    text = item.albumName,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                )
+                            }
+                            is ArtistDetailItem.SongItem -> {
+                                SongRow(
+                                    song = item.song,
+                                    onSeeDetails = goToDetail,
+                                    onAddTo = { selectedSong = item.song }
+                                )
+                            }
                         }
                     }
+                }
+
+                selectedSong?.let { song ->
+                    AddToSheet(
+                        song = song,
+                        onDismiss = { selectedSong = null }
+                    )
                 }
             }
         }

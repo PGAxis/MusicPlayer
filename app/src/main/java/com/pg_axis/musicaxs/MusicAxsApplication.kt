@@ -6,8 +6,14 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.pg_axis.musicaxs.services.AlbumArtFetcher
+import com.pg_axis.musicaxs.services.MusicService
 
 class MusicAxsApplication : Application(), ImageLoaderFactory {
+    override fun onCreate() {
+        super.onCreate()
+        MusicService.initFromSettings(this)
+        MusicService.initializeService(this)
+    }
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)

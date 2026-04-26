@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.org.jaudiotagger)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.palette.ktx)
+    implementation(libs.reorderable)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
