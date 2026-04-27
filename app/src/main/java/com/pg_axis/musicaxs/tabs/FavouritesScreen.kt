@@ -25,7 +25,7 @@ import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Playlist
-import com.pg_axis.musicaxs.templates.PlaylistDetailScreen
+import com.pg_axis.musicaxs.templates.FavouritesDetailScreen
 
 @Composable
 fun FavouritesScreen(
@@ -43,7 +43,7 @@ fun FavouritesScreen(
 
     TabSurface {
         when {
-            selected != null -> PlaylistDetailScreen(
+            selected != null -> FavouritesDetailScreen(
                 playlist = selected!!,
                 songs = albumSongs,
                 onBack = vm::onBackFromDetail,

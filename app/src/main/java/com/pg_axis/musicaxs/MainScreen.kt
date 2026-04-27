@@ -38,6 +38,7 @@ import kotlin.math.abs
 @Composable
 fun MainScreen(
     goToDetail: (uri: String) -> Unit,
+    goToPlaylist: (id: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
     val currentSong by vm.currentSong.collectAsState()
@@ -47,6 +48,9 @@ fun MainScreen(
     val tabScrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
+
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var newPlaylistName  by remember { mutableStateOf("") }
 
     var bgColor by remember { mutableStateOf(Color.DarkGray) }
 
@@ -89,7 +93,7 @@ fun MainScreen(
 
                 val onPlaylists = pagerState.settledPage == 1
                 IconButton(
-                    onClick = { vm.onAddPlaylist() },
+                    onClick = { showCreateDialog = true },
                     enabled = onPlaylists,
                     modifier = Modifier.size(35.dp)
                 ) {
@@ -169,7 +173,7 @@ fun MainScreen(
                 ) {
                     when (page) {
                         0 -> FavouritesScreen(goToDetail = goToDetail )
-                        1 -> PlaylistsScreen()
+                        1 -> PlaylistsScreen(goToPlaylist)
                         2 -> SongsScreen(goToDetail = goToDetail )
                         3 -> AlbumsScreen(goToDetail = goToDetail )
                         4 -> ArtistsScreen(goToDetail = goToDetail )
@@ -189,6 +193,35 @@ fun MainScreen(
                 onPlayPause = vm::onPlayPause,
                 onNext = vm::onNext,
                 onSeeDetail = goToDetail
+            )
+        }
+
+        if (showCreateDialog) {
+            AlertDialog(
+                onDismissRequest = { showCreateDialog = false; newPlaylistName = "" },
+                title = { Text("New Playlist") },
+                text = {
+                    OutlinedTextField(
+                        value = newPlaylistName,
+                        onValueChange = { newPlaylistName = it },
+                        label = { Text("Name") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (newPlaylistName.isNotBlank()) {
+                            vm.createPlaylist(newPlaylistName.trim())
+                            newPlaylistName = ""
+                            showCreateDialog = false
+                        }
+                    }) { Text("Create") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCreateDialog = false; newPlaylistName = "" }) {
+                        Text("Cancel")
+                    }
+                }
             )
         }
     }

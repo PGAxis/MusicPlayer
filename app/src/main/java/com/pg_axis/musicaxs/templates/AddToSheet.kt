@@ -23,6 +23,7 @@ import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.settings.FavouritesSave
+import com.pg_axis.musicaxs.settings.PlaylistRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +33,7 @@ fun AddToSheet(
 ) {
     val context = LocalContext.current
     val favourites = remember { FavouritesSave.getInstance(context) }
+    val playlists = remember { PlaylistRepository.getInstance(context).playlists.value }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -76,6 +78,28 @@ fun AddToSheet(
                     onDismiss()
                 }
             )
+
+            if (playlists.isNotEmpty()) {
+                HorizontalDivider()
+                Text(
+                    text = "Add to playlist",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+                playlists.forEach { playlist ->
+                    ListItem(
+                        headlineContent = { Text(playlist.name) },
+                        leadingContent = {
+                            Icon(painterResource(R.drawable.default_playlist), null, Modifier.size(15.dp))
+                        },
+                        modifier = Modifier.clickable {
+                            PlaylistRepository.getInstance(context).addSong(playlist.id, song.id)
+                            onDismiss()
+                        }
+                    )
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pg_axis.musicaxs.side_pages.SongDetailScreen
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.pg_axis.musicaxs.side_pages.PlaylistDetailScreen
 
 @Composable
 fun AppNavigation() {
@@ -18,6 +19,7 @@ fun AppNavigation() {
         composable("main") {
             MainScreen(
                 goToDetail = { songUri -> navController.navigate("songdetail/$songUri") },
+                goToPlaylist = { playlistId -> navController.navigate("playlist/$playlistId") },
                 vm = mainViewModel
             )
         }
@@ -29,6 +31,15 @@ fun AppNavigation() {
                 songUri = uri,
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable("playlist/{playlistId}") { backstackEntry ->
+            val idString = backstackEntry.arguments?.getString("playlistId")!!
+            val id = idString.toLong()
+
+            PlaylistDetailScreen(
+                id,
+                onBack = { navController.popBackStack() },
+                onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") })
         }
     }
 }

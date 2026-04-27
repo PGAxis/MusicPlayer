@@ -28,6 +28,7 @@ import com.pg_axis.musicaxs.settings.FavouritesSave
 import com.pg_axis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
+import com.pg_axis.musicaxs.settings.PlayCountTracker
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -365,6 +366,7 @@ class MusicService : MediaSessionService() {
                 val uri = mediaItem.localConfiguration?.uri ?: return
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
+                PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {

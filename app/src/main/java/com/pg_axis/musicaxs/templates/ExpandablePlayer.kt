@@ -148,7 +148,7 @@ fun ExpandablePlayer(
 
         val imageX = with(density) { lerp(collapsedXPx, expandedXPx, progress).toDp() }
         val imageY = with(density) { lerp(collapsedYPx, expandedYPx, progress).toDp() }
-        val imageCorner = with(density) { lerp(imageCollapsedSizePx / 2f, 10.dp.toPx(), progress).toDp() }
+        val imageCorner = with(density) { lerp(imageCollapsedSizePx / 2f, 50.dp.toPx(), progress).toDp() }
 
         Box(
             modifier = Modifier

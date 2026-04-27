@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.services.MusicService
@@ -74,13 +73,13 @@ fun QueueScreen(
 
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = PlayerBarDefaults.TotalHeight)
+            modifier = Modifier.fillMaxSize()
         ) {
-            itemsIndexed(vm.queue, key = { index, item ->
-                "${index}_${item.localConfiguration?.uri?.toString() ?: item.mediaId}"
+            itemsIndexed(vm.queue, key = { _, item ->
+                System.identityHashCode(item)
             }) { index, mediaItem ->
                 val uri = mediaItem.localConfiguration?.uri ?: return@itemsIndexed
+                val key = System.identityHashCode(mediaItem)
 
                 // Resolve a Song from the MediaItem for SongRow
                 val song = remember(uri) {
@@ -106,17 +105,17 @@ fun QueueScreen(
                             )
                         )
                     } ?: Song(
-                        id     = uri.toString().hashCode().toLong(),
-                        title  = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                        id = uri.toString().hashCode().toLong(),
+                        title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
                         artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
-                        album  = "",
-                        uri    = uri,
+                        album = "",
+                        uri = uri,
                         durationMs  = 0L,
                         albumArtUri = Uri.EMPTY
                     )
                 }
 
-                ReorderableItem(reorderableState, key = uri.toString()) { _ ->
+                ReorderableItem(reorderableState, key = key) { _ ->
                     SongRow(
                         song = song,
                         onSeeDetails = onSeeDetail,
@@ -124,7 +123,7 @@ fun QueueScreen(
                         isCurrentlyPlaying = index == currentIndex,
                         showRemoveFromQueue = true,
                         onRemoveFromQueue = { vm.removeAt(index) },
-                        dragHandleModifier = Modifier.draggableHandle(enabled = true),
+                        dragHandleModifier = Modifier.draggableHandle(),
                         onClick = {
                             MusicService.playerInstance?.let {
                                 it.seekTo(index, 0)

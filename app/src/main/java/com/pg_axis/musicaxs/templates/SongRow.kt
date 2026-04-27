@@ -65,10 +65,11 @@ fun SongRow(
         }
 
         if (showsImage) {
+            val validAlbumArtUri = song.albumArtUri.takeIf { it != Uri.EMPTY && (it?.lastPathSegment?.toLongOrNull() ?: 0L) > 0L }
             var useFallbackUri by remember(song.id) { mutableStateOf(false) }
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(if (useFallbackUri) song.uri else song.albumArtUri)
+                    .data(if (useFallbackUri) song.uri else validAlbumArtUri)
                     .size(44)
                     .memoryCacheKey("art_${song.id}_$useFallbackUri")
                     .diskCacheKey("art_${song.id}_$useFallbackUri")
@@ -91,14 +92,14 @@ fun SongRow(
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFromQueue) CyanPrimary else Color.Unspecified
+                color = if (showRemoveFromQueue) CyanPrimary else Color.White
             )
             Text(
                 text = song.artist,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFromQueue) CyanPrimary else Color.Unspecified
+                color = if (showRemoveFromQueue) CyanPrimary else Color.White
             )
         }
 
@@ -119,7 +120,7 @@ fun SongRow(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Song options",
-                    tint = if (showRemoveFromQueue) CyanPrimary else Color.Unspecified
+                    tint = if (showRemoveFromQueue) CyanPrimary else Color.White
                 )
             }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {

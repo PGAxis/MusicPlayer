@@ -41,7 +41,7 @@ import com.pg_axis.musicaxs.models.Song
 
 
 @Composable
-fun PlaylistDetailScreen(
+fun FavouritesDetailScreen(
     playlist: Playlist,
     songs: List<Song>,
     onBack: () -> Unit,
