@@ -44,6 +44,7 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.side_pages.QueueScreen
 import com.pg_axis.musicaxs.side_pages.SongControlScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -121,6 +122,17 @@ fun ExpandablePlayer(
         val rawPlayerOffset = if (playerState.offset.isNaN()) collapsedOffset else playerState.offset
         val progress = (1f - rawPlayerOffset / collapsedOffset).coerceIn(0f, 1f)
 
+        var queueMounted by remember { mutableStateOf(false) }
+
+        LaunchedEffect(progress >= 1f) {
+            if (progress >= 1f) {
+                delay(500)
+                queueMounted = true
+            } else {
+                queueMounted = false
+            }
+        }
+
         val rawQueueOffset = if (queueState.offset.isNaN()) -fullWidthPx else queueState.offset
 
         // Animated shape values
@@ -169,7 +181,7 @@ fun ExpandablePlayer(
                     .clip(RoundedCornerShape(corner))
                     .background(animatedBg)
             ) {
-                // ── 1. Collapsed bar ──────────────────────────────────────────
+                // --Collapsed bar
                 val barAlpha = (1f - progress * 2f).coerceIn(0f, 1f)
                 Row(
                     modifier = Modifier
@@ -218,7 +230,7 @@ fun ExpandablePlayer(
                     }
                 }
 
-                // ── 2. Expanded screen ────────────────────────────────────────
+                //-- Expanded screen
                 val expandedAlpha = ((progress - 0.3f) / 0.7f).coerceIn(0f, 1f)
                 if (progress > 0.01f) {
                     Box(
@@ -238,7 +250,7 @@ fun ExpandablePlayer(
                     }
                 }
 
-                // ── 3. Morphing image (drawn above expanded screen) ───────────
+                // -- Morphing image
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(currentSong.songUri)
@@ -265,8 +277,8 @@ fun ExpandablePlayer(
                     onError = { onBgColorChange(Color.DarkGray) }
                 )
 
-                // ── 4. Queue panel (drawn last — on top of everything) ────────
-                if (progress > 0.01f) {
+                // -- Queue panel
+                if (queueMounted) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

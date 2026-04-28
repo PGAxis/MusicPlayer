@@ -94,11 +94,11 @@ fun QueueScreen(
                         val artist  = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
                         val albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID))
                         Song(
-                            id    = uri.toString().hashCode().toLong(),  // stable, uri-based
-                            title  = title  ?: mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                            id = uri.toString().hashCode().toLong(),  // stable, uri-based
+                            title = title  ?: mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
                             artist = artist ?: mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
-                            album  = "",
-                            uri    = uri,
+                            album = "",
+                            uri = uri,
                             durationMs  = 0L,
                             albumArtUri = ContentUris.withAppendedId(
                                 "content://media/external/audio/albumart".toUri(), albumId

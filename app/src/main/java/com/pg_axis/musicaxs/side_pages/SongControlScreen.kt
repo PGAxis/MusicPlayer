@@ -136,9 +136,9 @@ fun SongControlScreen(
             IconButton(onClick = { vm.changePlayType() }, shape = RoundedCornerShape(0.dp)) {
                 Icon(
                     painterResource(when (uiState) {
-                        PlayType.Repeat     -> R.drawable.repeat
+                        PlayType.Repeat -> R.drawable.repeat
                         PlayType.RepeatOnce -> R.drawable.repeat_once
-                        PlayType.Continue   -> R.drawable.continue_play
+                        PlayType.Continue -> R.drawable.continue_play
                     }),
                     "RepeatType", tint = CyanPrimary, modifier = Modifier.size(25.dp)
                 )

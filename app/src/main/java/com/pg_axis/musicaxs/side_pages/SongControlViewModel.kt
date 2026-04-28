@@ -5,9 +5,11 @@ import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.Player
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.settings.FavouritesSave
@@ -42,13 +44,14 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
 
     // Scrubbing state — true while user is dragging the slider
     private val _isScrubbing = MutableStateFlow(false)
-    val isScrubbing: StateFlow<Boolean> = _isScrubbing.asStateFlow()
 
     private var lastScrubPositionMs: Long = 0L
 
     init {
         _positionMs.value = settings.lastPositionMs
         _durationMs.value = settings.lastDurationMs
+
+        _uiState.value = getPlayTypeByNum(settings.repeatMode)
 
         viewModelScope.launch {
             while (true) {
@@ -91,12 +94,29 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
     fun seekBack10() = MusicService.seekBy(-10_000L)
     fun seekForward10() = MusicService.seekBy(10_000L)
 
-    fun changePlayType() { _uiState.value = getNextPlayType() }
+    fun changePlayType() {
+        val next = getNextPlayType()
+        Log.d("Repeat type", "$next")
+        _uiState.value = next
+
+        MusicService.setRepeatMode(when (next) {
+            PlayType.Repeat -> Player.REPEAT_MODE_ALL
+            PlayType.RepeatOnce -> Player.REPEAT_MODE_ONE
+            PlayType.Continue -> Player.REPEAT_MODE_OFF
+        })
+    }
 
     private fun getNextPlayType() = when (_uiState.value) {
         PlayType.Repeat -> PlayType.RepeatOnce
         PlayType.RepeatOnce -> PlayType.Continue
         PlayType.Continue -> PlayType.Repeat
+    }
+
+    private fun getPlayTypeByNum(mode: Int) = when (mode) {
+        0 -> PlayType.Continue
+        1 -> PlayType.RepeatOnce
+        2 -> PlayType.Repeat
+        else -> PlayType.Continue
     }
 
     fun resolveSongFromUri(context: Context, uri: Uri): Song? {

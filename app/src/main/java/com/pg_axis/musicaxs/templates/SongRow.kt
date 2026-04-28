@@ -25,6 +25,7 @@ import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary
+import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ModifierParameter")
@@ -56,32 +57,26 @@ fun SongRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Currently playing indicator
         if (isCurrentlyPlaying) {
             EqualizerBars(modifier = Modifier.width(16.dp))
         } else if (showRemoveFromQueue) {
-            // Spacer to keep alignment consistent in queue
             Spacer(Modifier.width(16.dp))
         }
 
         if (showsImage) {
-            val validAlbumArtUri = song.albumArtUri.takeIf { it != Uri.EMPTY && (it?.lastPathSegment?.toLongOrNull() ?: 0L) > 0L }
-            var useFallbackUri by remember(song.id) { mutableStateOf(false) }
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(if (useFallbackUri) song.uri else validAlbumArtUri)
-                    .size(44)
-                    .memoryCacheKey("art_${song.id}_$useFallbackUri")
-                    .diskCacheKey("art_${song.id}_$useFallbackUri")
-                    .crossfade(true)
+                    .data(song.uri)
+                    .size(64, 64)
+                    .crossfade(false)
+                    .dispatcher(Dispatchers.IO.limitedParallelism(8))
                     .build(),
                 contentDescription = "Album art",
                 error = painterResource(R.drawable.default_cover),
                 placeholder = painterResource(R.drawable.default_cover),
                 fallback = painterResource(R.drawable.default_cover),
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.Crop,
-                onError = { if (!useFallbackUri) useFallbackUri = true }
+                contentScale = ContentScale.Crop
             )
         }
 

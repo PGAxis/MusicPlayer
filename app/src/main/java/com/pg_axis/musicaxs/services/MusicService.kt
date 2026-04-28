@@ -3,8 +3,10 @@ package com.pg_axis.musicaxs.services
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -66,6 +68,10 @@ class MusicService : MediaSessionService() {
             instance?.mediaSession?.player?.seekTo(positionMs)
         }
 
+        fun setRepeatMode(repeatMode: Int) {
+            instance?.mediaSession?.player?.repeatMode = repeatMode
+        }
+
         fun seekBy(offsetMs: Long) {
             instance?.mediaSession?.player?.let {
                 it.seekTo((it.currentPosition + offsetMs).coerceAtLeast(0L))
@@ -124,8 +130,16 @@ class MusicService : MediaSessionService() {
             val settings = SettingsSave.getInstance(context)
             Log.d("Settings initialized", "Queue is initialized, ${settings.lastQueueUris}")
             if (settings.lastQueueUris.isNotEmpty()) {
-                queueState.value = settings.lastQueueUris.map { uri ->
-                    MediaItem.Builder().setUri(uri.toUri()).build()
+                queueState.value = settings.lastQueueUris.mapIndexed { i, uri ->
+                    MediaItem.Builder()
+                        .setUri(uri.toUri())
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(settings.lastQueueTitles.getOrElse(i) { "" })
+                                .setArtist(settings.lastQueueArtists.getOrElse(i) { "" })
+                                .build()
+                        )
+                        .build()
                 }
             }
         }
@@ -150,16 +164,20 @@ class MusicService : MediaSessionService() {
         }
 
         fun previous() {
-            val player = instance?.mediaSession?.player
-            player?.currentPosition?.let {
-                if (it > 3000) player.seekTo(0)
-                else player.seekToPreviousMediaItem()
-            }
+            val player = instance?.mediaSession?.player ?: return
+            val isFirst = player.currentMediaItemIndex == 0
+
+            if (player.currentPosition > 3000) player.seekTo(0)
+            else if (player.repeatMode != Player.REPEAT_MODE_ALL && isFirst) player.seekTo(player.mediaItemCount - 1, 0)
+            else player.seekToPreviousMediaItem()
         }
 
         fun next() {
-            val player = instance?.mediaSession?.player
-            player?.seekToNextMediaItem()
+            val player = instance?.mediaSession?.player ?: return
+            val isLast = player.currentMediaItemIndex == player.mediaItemCount - 1
+
+            if (player.repeatMode != Player.REPEAT_MODE_ALL && isLast) player.seekTo(0, 0)
+            else player.seekToNextMediaItem()
         }
 
         private const val EXTRA_URI = "extra_uri"
@@ -255,11 +273,35 @@ class MusicService : MediaSessionService() {
 
             val playerCommands = Player.Commands.Builder()
                 .addAll(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
-                .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
-                .remove(Player.COMMAND_SEEK_TO_NEXT)
                 .build()
 
             return MediaSession.ConnectionResult.accept(sessionCommands, playerCommands)
+        }
+
+        override fun onMediaButtonEvent(
+            session: MediaSession,
+            controllerInfo: MediaSession.ControllerInfo,
+            intent: Intent
+        ): Boolean {
+            val keyEvent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
+            }
+
+            when (keyEvent?.keyCode) {
+                KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                    if (keyEvent.action == KeyEvent.ACTION_DOWN) next()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+                    if (keyEvent.action == KeyEvent.ACTION_DOWN) previous()
+                    return true
+                }
+            }
+
+            return super.onMediaButtonEvent(session, controllerInfo, intent)
         }
 
         override fun onCustomCommand(
@@ -295,7 +337,17 @@ class MusicService : MediaSessionService() {
 
             val queueUris = settings.lastQueueUris.ifEmpty { listOf(lastUri) }
             val currentIndex = queueUris.indexOf(lastUri).coerceAtLeast(0)
-            val items = queueUris.map { MediaItem.Builder().setUri(it.toUri()).build() }
+            val items = queueUris.mapIndexed { i, uri ->
+                MediaItem.Builder()
+                    .setUri(uri.toUri())
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(settings.lastQueueTitles.getOrElse(i) { "" })
+                            .setArtist(settings.lastQueueArtists.getOrElse(i) { "" })
+                            .build()
+                    )
+                    .build()
+            }
 
             return Futures.immediateFuture(
                 MediaSession.MediaItemsWithStartPosition(
@@ -367,6 +419,7 @@ class MusicService : MediaSessionService() {
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
                 PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
+                updateNotificationButtons(mediaSession!!)
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -380,7 +433,16 @@ class MusicService : MediaSessionService() {
 
                 val settings = SettingsSave.getInstance(this@MusicService)
                 settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
+                settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
+                settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }
                 settings.save()
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED && player.repeatMode == Player.REPEAT_MODE_OFF) {
+                    player.seekTo(0, 0)
+                    player.pause()
+                }
             }
         })
 
@@ -399,13 +461,22 @@ class MusicService : MediaSessionService() {
                 val uris = settings.lastQueueUris
                 if (uris.isNotEmpty()) {
                     val currentIndex = uris.indexOf(settings.lastSongUri).coerceAtLeast(0)
-                    val items = uris.map { uri ->
-                        MediaItem.Builder().setUri(uri.toUri()).build()
+                    val items = uris.mapIndexed { i, uri ->
+                        MediaItem.Builder()
+                            .setUri(uri.toUri())
+                            .setMediaMetadata(
+                                MediaMetadata.Builder()
+                                    .setTitle(settings.lastQueueTitles.getOrElse(i) { "Unknown" })
+                                    .setArtist(settings.lastQueueArtists.getOrElse(i) { "Unknown" })
+                                    .build()
+                            )
+                            .build()
                     }
                     mediaSession?.player?.apply {
                         setMediaItems(items, currentIndex, settings.lastPositionMs)
                         prepare()
                     }
+                    mediaSession?.player?.repeatMode = settings.repeatMode
                 }
                 return START_NOT_STICKY
             }

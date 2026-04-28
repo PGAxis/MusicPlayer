@@ -91,18 +91,18 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
                 emptyList()
             )
 
-    /*
-    fun createPlaylist(name: String) = repo.create(name)
-
-    fun deletePlaylist(id: Long) = repo.delete(id)
-
-    fun getSongsForPlaylist(context: Context, playlist: Playlist): List<Song> {
-        return playlist.songIds.mapNotNull { id ->
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            querySong(context, uri)
+    fun createFromImport(name: String, songIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.create(name, songIds)
         }
     }
-    */
+
+    fun getSongsForExport(context: Context, playlist: Playlist): List<Song> {
+        return playlist.songIds.mapNotNull { id ->
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
+            querySong(context, uri) // already exists in the VM
+        }
+    }
 
     // ── Queries ───────────────────────────────────────────────────────────────
 

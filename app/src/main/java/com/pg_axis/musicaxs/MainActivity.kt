@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.ui.theme.MusicaxsTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,6 +35,15 @@ class MainActivity : ComponentActivity() {
             MusicaxsTheme {
                 AppNavigation()
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (MusicService.playerInstance == null) {
+            MusicService.initFromSettings(application)
+            MusicService.initializeService(application)
         }
     }
 }

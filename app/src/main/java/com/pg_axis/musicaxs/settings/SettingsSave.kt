@@ -1,7 +1,6 @@
 package com.pg_axis.musicaxs.settings
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -31,7 +30,9 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastPositionMs by mutableLongStateOf(0L)
     override var lastDurationMs by mutableLongStateOf(0L)
     override var lastQueueUris by mutableStateOf<List<String>>(emptyList())
-
+    override var repeatMode by mutableIntStateOf(0)
+    override var lastQueueTitles by mutableStateOf<List<String>>(emptyList())
+    override var lastQueueArtists by mutableStateOf<List<String>>(emptyList())
 
     fun save() {
         val data = SettingsData(
@@ -39,21 +40,21 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastSongUri = lastSongUri,
             lastPositionMs = lastPositionMs,
             lastDurationMs = lastDurationMs,
-            lastQueueUris = lastQueueUris
+            lastQueueUris = lastQueueUris,
+            lastQueueTitles = lastQueueTitles,
+            lastQueueArtists = lastQueueArtists,
+            repeatMode = repeatMode
         )
         val json = gson.toJson(data)
-        Log.d("SettingsSave", "Saving: $json")
         settingsPath.writeText(json)
     }
 
     fun load() {
         if (!settingsPath.exists()) {
-            Log.d("SettingsSave", "No settings file found")
             return
         }
         try {
             val text = settingsPath.readText()
-            Log.d("SettingsSave", "Loading: $text")
             val type = object : TypeToken<SettingsData>() {}.type
             gson.fromJson<SettingsData>(text, type)?.let {
                 lastTabIndex = it.lastTabIndex
@@ -61,10 +62,11 @@ class SettingsSave private constructor(context: Context): ISettings {
                 lastPositionMs = it.lastPositionMs
                 lastDurationMs = it.lastDurationMs
                 lastQueueUris = it.lastQueueUris
-                Log.d("SettingsSave", "Loaded queue: ${it.lastQueueUris}")
+                lastQueueTitles = it.lastQueueTitles
+                lastQueueArtists = it.lastQueueArtists
+                repeatMode = it.repeatMode
             }
-        } catch (e: Exception) {
-            Log.e("SettingsSave", "Load failed", e)
+        } catch (_: Exception) {
         }
     }
 
@@ -75,7 +77,10 @@ class SettingsSave private constructor(context: Context): ISettings {
         val lastSongUri: String? = null,
         val lastPositionMs: Long = 0L,
         val lastDurationMs: Long = 0L,
-        val lastQueueUris: List<String> = emptyList()
+        val lastQueueUris: List<String> = emptyList(),
+        val lastQueueTitles: List<String> = emptyList(),
+        val lastQueueArtists: List<String> = emptyList(),
+        val repeatMode: Int = 0
     )
 
     init {

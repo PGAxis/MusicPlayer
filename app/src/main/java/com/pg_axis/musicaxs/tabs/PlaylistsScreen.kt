@@ -1,6 +1,8 @@
 package com.pg_axis.musicaxs.tabs
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -26,6 +29,7 @@ import coil.request.ImageRequest
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Playlist
+import com.pg_axis.musicaxs.services.M3uHandler
 
 data class SmartInfo(
     val first: String,
@@ -34,6 +38,7 @@ data class SmartInfo(
     val fourth: Long
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistsScreen(
     onOpenPlaylist: (id: String) -> Unit,
@@ -44,11 +49,45 @@ fun PlaylistsScreen(
     val recentlyPlayed by vm.recentlyPlayed.collectAsStateWithLifecycle()
     val mostPlayed by vm.mostPlayed.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    var showSheet by remember { mutableStateOf(false) }
+    var showNameDialog by remember { mutableStateOf(false) }
+    var pendingImportSongIds by remember { mutableStateOf<List<Long>>(emptyList()) }
+    var importedName by remember { mutableStateOf("") }
+
+    var exportTargetPlaylist by remember { mutableStateOf<Playlist?>(null) }
+
     val smartPlaylists = listOf(
         SmartInfo("Recently Added", recentlyAdded.size, recentlyAdded.firstOrNull()?.uri, 1),
         SmartInfo("Recently Played", recentlyPlayed.size, recentlyPlayed.firstOrNull()?.uri, 2),
         SmartInfo("Most Played", mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3)
     )
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("audio/x-mpegurl")
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val playlist = exportTargetPlaylist ?: return@rememberLauncherForActivityResult
+        val songs = vm.getSongsForExport(context, playlist)
+        context.contentResolver.openOutputStream(uri)?.use {
+            M3uHandler.export(context, songs, it)
+        }
+        exportTargetPlaylist = null
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val songIds = context.contentResolver.openInputStream(uri)?.use {
+            M3uHandler.import(context, it)
+        } ?: emptyList()
+        if (songIds.isNotEmpty()) {
+            pendingImportSongIds = songIds
+            importedName = ""
+            showNameDialog = true
+        }
+    }
 
     TabSurface {
         LazyColumn(
@@ -86,6 +125,11 @@ fun PlaylistsScreen(
                         fontSize = 16.sp,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = { showSheet = true }, modifier = Modifier.size(36.dp)) {
+                        Icon(painterResource(R.drawable.import_export), "Import / Export",
+                            tint = Color.White
+                        )
+                    }
                 }
                 HorizontalDivider()
             }
@@ -109,6 +153,78 @@ fun PlaylistsScreen(
                     )
                 }
             }
+        }
+
+        if (showSheet) {
+            ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+                Column(Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)) {
+                    Text("Playlists", fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+                    HorizontalDivider()
+
+                    ListItem(
+                        headlineContent = { Text("Import .m3u") },
+                        leadingContent = {
+                            Icon(
+                                painter = painterResource(R.drawable.import_icon),
+                                contentDescription = "Import",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            showSheet = false
+                            importLauncher.launch(arrayOf("audio/x-mpegurl", "audio/mpegurl", "*/*"))
+                        }
+                    )
+
+                    // Export — shows sub-list of playlists to pick from
+                    if (playlists.isEmpty()) {
+                        ListItem(headlineContent = { Text("Export .m3u — no playlists yet") })
+                    } else {
+                        Text("Export", fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+                        playlists.forEach { playlist ->
+                            ListItem(
+                                headlineContent = { Text(playlist.name) },
+                                supportingContent = { Text("${playlist.getSongCount()} songs") },
+                                modifier = Modifier.clickable {
+                                    showSheet = false
+                                    exportTargetPlaylist = playlist
+                                    exportLauncher.launch("${playlist.name}.m3u8")
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showNameDialog) {
+            AlertDialog(
+                onDismissRequest = { showNameDialog = false },
+                title = { Text("Name your playlist") },
+                text = {
+                    OutlinedTextField(
+                        value = importedName,
+                        onValueChange = { importedName = it },
+                        label = { Text("Playlist name") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (importedName.isNotBlank()) {
+                            vm.createFromImport(importedName, pendingImportSongIds)
+                            showNameDialog = false
+                        }
+                    }) { Text("Create") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showNameDialog = false }) { Text("Cancel") }
+                }
+            )
         }
     }
 }

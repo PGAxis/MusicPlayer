@@ -15,27 +15,29 @@ import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import java.io.File
 import androidx.core.net.toUri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AlbumArtFetcher(
     private val uri: Uri,
     private val context: Context
 ) : Fetcher {
+    private fun noArtSentinelFor(key: String) =
+        File(context.cacheDir, "album_art/$key.none")
 
     override suspend fun fetch(): FetchResult? {
-
         if (uri.authority != "media") return null
-
         val songId = uri.lastPathSegment ?: return null
 
         val cacheFile = cacheFileFor("song_$songId")
-
         if (cacheFile.exists() && cacheFile.length() > 0) {
             return sourceResult(cacheFile, DataSource.DISK)
         }
 
-        // ── Step 2: try MediaStore album art ──
-        val albumId = resolveAlbumId(uri)
+        val sentinel = noArtSentinelFor("song_$songId")
+        if (sentinel.exists()) return null
 
+        val albumId = resolveAlbumId(uri)
         if (albumId != null) {
             val albumArtUri =
                 "content://media/external/audio/albumart/$albumId".toUri()
@@ -60,9 +62,17 @@ class AlbumArtFetcher(
             if (art != null && art.isNotEmpty()) {
                 cacheFile.writeBytes(art)
                 sourceResult(cacheFile, DataSource.DISK)
-            } else null
+            } else{
+                withContext(Dispatchers.IO) {
+                    sentinel.createNewFile()
+                }
+                null
+            }
 
         } catch (_: Exception) {
+            withContext(Dispatchers.IO) {
+                sentinel.createNewFile()
+            }
             null
         }
     }

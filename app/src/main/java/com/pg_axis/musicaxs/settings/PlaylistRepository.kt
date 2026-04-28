@@ -40,6 +40,13 @@ class PlaylistRepository private constructor(context: Context) {
         return playlist
     }
 
+    fun create(name: String, songIds: List<Long>): Playlist {
+        val id = System.currentTimeMillis()
+        val playlist = Playlist(id = id, name = name, songIds = songIds)
+        save(playlist)
+        return playlist
+    }
+
     fun playlistById(id: Long): Playlist? {
         return _playlists.value.find { it.id == id }
     }

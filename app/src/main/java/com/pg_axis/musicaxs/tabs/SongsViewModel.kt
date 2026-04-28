@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.ContentUris
 import android.content.pm.PackageManager
 import android.database.ContentObserver
-import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -20,7 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
-import java.io.File
+import com.pg_axis.musicaxs.services.AlbumArtPreloader
 
 // MIME types
 private val SUPPORTED_MIME_TYPES = setOf(
@@ -95,41 +94,9 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun prewarmAlbumArtCache(songs: List<Song>) {
-        val context = getApplication<Application>()
-        val cacheDir = File(context.cacheDir, "album_art").also { it.mkdirs() }
-
-        val toProcess = songs.filter { it.albumArtUri != null }.distinctBy { it.albumArtUri } +
-                songs.filter { it.albumArtUri == null }
-
-        toProcess
-            .filter { song ->
-                val songId = song.uri.lastPathSegment ?: return@filter false
-                !File(cacheDir, "song_$songId.jpg").exists()
-            }
-            .forEach { song ->
-                val songId = song.uri.lastPathSegment ?: return@forEach
-                val cacheFile = File(cacheDir, "song_$songId.jpg")
-
-                try {
-                    song.albumArtUri?.let { artUri ->
-                        context.contentResolver.openInputStream(artUri)?.use { stream ->
-                            val bytes = stream.readBytes()
-                            if (bytes.isNotEmpty()) {
-                                cacheFile.writeBytes(bytes)
-                                return@forEach
-                            }
-                        }
-                    }
-
-                    val mmr = MediaMetadataRetriever()
-                    mmr.setDataSource(context, song.uri)
-                    val art = mmr.embeddedPicture
-                    mmr.release()
-                    if (art != null && art.isNotEmpty()) {
-                        cacheFile.writeBytes(art)
-                    }
-                } catch (_: Exception) { }
-            }
+        viewModelScope.launch {
+            AlbumArtPreloader.preloadAll(context = getApplication(), songs = songs)
+        }
     }
 
     private fun querySongs(): List<Song> {
