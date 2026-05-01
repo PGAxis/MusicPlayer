@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
@@ -31,6 +30,14 @@ import com.pg_axis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
 import com.pg_axis.musicaxs.settings.PlayCountTracker
+import com.pg_axis.musicaxs.settings.ShuffleSave
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -40,6 +47,9 @@ class MusicService : MediaSessionService() {
 
     // ── Queue state ───────────────────────────────────────────────────────────
     private var currentSource: QueueSource = QueueSource.MANUAL
+
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var playCountJob: Job? = null
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
@@ -64,12 +74,41 @@ class MusicService : MediaSessionService() {
 
         val playerInstance get() = instance?.mediaSession?.player
 
+        val isShuffled get() = ShuffleSave.getInstance(instance!!).isShuffled
+
+        fun toggleShuffle(context: Context) {
+            val save = ShuffleSave.getInstance(context)
+            val player = instance?.mediaSession?.player ?: return
+
+            if (!save.isShuffled) {
+                val currentUris = (0 until player.mediaItemCount)
+                    .map { player.getMediaItemAt(it).localConfiguration?.uri?.toString() ?: "" }
+                save.setOriginalQueue(currentUris)
+                save.updateShuffled(true)
+
+                isShuffleOn = true
+
+                val shuffled = currentUris.shuffled()
+                applyQueueReorder(shuffled)
+            } else {
+                // turning off — restore original
+                save.updateShuffled(false)
+                isShuffleOn = false
+
+                val original = save.getOriginalQueue()
+                applyQueueReorder(original)
+            }
+
+            instance?.mediaSession?.let { instance?.updateNotificationButtons(it) }
+        }
+
         fun seekTo(positionMs: Long) {
             instance?.mediaSession?.player?.seekTo(positionMs)
         }
 
         fun setRepeatMode(repeatMode: Int) {
             instance?.mediaSession?.player?.repeatMode = repeatMode
+            instance?.setRepeatInternal(repeatMode)
         }
 
         fun seekBy(offsetMs: Long) {
@@ -78,11 +117,6 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        /**
-         * Play a single song.
-         * - PLAYLIST mode: clears queue, plays only this song, switches to MANUAL.
-         * - MANUAL mode: inserts at index 0, plays from there, rest of queue follows.
-         */
         fun playSingular(context: Context, song: Song, startPositionMs: Long = 0L) {
             instance?.playSingularInternal(song, startPositionMs) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
@@ -95,9 +129,6 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        /**
-         * Replace the current queue with a playlist and start playback from the first item.
-         */
         fun replaceQueue(context: Context, songs: List<Song>) {
             if (songs.isEmpty()) return
             instance?.replaceQueueInternal(songs) ?: run {
@@ -110,11 +141,9 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        /**
-         * Append a song to the end of the current queue without interrupting playback.
-         * Falls back to playSingular if the service isn't running.
-         */
         fun addToQueue(context: Context, song: Song) {
+            val save = ShuffleSave.getInstance(context)
+            if (save.isShuffled) save.addToOriginal(song.uri.toString())
             instance?.addToQueueInternal(song) ?: playSingular(context, song)
         }
 
@@ -123,12 +152,47 @@ class MusicService : MediaSessionService() {
         }
 
         fun removeFromQueue(index: Int) {
-            instance?.mediaSession?.player?.removeMediaItem(index)
+            val player = instance?.mediaSession?.player ?: return
+            val uri = player.getMediaItemAt(index).localConfiguration?.uri?.toString()
+            if (uri != null && ShuffleSave.getInstance(instance!!).isShuffled) {
+                ShuffleSave.getInstance(instance!!).removeFromOriginal(uri)
+            }
+            player.removeMediaItem(index)
+        }
+
+        private fun applyQueueReorder(targetUris: List<String>) {
+            val player = instance?.mediaSession?.player ?: return
+
+            // Mirror of the current player queue so we can simulate moves
+            val current = (0 until player.mediaItemCount)
+                .map { player.getMediaItemAt(it).localConfiguration?.uri?.toString() ?: "" }
+                .toMutableList()
+
+            for (targetIndex in targetUris.indices) {
+                val targetUri = targetUris[targetIndex]
+
+                // Find first occurrence at or after targetIndex (positions before are already settled)
+                var currentIndex = -1
+                for (i in targetIndex until current.size) {
+                    if (current[i] == targetUri) {
+                        currentIndex = i
+                        break
+                    }
+                }
+
+                if (currentIndex == -1 || currentIndex == targetIndex) continue
+
+                player.moveMediaItem(currentIndex, targetIndex)
+                current.add(targetIndex, current.removeAt(currentIndex))
+            }
+        }
+
+        fun reorderQueue(from: Int, to: Int) {
+            instance?.mediaSession?.player?.moveMediaItem(from, to)
         }
 
         fun initFromSettings(context: Context) {
             val settings = SettingsSave.getInstance(context)
-            Log.d("Settings initialized", "Queue is initialized, ${settings.lastQueueUris}")
             if (settings.lastQueueUris.isNotEmpty()) {
                 queueState.value = settings.lastQueueUris.mapIndexed { i, uri ->
                     MediaItem.Builder()
@@ -202,12 +266,19 @@ class MusicService : MediaSessionService() {
         )
         .build()
 
+    private fun setRepeatInternal(repeatMode: Int) {
+        settings.repeatMode = repeatMode
+        settings.save()
+    }
+
     private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
         val player = mediaSession?.player ?: return
 
         when (currentSource) {
             QueueSource.PLAYLIST -> {
                 currentSource = QueueSource.MANUAL
+                settings.queueSource = QueueSource.MANUAL
+                settings.save()
                 player.setMediaItem(song.toMediaItem(), startPositionMs)
             }
             QueueSource.MANUAL -> {
@@ -222,6 +293,13 @@ class MusicService : MediaSessionService() {
     private fun replaceQueueInternal(songs: List<Song>) {
         val player = mediaSession?.player ?: return
         currentSource = QueueSource.PLAYLIST
+        settings.queueSource = QueueSource.PLAYLIST
+        settings.save()
+
+        val save = ShuffleSave.getInstance(this)
+        save.updateShuffled(false)
+        save.setOriginalQueue(songs.map { it.uri.toString() })
+
         player.setMediaItems(songs.map { it.toMediaItem() })
         player.prepare()
         player.play()
@@ -229,6 +307,11 @@ class MusicService : MediaSessionService() {
 
     private fun addToQueueInternal(song: Song) {
         mediaSession?.player?.addMediaItem(song.toMediaItem())
+        if (currentSource == QueueSource.PLAYLIST) {
+            currentSource = QueueSource.MANUAL
+            settings.queueSource = QueueSource.MANUAL
+            settings.save()
+        }
     }
 
     private fun replaceQueueFromExtras(
@@ -249,6 +332,8 @@ class MusicService : MediaSessionService() {
                 .build()
         }
         currentSource = QueueSource.PLAYLIST
+        settings.queueSource = QueueSource.PLAYLIST
+        settings.save()
         player.setMediaItems(items)
         player.prepare()
         player.play()
@@ -311,10 +396,7 @@ class MusicService : MediaSessionService() {
             args: Bundle
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
-                COMMAND_SHUFFLE.customAction  -> {
-                    isShuffleOn = !isShuffleOn
-                    session.player.shuffleModeEnabled = isShuffleOn
-                }
+                COMMAND_SHUFFLE.customAction  -> toggleShuffle(this@MusicService)
                 COMMAND_LIKE.customAction -> like(favourites, false)
                 COMMAND_PREVIOUS.customAction -> previous()
                 COMMAND_NEXT.customAction -> next()
@@ -418,8 +500,16 @@ class MusicService : MediaSessionService() {
                 val uri = mediaItem.localConfiguration?.uri ?: return
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
-                PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
                 updateNotificationButtons(mediaSession!!)
+
+                playCountJob?.cancel()
+                playCountJob = serviceScope.launch {
+                    delay(1000)
+                    val player = instance?.mediaSession?.player ?: return@launch
+                    if (player.isPlaying) {
+                        PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
+                    }
+                }
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -448,6 +538,9 @@ class MusicService : MediaSessionService() {
 
         queueState.value = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
         currentIndexState.value = player.currentMediaItemIndex
+        currentSource = settings.queueSource
+        player.repeatMode = settings.repeatMode
+        isShuffleOn = ShuffleSave.getInstance(this).isShuffled
 
         updateNotificationButtons(mediaSession!!)
     }
@@ -516,6 +609,7 @@ class MusicService : MediaSessionService() {
             release()
             mediaSession = null
         }
+        serviceScope.cancel()
         super.onDestroy()
     }
 

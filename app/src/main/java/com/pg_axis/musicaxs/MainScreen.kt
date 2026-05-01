@@ -172,7 +172,7 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     when (page) {
-                        0 -> FavouritesScreen(goToDetail = goToDetail )
+                        0 -> FavouritesScreen(goToPlaylist )
                         1 -> PlaylistsScreen(goToPlaylist)
                         2 -> SongsScreen(goToDetail = goToDetail )
                         3 -> AlbumsScreen(goToDetail = goToDetail )

@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import coil.ImageLoader
 import coil.decode.DataSource
 import coil.decode.ImageSource
@@ -28,22 +29,40 @@ class AlbumArtFetcher(
     override suspend fun fetch(): FetchResult? {
         if (uri.authority != "media") return null
         val songId = uri.lastPathSegment ?: return null
+        Log.d("AlbumArtFetcher", "fetch called for songId=$songId uri=$uri")
 
         val cacheFile = cacheFileFor("song_$songId")
         if (cacheFile.exists() && cacheFile.length() > 0) {
+            Log.d("AlbumArtFetcher", "serving from disk cache: $songId")
             return sourceResult(cacheFile, DataSource.DISK)
         }
 
         val sentinel = noArtSentinelFor("song_$songId")
-        if (sentinel.exists()) return null
+        if (sentinel.exists()) {
+            Log.d("AlbumArtFetcher", "sentinel exists, skipping: $songId")
+            return null
+        }
+
+        try {
+            val mmr = MediaMetadataRetriever()
+            mmr.setDataSource(context, uri)
+            val art = mmr.embeddedPicture
+            mmr.release()
+            Log.d("AlbumArtFetcher", "MMR result for $songId: ${if (art != null) "${art.size} bytes" else "null"}")
+            if (art != null && art.isNotEmpty()) {
+                cacheFile.writeBytes(art)
+                return sourceResult(cacheFile, DataSource.DISK)
+            }
+        } catch (e: Exception) {
+            Log.d("AlbumArtFetcher", "MMR exception for $songId: $e")
+        }
 
         val albumId = resolveAlbumId(uri)
         if (albumId != null) {
-            val albumArtUri =
-                "content://media/external/audio/albumart/$albumId".toUri()
-
             try {
-                context.contentResolver.openInputStream(albumArtUri)?.use { stream ->
+                context.contentResolver.openInputStream(
+                    "content://media/external/audio/albumart/$albumId".toUri()
+                )?.use { stream ->
                     val bytes = stream.readBytes()
                     if (bytes.isNotEmpty()) {
                         cacheFile.writeBytes(bytes)
@@ -53,28 +72,8 @@ class AlbumArtFetcher(
             } catch (_: Exception) {}
         }
 
-        return try {
-            val mmr = MediaMetadataRetriever()
-            mmr.setDataSource(context, uri)
-            val art = mmr.embeddedPicture
-            mmr.release()
-
-            if (art != null && art.isNotEmpty()) {
-                cacheFile.writeBytes(art)
-                sourceResult(cacheFile, DataSource.DISK)
-            } else{
-                withContext(Dispatchers.IO) {
-                    sentinel.createNewFile()
-                }
-                null
-            }
-
-        } catch (_: Exception) {
-            withContext(Dispatchers.IO) {
-                sentinel.createNewFile()
-            }
-            null
-        }
+        withContext(Dispatchers.IO) { sentinel.createNewFile() }
+        return null
     }
 
     private fun resolveAlbumId(uri: Uri): String? {

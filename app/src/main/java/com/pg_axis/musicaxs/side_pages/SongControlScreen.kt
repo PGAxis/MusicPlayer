@@ -126,9 +126,14 @@ fun SongControlScreen(
 
             Spacer(Modifier.weight(1f))
 
-            IconButton(onClick = { /* TODO shuffle */ }, shape = RoundedCornerShape(0.dp)) {
-                Icon(painterResource(R.drawable.shuffle), "Shuffle",
-                    tint = CyanPrimary, modifier = Modifier.size(25.dp))
+            val isShuffled by remember { derivedStateOf { MusicService.isShuffled } }
+            IconButton(onClick = { MusicService.toggleShuffle(context) }, shape = RoundedCornerShape(0.dp)) {
+                Icon(
+                    painter = painterResource(R.drawable.shuffle),
+                    contentDescription = "Shuffle",
+                    tint = if (isShuffled) CyanPrimary else CyanPrimary.copy(alpha = 0.5f),
+                    modifier = Modifier.size(25.dp)
+                )
             }
 
             Spacer(Modifier.weight(1f))

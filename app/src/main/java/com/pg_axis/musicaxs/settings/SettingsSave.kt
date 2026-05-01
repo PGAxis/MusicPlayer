@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.pg_axis.musicaxs.services.QueueSource
 
 class SettingsSave private constructor(context: Context): ISettings {
 
@@ -30,9 +31,10 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastPositionMs by mutableLongStateOf(0L)
     override var lastDurationMs by mutableLongStateOf(0L)
     override var lastQueueUris by mutableStateOf<List<String>>(emptyList())
-    override var repeatMode by mutableIntStateOf(0)
     override var lastQueueTitles by mutableStateOf<List<String>>(emptyList())
     override var lastQueueArtists by mutableStateOf<List<String>>(emptyList())
+    override var repeatMode by mutableIntStateOf(2)
+    override var queueSource by mutableStateOf(QueueSource.MANUAL)
 
     fun save() {
         val data = SettingsData(
@@ -43,7 +45,8 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueUris = lastQueueUris,
             lastQueueTitles = lastQueueTitles,
             lastQueueArtists = lastQueueArtists,
-            repeatMode = repeatMode
+            repeatMode = repeatMode,
+            queueSource = queueSource
         )
         val json = gson.toJson(data)
         settingsPath.writeText(json)
@@ -65,6 +68,7 @@ class SettingsSave private constructor(context: Context): ISettings {
                 lastQueueTitles = it.lastQueueTitles
                 lastQueueArtists = it.lastQueueArtists
                 repeatMode = it.repeatMode
+                queueSource = it.queueSource
             }
         } catch (_: Exception) {
         }
@@ -80,7 +84,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         val lastQueueUris: List<String> = emptyList(),
         val lastQueueTitles: List<String> = emptyList(),
         val lastQueueArtists: List<String> = emptyList(),
-        val repeatMode: Int = 0
+        val repeatMode: Int = 2,
+        val queueSource: QueueSource = QueueSource.MANUAL
     )
 
     init {

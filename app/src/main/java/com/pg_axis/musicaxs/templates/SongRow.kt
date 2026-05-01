@@ -37,6 +37,7 @@ fun SongRow(
     showsImage: Boolean = true,
     isCurrentlyPlaying: Boolean = false,
     showRemoveFromQueue: Boolean = false,
+    removeLabel: String = "Remove from queue",
     onRemoveFromQueue: () -> Unit = {},
     dragHandleModifier: Modifier = Modifier,   // caller applies .draggableHandle() here
     onClick: (() -> Unit)? = null
@@ -132,7 +133,7 @@ fun SongRow(
                 )
                 if (showRemoveFromQueue) {
                     DropdownMenuItem(
-                        text = { Text("Remove from queue") },
+                        text = { Text(removeLabel) },
                         onClick = { menuExpanded = false; onRemoveFromQueue() }
                     )
                 }

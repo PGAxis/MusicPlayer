@@ -48,9 +48,9 @@ class PlayCountTracker private constructor(context: Context) {
         save()
     }
 
-    fun getCount(uri: Uri): Int = entries[uri.toString()]?.count ?: 0
+    /*fun getCount(uri: Uri): Int = entries[uri.toString()]?.count ?: 0
 
-    fun getLastPlayed(uri: Uri): Long = entries[uri.toString()]?.lastPlayedMs ?: 0L
+    fun getLastPlayed(uri: Uri): Long = entries[uri.toString()]?.lastPlayedMs ?: 0L*/
 
     /** Returns URIs sorted by play count descending */
     fun topPlayed(limit: Int = 50): List<String> =
@@ -77,6 +77,7 @@ class PlayCountTracker private constructor(context: Context) {
             val type = object : TypeToken<Map<String, PlayEntry>>() {}.type
             gson.fromJson<Map<String, PlayEntry>>(file.readText(), type)?.let {
                 entries.putAll(it)
+                _entriesFlow.value = entries.toMap()
             }
         } catch (_: Exception) { }
     }

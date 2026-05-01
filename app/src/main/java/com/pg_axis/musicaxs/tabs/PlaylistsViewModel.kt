@@ -6,6 +6,7 @@ import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pg_axis.musicaxs.models.Playlist
@@ -104,7 +105,25 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    // ── Queries ───────────────────────────────────────────────────────────────
+    fun rename(playlistId: Long, name: String) {
+        viewModelScope.launch(Dispatchers.IO) { repo.rename(playlistId, name) }
+    }
+
+    fun delete(playlistId: Long) {
+        viewModelScope.launch(Dispatchers.IO) { repo.delete(playlistId) }
+    }
+
+    fun merge(sourceId: Long, targetId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val source = repo.playlistById(sourceId) ?: return@launch
+            val target = repo.playlistById(targetId) ?: return@launch
+            val merged = (target.songIds + source.songIds).distinct()
+            repo.reorderSongs(targetId, merged)
+            repo.delete(sourceId)
+        }
+    }
+
+    // -- Queries
 
     private fun queryRecentlyAdded(context: Context, limit: Int = 50): List<Song> {
         val projection = arrayOf(
@@ -143,7 +162,7 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun resolveUris(context: Context, uris: List<String>): List<Song> =
-        uris.mapNotNull { uri -> querySong(context, Uri.parse(uri)) }
+        uris.mapNotNull { uri -> querySong(context, uri.toUri()) }
 
     private fun querySong(context: Context, uri: Uri): Song? {
         val projection = arrayOf(
@@ -195,6 +214,4 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
             resolver.unregisterContentObserver(observer)
         }
     }
-
-    private fun String.toUri() = Uri.parse(this)
 }

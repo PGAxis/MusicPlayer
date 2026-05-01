@@ -53,13 +53,19 @@ class PlaylistRepository private constructor(context: Context) {
 
     fun addSong(playlistId: Long, songId: Long) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
-        if (songId in playlist.songIds) return
         save(playlist.copy(songIds = playlist.songIds + songId))
     }
 
-    fun removeSong(playlistId: Long, songId: Long) {
+    /*fun removeSong(playlistId: Long, songId: Long) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
         save(playlist.copy(songIds = playlist.songIds - songId))
+    }*/
+
+    fun removeSongAt(playlistId: Long, index: Int) {
+        val playlist = _playlists.value.find { it.id == playlistId } ?: return
+        if (index !in playlist.songIds.indices) return
+        val newIds = playlist.songIds.toMutableList().also { it.removeAt(index) }
+        save(playlist.copy(songIds = newIds))
     }
 
     fun rename(playlistId: Long, name: String) {

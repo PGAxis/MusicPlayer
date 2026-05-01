@@ -85,7 +85,6 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
 
                 prewarmAlbumArtCache(songs)
             } catch (_: SecurityException) {
-                // READ_MEDIA_AUDIO / READ_EXTERNAL_STORAGE not granted yet
                 _uiState.value = SongsUiState.PermissionRequired
             } catch (e: Exception) {
                 _uiState.value = SongsUiState.Error(e.message ?: "Unknown error")
@@ -96,6 +95,7 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
     private fun prewarmAlbumArtCache(songs: List<Song>) {
         viewModelScope.launch {
             AlbumArtPreloader.preloadAll(context = getApplication(), songs = songs)
+            AlbumArtPreloader.cleanup(context = getApplication(), songs = songs)
         }
     }
 

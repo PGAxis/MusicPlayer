@@ -30,6 +30,8 @@ import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Playlist
 import com.pg_axis.musicaxs.services.M3uHandler
+import com.pg_axis.musicaxs.settings.FavouritedPlaylistsSave
+import com.pg_axis.musicaxs.templates.MergeIntoSheet
 
 data class SmartInfo(
     val first: String,
@@ -44,12 +46,18 @@ fun PlaylistsScreen(
     onOpenPlaylist: (id: String) -> Unit,
     vm: PlaylistsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val recentlyAdded by vm.recentlyAdded.collectAsStateWithLifecycle()
     val recentlyPlayed by vm.recentlyPlayed.collectAsStateWithLifecycle()
     val mostPlayed by vm.mostPlayed.collectAsStateWithLifecycle()
+    val favPlaylists = remember { FavouritedPlaylistsSave.getInstance(context) }
 
-    val context = LocalContext.current
+    var renameTarget by remember { mutableStateOf<Playlist?>(null) }
+    var renameText by remember { mutableStateOf("") }
+    var deleteTarget by remember { mutableStateOf<Playlist?>(null) }
+    var mergeSource by remember { mutableStateOf<Playlist?>(null) }
+
     var showSheet by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
     var pendingImportSongIds by remember { mutableStateOf<List<Long>>(emptyList()) }
@@ -122,10 +130,10 @@ fun PlaylistsScreen(
                     Text(
                         text = "My Playlists",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(onClick = { showSheet = true }, modifier = Modifier.size(36.dp)) {
+                    IconButton(onClick = { showSheet = true }, modifier = Modifier.size(24.dp)) {
                         Icon(painterResource(R.drawable.import_export), "Import / Export",
                             tint = Color.White
                         )
@@ -149,7 +157,15 @@ fun PlaylistsScreen(
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistRow(
                         playlist = playlist,
-                        onClick = { onOpenPlaylist(playlist.id.toString()) }
+                        isFavourited = favPlaylists.isFavourited(playlist.id),
+                        onClick = { onOpenPlaylist(playlist.id.toString()) },
+                        onRename = {
+                            renameTarget = playlist
+                            renameText = playlist.name
+                        },
+                        onDelete = { deleteTarget = playlist },
+                        onMerge  = { mergeSource = playlist },
+                        onToggleFavourite = { favPlaylists.toggle(playlist.id) }
                     )
                 }
             }
@@ -226,6 +242,58 @@ fun PlaylistsScreen(
                 }
             )
         }
+
+        renameTarget?.let { target ->
+            AlertDialog(
+                onDismissRequest = { renameTarget = null },
+                title = { Text("Rename playlist") },
+                text = {
+                    OutlinedTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        label = { Text("New name") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (renameText.isNotBlank()) {
+                            vm.rename(target.id, renameText)
+                            renameTarget = null
+                        }
+                    }) { Text("Rename") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { renameTarget = null }) { Text("Cancel") }
+                }
+            )
+        }
+
+        deleteTarget?.let { target ->
+            AlertDialog(
+                onDismissRequest = { deleteTarget = null },
+                title = { Text("Delete \"${target.name}\"?") },
+                text = { Text("This can't be undone.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        vm.delete(target.id)
+                        deleteTarget = null
+                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deleteTarget = null }) { Text("Cancel") }
+                }
+            )
+        }
+
+        mergeSource?.let { source ->
+            MergeIntoSheet(
+                source = source,
+                candidates = playlists.filter { it.id != source.id },
+                onMerge = { targetId -> vm.merge(source.id, targetId) },
+                onDismiss = { mergeSource = null }
+            )
+        }
     }
 }
 
@@ -272,9 +340,16 @@ private fun SmartPlaylistCard(
 @Composable
 private fun PlaylistRow(
     playlist: Playlist,
-    onClick: () -> Unit
+    isFavourited: Boolean,
+    onClick: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+    onMerge: () -> Unit,
+    onToggleFavourite: () -> Unit
 ) {
     val context = LocalContext.current
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,5 +388,51 @@ private fun PlaylistRow(
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Box {
+            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    painter = painterResource(R.drawable.settings),
+                    contentDescription = "Playlist options",
+                    tint = Color.White
+                )
+            }
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = if (isFavourited) "Remove from Favourites" else "Add to Favourites",
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Icon(
+                                painter = painterResource(if (isFavourited) R.drawable.heart_filled else R.drawable.heart_outline),
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                    },
+                    onClick = { menuExpanded = false; onToggleFavourite() }
+                )
+                DropdownMenuItem(
+                    text = { Text("Rename") },
+                    onClick = { menuExpanded = false; onRename() }
+                )
+                DropdownMenuItem(
+                    text = { Text("Merge into…") },
+                    onClick = { menuExpanded = false; onMerge() }
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                    onClick = { menuExpanded = false; onDelete() }
+                )
+            }
+        }
     }
 }

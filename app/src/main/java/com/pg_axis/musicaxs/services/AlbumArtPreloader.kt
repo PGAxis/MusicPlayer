@@ -27,11 +27,33 @@ object AlbumArtPreloader {
                 }
         }
 
+    fun cleanup(context: Context, songs: List<Song>) {
+        val dir = File(context.cacheDir, "album_art").takeIf { it.exists() } ?: return
+        val validIds = songs.map { it.id }.toSet()
+
+        dir.listFiles()?.forEach { file ->
+            val id = file.nameWithoutExtension
+                .removePrefix("song_")
+                .toLongOrNull() ?: return@forEach
+            if (id !in validIds) file.delete()
+        }
+    }
+
     private fun extractAndCache(context: Context, song: Song, dir: File) {
         val cacheFile = File(dir, "song_${song.id}.jpg")
         val sentinel  = File(dir, "song_${song.id}.none")
 
-        // 1. Try the fast albumart URI first
+        try {
+            val mmr = MediaMetadataRetriever()
+            mmr.setDataSource(context, song.uri)
+            val art = mmr.embeddedPicture
+            mmr.release()
+            if (art != null && art.isNotEmpty()) {
+                cacheFile.writeBytes(art)
+                return
+            }
+        } catch (_: Exception) {}
+
         val albumId = resolveAlbumId(context, song.uri)
         if (albumId != null) {
             try {
@@ -46,19 +68,6 @@ object AlbumArtPreloader {
             } catch (_: Exception) {}
         }
 
-        // 2. Fall back to MMR (only once, ever)
-        try {
-            val mmr = MediaMetadataRetriever()
-            mmr.setDataSource(context, song.uri)
-            val art = mmr.embeddedPicture
-            mmr.release()
-            if (art != null && art.isNotEmpty()) {
-                cacheFile.writeBytes(art)
-                return
-            }
-        } catch (_: Exception) {}
-
-        // 3. No art found — write sentinel so we never probe again
         sentinel.createNewFile()
     }
 

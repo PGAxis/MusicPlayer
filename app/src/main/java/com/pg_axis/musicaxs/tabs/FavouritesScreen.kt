@@ -25,16 +25,14 @@ import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.PlayerBarDefaults
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Playlist
-import com.pg_axis.musicaxs.templates.FavouritesDetailScreen
 
 @Composable
 fun FavouritesScreen(
-    goToDetail: (uri: String) -> Unit,
+    onOpenPlaylist: (id: String) -> Unit,
     vm: FavouritesViewModel = viewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val selected by vm.selectedPlaylist.collectAsStateWithLifecycle()
-    val albumSongs by vm.playlistSongs.collectAsStateWithLifecycle()
 
     // Intercept system back button when in detail view
     BackHandler(enabled = selected != null) {
@@ -42,51 +40,40 @@ fun FavouritesScreen(
     }
 
     TabSurface {
-        when {
-            selected != null -> FavouritesDetailScreen(
-                playlist = selected!!,
-                songs = albumSongs,
-                onBack = vm::onBackFromDetail,
-                onShowDetails = goToDetail
-            )
-
-            else -> when (val state = uiState) {
-                is FavouritesUiState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+        when (val state = uiState) {
+            is FavouritesUiState.Loading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                is FavouritesUiState.Error -> {
+            }
+            is FavouritesUiState.Ready -> {
+                if (state.playlists.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: ${state.message}")
+                        Text("No favourites yet.")
                     }
-                }
-                is FavouritesUiState.Ready -> {
-                    if (state.playlists.isEmpty()) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No playlists found.")
-                        }
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start  = 12.dp,
-                                end = 12.dp,
-                                top = 12.dp,
-                                bottom = PlayerBarDefaults.TotalHeight
-                            ),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            items(state.playlists, key = { it.id }) { playlist ->
-                                PlaylistTile(
-                                    playlist = playlist,
-                                    onClick = { vm.onPlaylistSelected(playlist) }
-                                )
-                            }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 12.dp, end = 12.dp,
+                            top = 12.dp, bottom = PlayerBarDefaults.TotalHeight
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(state.playlists, key = { it.id }) { playlist ->
+                            PlaylistTile(
+                                playlist = playlist,
+                                onClick = { onOpenPlaylist(playlist.id.toString()) }
+                            )
                         }
                     }
+                }
+            }
+            is FavouritesUiState.Error -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ${state.message}")
                 }
             }
         }
