@@ -9,6 +9,7 @@ import com.pg_axis.musicaxs.side_pages.SongDetailScreen
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pg_axis.musicaxs.side_pages.PlaylistDetailScreen
+import com.pg_axis.musicaxs.side_pages.SearchScreen
 
 @Composable
 fun AppNavigation() {
@@ -20,6 +21,8 @@ fun AppNavigation() {
             MainScreen(
                 goToDetail = { songUri -> navController.navigate("songdetail/$songUri") },
                 goToPlaylist = { playlistId -> navController.navigate("playlist/$playlistId") },
+                goToSearch = { navController.navigate("search") },
+                onChooseSongsForPlaylist = { playlistId -> navController.navigate("search/choose/$playlistId") },
                 vm = mainViewModel
             )
         }
@@ -40,6 +43,24 @@ fun AppNavigation() {
                 id,
                 onBack = { navController.popBackStack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") })
+        }
+        composable("search") {
+            SearchScreen(
+                onBack = { navController.popBackStack() },
+                onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
+            )
+        }
+        composable("search/choose/{playlistId}") { backStackEntry ->
+            val playlistId = backStackEntry.arguments?.getString("playlistId")!!.toLong()
+            SearchScreen(
+                onBack = {
+                    navController.navigate("main") {
+                        popUpTo("main") { inclusive = true }
+                    }
+                },
+                onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") },
+                choosingForPlaylistId = playlistId
+            )
         }
     }
 }

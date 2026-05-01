@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.pg_axis.musicaxs.R
@@ -39,11 +40,13 @@ fun SongRow(
     showRemoveFromQueue: Boolean = false,
     removeLabel: String = "Remove from queue",
     onRemoveFromQueue: () -> Unit = {},
-    dragHandleModifier: Modifier = Modifier,   // caller applies .draggableHandle() here
+    dragHandleModifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
+
+    val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
 
     Row(
         modifier = Modifier
@@ -59,7 +62,10 @@ fun SongRow(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         if (isCurrentlyPlaying) {
-            EqualizerBars(modifier = Modifier.width(16.dp))
+            EqualizerBars(
+                isPlaying = isPlaying,
+                modifier = Modifier.width(16.dp)
+            )
         } else if (showRemoveFromQueue) {
             Spacer(Modifier.width(16.dp))
         }

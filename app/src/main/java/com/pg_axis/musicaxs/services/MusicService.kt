@@ -63,6 +63,7 @@ class MusicService : MediaSessionService() {
         val COMMAND_NEXT = SessionCommand("ACTION_NEXT", Bundle.EMPTY)
         val currentUri: Uri? get() = instance?.mediaSession?.player?.currentMediaItem?.localConfiguration?.uri
         val queueState = MutableStateFlow<List<MediaItem>>(emptyList())
+        val isPlayingState = MutableStateFlow(false)
         val currentIndexState = MutableStateFlow(-1)
 
         var isShuffleOn = false
@@ -487,6 +488,7 @@ class MusicService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 updateNotificationButtons(mediaSession!!)
+                isPlayingState.value = isPlaying
                 if (!isPlaying) {
                     val settings = SettingsSave.getInstance(this@MusicService)
                     settings.lastPositionMs = player.currentPosition

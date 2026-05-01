@@ -6,11 +6,11 @@ Music player that mimics default Samsung Music app... except with fixed/added th
 
 - Album art extraction for even embedded album art
 - Playlist creation, import and export
-- **Favourite** tag for songs and playlists (in progress)
+- **Favourite** tag for songs and playlists
 - Dynamic playlists: **Recently Added**, **Recently Played**, **Most Played**
 - Metadata editing
 - **Repeat**, **Repeat once** and **Don't repeat** modes
-- Shuffle mode (in progress)
+- Shuffle mode
 
 ## Building
 

@@ -16,6 +16,7 @@ import com.pg_axis.musicaxs.ui.theme.CyanPrimary
 @Composable
 fun EqualizerBars(
     modifier: Modifier = Modifier,
+    isPlaying: Boolean = true,
     barWidth: Dp = 3.dp,
     maxHeight: Dp = 16.dp
 ) {
@@ -35,15 +36,16 @@ fun EqualizerBars(
     )
 
     Row(
-        modifier = modifier,
+        modifier = modifier.height(maxHeight),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         listOf(bar1, bar2, bar3).forEach { fraction ->
+            val height = if (isPlaying) maxHeight * fraction else maxHeight * 0.3f
             Box(
                 modifier = Modifier
                     .width(barWidth)
-                    .height(maxHeight * fraction)
+                    .height(height)
                     .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
                     .background(CyanPrimary)
             )

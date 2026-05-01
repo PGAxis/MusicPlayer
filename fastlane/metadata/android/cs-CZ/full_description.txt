@@ -1,0 +1,11 @@
+Hudební přehrávač který napodobuje základní Samsung Music aplikaci... až na opravené/přidané věci které jsem tam chtěl a odstraněné věci které jsem nechtěl.
+
+Funkce:
+
+- Extrakce obrázků alb, a to i pro obrázky vepsané do samotných hudebních souborů
+- Vytváření, import a export playlistů
+- Přidávání skladeb a playlistů mezi oblíbené
+- Dynamické playlisty: Naposledy přidané, Naposledy přehrávané, Nejčastěji přehrávané
+- Úprava metadat
+- Režimy Opakovat, Opakovat jednu a Neopakovat
+- Režim Náhodného přehrávání

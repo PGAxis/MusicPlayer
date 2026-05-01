@@ -116,7 +116,7 @@ private fun AlbumTile(album: Album, onClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(25.dp)),
             contentScale = ContentScale.Crop
         )
 

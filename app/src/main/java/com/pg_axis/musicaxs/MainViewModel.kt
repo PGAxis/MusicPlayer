@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.pg_axis.musicaxs.models.Playlist
 import com.pg_axis.musicaxs.settings.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,8 +54,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _currentSong = MutableStateFlow<CurrentSong?>(null)
     val currentSong: StateFlow<CurrentSong?> = _currentSong.asStateFlow()
-
-    fun createPlaylist(name: String) = repo.create(name)
 
     // Called when the pager settles on a new page
     fun onPageChanged(index: Int) {
@@ -151,6 +150,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onNext() {
         MusicService.next()
     }
-    fun onSearch()   { /* TODO */ }
+    fun createAndGetPlaylist(name: String): Playlist {
+        return repo.create(name)
+    }
     fun onSettings() { /* TODO */ }
 }

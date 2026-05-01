@@ -39,6 +39,8 @@ import kotlin.math.abs
 fun MainScreen(
     goToDetail: (uri: String) -> Unit,
     goToPlaylist: (id: String) -> Unit,
+    goToSearch: () -> Unit,
+    onChooseSongsForPlaylist: (playlistId: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
     val currentSong by vm.currentSong.collectAsState()
@@ -74,8 +76,8 @@ fun MainScreen(
             }
         }
 
-        // -- Header -------------------
         Column(Modifier.fillMaxSize()) {
+            // -- Header -------------------
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,7 +109,7 @@ fun MainScreen(
 
                 Spacer(Modifier.width(4.dp))
 
-                IconButton(onClick = vm::onSearch, modifier = Modifier.size(35.dp)) {
+                IconButton(onClick = goToSearch, modifier = Modifier.size(35.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.magglass),
                         contentDescription = "Search",
@@ -211,9 +213,10 @@ fun MainScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         if (newPlaylistName.isNotBlank()) {
-                            vm.createPlaylist(newPlaylistName.trim())
-                            newPlaylistName = ""
+                            val playlist = vm.createAndGetPlaylist(newPlaylistName)
                             showCreateDialog = false
+                            newPlaylistName = ""
+                            onChooseSongsForPlaylist(playlist.id.toString())
                         }
                     }) { Text("Create") }
                 },
