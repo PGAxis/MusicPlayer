@@ -34,7 +34,7 @@ Music player that mimics default Samsung Music app... except with fixed/added th
 - [Gson](https://github.com/google/gson) — JSON serialization
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) — UI
 - [Reorderable](https://github.com/Calvin-LL/Reorderable) - song queue reordering
-- jaudiotagger (I need to find link to the specific version) - metadata editing
+- [Jaudiotagger](https://github.com/Kaned1as/jaudiotagger) - metadata editing
 
 ## License
 
