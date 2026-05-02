@@ -42,7 +42,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val tabs = listOf("Favourites", "Playlists", "Songs", "Albums", "Artists")
 
-    // Index of the last active tab, persisted via settings later
+    // Index of the last active tab, persisted via settings
     private val _currentPageIndex = MutableStateFlow(settings.lastTabIndex)
     val currentPageIndex: StateFlow<Int> = _currentPageIndex.asStateFlow()
 
@@ -55,7 +55,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentSong = MutableStateFlow<CurrentSong?>(null)
     val currentSong: StateFlow<CurrentSong?> = _currentSong.asStateFlow()
 
-    // Called when the pager settles on a new page
+    // Called when the pager settles
     fun onPageChanged(index: Int) {
         _currentPageIndex.value = index
         settings.lastTabIndex = index
@@ -153,5 +153,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun createAndGetPlaylist(name: String): Playlist {
         return repo.create(name)
     }
-    fun onSettings() { /* TODO */ }
 }

@@ -3,6 +3,7 @@ package com.pg_axis.musicaxs.settings
 import com.pg_axis.musicaxs.services.QueueSource
 
 interface ISettings {
+    // media playback persistency
     var lastTabIndex: Int
     var lastSongUri: String
     var lastPositionMs: Long
@@ -12,4 +13,7 @@ interface ISettings {
     var lastQueueArtists: List<String>
     var repeatMode: Int
     var queueSource: QueueSource
+
+    // settings
+    var hideWhatsAppAudio: Boolean
 }

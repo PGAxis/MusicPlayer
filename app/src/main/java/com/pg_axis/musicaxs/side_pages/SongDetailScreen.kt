@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +28,17 @@ import com.pg_axis.musicaxs.ui.theme.BlueTertiary
 import com.pg_axis.musicaxs.ui.theme.BorderColor
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary
 import com.pg_axis.musicaxs.ui.theme.TextSecondary
+
+private val MIME_TO_EXTENSION = mapOf(
+    "audio/mpeg" to "MP3",       // mp3
+    "audio/wav" to "WAV",        // wav
+    "audio/x-wav" to "WAV",      // wav (alternate)
+    "audio/flac" to "FLAC",      // flac
+    "audio/x-flac" to "FLAC",    // flac (alternate)
+    "audio/ogg" to "OGG",        // ogg vorbis
+    "audio/mp4" to "M4A",        // m4a / aac
+    "audio/m4a" to "M4A",        // m4a (alternate)
+)
 
 @Composable
 fun SongDetailScreen(
@@ -136,6 +149,17 @@ fun SongDetailScreen(
             )
 
             OutlinedTextField(
+                value = vm.track,
+                onValueChange = vm::updateTrack,
+                label = { Text("Track number") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = BlueTertiary
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
                 value = vm.duration,
                 onValueChange = { },
                 label = { Text("Duration") },
@@ -150,7 +174,7 @@ fun SongDetailScreen(
             )
 
             OutlinedTextField(
-                value = vm.mimeType,
+                value = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
                 onValueChange = { },
                 label = { Text("File type") },
                 readOnly = true,

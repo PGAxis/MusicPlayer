@@ -10,6 +10,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pg_axis.musicaxs.side_pages.PlaylistDetailScreen
 import com.pg_axis.musicaxs.side_pages.SearchScreen
+import com.pg_axis.musicaxs.side_pages.SettingsScreen
 
 @Composable
 fun AppNavigation() {
@@ -22,6 +23,7 @@ fun AppNavigation() {
                 goToDetail = { songUri -> navController.navigate("songdetail/$songUri") },
                 goToPlaylist = { playlistId -> navController.navigate("playlist/$playlistId") },
                 goToSearch = { navController.navigate("search") },
+                goToSettings = { navController.navigate("settings") },
                 onChooseSongsForPlaylist = { playlistId -> navController.navigate("search/choose/$playlistId") },
                 vm = mainViewModel
             )
@@ -61,6 +63,9 @@ fun AppNavigation() {
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") },
                 choosingForPlaylistId = playlistId
             )
+        }
+        composable("settings") {
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

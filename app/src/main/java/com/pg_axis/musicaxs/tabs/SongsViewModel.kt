@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.pg_axis.musicaxs.services.AlbumArtPreloader
+import com.pg_axis.musicaxs.settings.SettingsSave
 
 // MIME types
 private val SUPPORTED_MIME_TYPES = setOf(
@@ -41,6 +42,7 @@ sealed interface SongsUiState {
 }
 
 class SongsViewModel(app: Application) : AndroidViewModel(app) {
+    private val settings = SettingsSave.getInstance(getApplication())
 
     private val _uiState = MutableStateFlow<SongsUiState>(SongsUiState.Loading)
     val uiState: StateFlow<SongsUiState> = _uiState.asStateFlow()
@@ -114,10 +116,14 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
 
         val songs = mutableListOf<Song>()
 
+        val whatsAppFilter = if (settings.hideWhatsAppAudio)
+            " AND ${MediaStore.Audio.Media.ALBUM} != 'WhatsApp Audio'"
+        else ""
+
         context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
-            "${MediaStore.Audio.Media.IS_MUSIC} != 0",
+            "${MediaStore.Audio.Media.IS_MUSIC} != 0$whatsAppFilter",
             null,
             "${MediaStore.Audio.Media.TITLE} ASC"
         )?.use { cursor ->

@@ -25,7 +25,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     private val settingsPath = context.filesDir.resolve("settings.json")
     private val gson = Gson()
 
-
+    // media playback persistency
     override var lastTabIndex by mutableIntStateOf(2)
     override var lastSongUri by mutableStateOf("")
     override var lastPositionMs by mutableLongStateOf(0L)
@@ -35,6 +35,8 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastQueueArtists by mutableStateOf<List<String>>(emptyList())
     override var repeatMode by mutableIntStateOf(2)
     override var queueSource by mutableStateOf(QueueSource.MANUAL)
+    // settings
+    override var hideWhatsAppAudio by mutableStateOf(false)
 
     fun save() {
         val data = SettingsData(
@@ -46,7 +48,8 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueTitles = lastQueueTitles,
             lastQueueArtists = lastQueueArtists,
             repeatMode = repeatMode,
-            queueSource = queueSource
+            queueSource = queueSource,
+            hideWhatsAppAudio = hideWhatsAppAudio
         )
         val json = gson.toJson(data)
         settingsPath.writeText(json)
@@ -69,6 +72,7 @@ class SettingsSave private constructor(context: Context): ISettings {
                 lastQueueArtists = it.lastQueueArtists
                 repeatMode = it.repeatMode
                 queueSource = it.queueSource
+                hideWhatsAppAudio = it.hideWhatsAppAudio
             }
         } catch (_: Exception) {
         }
@@ -77,6 +81,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     // ─── Data class ───────────────────────────────────────────────────────────
 
     data class SettingsData(
+        // media playback persistency
         val lastTabIndex: Int = 2,
         val lastSongUri: String? = null,
         val lastPositionMs: Long = 0L,
@@ -85,7 +90,9 @@ class SettingsSave private constructor(context: Context): ISettings {
         val lastQueueTitles: List<String> = emptyList(),
         val lastQueueArtists: List<String> = emptyList(),
         val repeatMode: Int = 2,
-        val queueSource: QueueSource = QueueSource.MANUAL
+        val queueSource: QueueSource = QueueSource.MANUAL,
+        // settings
+        val hideWhatsAppAudio: Boolean = false
     )
 
     init {

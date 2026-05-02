@@ -39,4 +39,5 @@
 -keep class org.jaudiotagger.tag.id3.framebody.FrameBodyUnsupported { <init>(...); }
 -keep class org.jaudiotagger.audio.mp3.MP3File { *; }
 -keep class org.jaudiotagger.audio.mp3.MP3AudioHeader { *; }
+-keep class org.jaudiotagger.audio.opus.** { *; }
 -dontwarn org.jaudiotagger.**

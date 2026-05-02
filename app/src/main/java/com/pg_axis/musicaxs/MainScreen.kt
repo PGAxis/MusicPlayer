@@ -40,6 +40,7 @@ fun MainScreen(
     goToDetail: (uri: String) -> Unit,
     goToPlaylist: (id: String) -> Unit,
     goToSearch: () -> Unit,
+    goToSettings: () -> Unit,
     onChooseSongsForPlaylist: (playlistId: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
@@ -119,7 +120,7 @@ fun MainScreen(
 
                 Spacer(Modifier.width(4.dp))
 
-                IconButton(onClick = vm::onSettings, modifier = Modifier.size(35.dp)) {
+                IconButton(onClick = goToSettings, modifier = Modifier.size(35.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.settings),
                         contentDescription = "Settings",

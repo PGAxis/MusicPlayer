@@ -32,6 +32,8 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var album by mutableStateOf("")
         private set
+    var track by mutableStateOf("")
+        private set
     var duration by mutableStateOf("")
         private set
     var fileSize by mutableStateOf("")
@@ -53,13 +55,15 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
     private var originalTitle = ""
     private var originalArtist = ""
     private var originalAlbum = ""
+    private var originalTrack = ""
 
     private var currentUri: Uri? = null
 
     val isModified: Boolean
         get() = title != originalTitle ||
                 artist != originalArtist ||
-                album != originalAlbum
+                album != originalAlbum ||
+                track != originalTrack
 
     fun load(uri: Uri) {
         currentUri = uri
@@ -69,6 +73,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.TRACK,
                 MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.MIME_TYPE,
                 MediaStore.Audio.Media.SIZE,
@@ -80,6 +85,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                         val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                         val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+                        val trackCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
                         val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
                         val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
                         val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
@@ -87,6 +93,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         val t = cursor.getString(titleCol) ?: ""
                         val a = cursor.getString(artistCol) ?: ""
                         val al = cursor.getString(albumCol) ?: ""
+                        val tr = decodeTrackNumber(cursor.getInt(trackCol)).toString()
                         val d = formatDuration(cursor.getLong(durationCol))
                         val m = cursor.getString(mimeCol) ?: ""
                         val s = formatBytes(cursor.getLong(sizeCol))
@@ -95,6 +102,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                             title = t
                             artist = a
                             album = al
+                            track = tr
                             duration = d
                             mimeType = m
                             fileSize = s
@@ -104,6 +112,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                             originalTitle = t
                             originalArtist = a
                             originalAlbum = al
+                            originalTrack = tr
 
                             filePath = resolvePath(uri)
 
@@ -117,6 +126,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
     fun updateTitle(v: String) { title = v }
     fun updateArtist(v: String) { artist = v }
     fun updateAlbum(v: String) { album = v }
+    fun updateTrack(v: String) { track = v.filter { it.isDigit() } }
 
     fun createWriteRequest(): PendingIntent? {
         val uri = currentUri ?: return null
@@ -156,6 +166,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         safeSet(tag, FieldKey.TITLE, title)
                         safeSet(tag, FieldKey.ARTIST, artist)
                         safeSet(tag, FieldKey.ALBUM, album)
+                        safeSet(tag, FieldKey.TRACK, track.ifBlank { "0" })
                         audio.commit()
 
                         context.contentResolver.openOutputStream(uri, "rwt")?.use { out ->
@@ -172,6 +183,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         put(MediaStore.Audio.Media.TITLE, title)
                         put(MediaStore.Audio.Media.ARTIST, artist)
                         put(MediaStore.Audio.Media.ALBUM, album)
+                        put(MediaStore.Audio.Media.TRACK, track.toIntOrNull() ?: 0)
                     }
                     context.contentResolver.update(uri, values, null, null)
                 }
@@ -180,6 +192,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                     originalTitle = title
                     originalArtist = artist
                     originalAlbum = album
+                    originalTrack = track
                     isSaving = false
                     onDone()
                 }
@@ -246,6 +259,8 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
         return if (h > 0) "%d:%02d:%02d".format(h, m, s)
         else "%d:%02d".format(m, s)
     }
+
+    private fun decodeTrackNumber(raw: Int): Int = raw % 1000
 
     fun formatBytes(bytes: Long): String {
         if (bytes <= 0) return "0 B"

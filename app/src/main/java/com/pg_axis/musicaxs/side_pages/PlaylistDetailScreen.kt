@@ -119,16 +119,23 @@ fun PlaylistDetailScreen(
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    IconButton(onClick = {
-                        favPlaylists.toggle(playlistId)
-                        isFavourited = !isFavourited
-                    }, shape = RoundedCornerShape(0.dp)) {
-                        Icon(
-                            painterResource(if (isFavourited) R.drawable.heart_filled else R.drawable.heart_outline),
-                            "Favourite playlist",
-                            tint = CyanPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    when (playlistId) {
+                        0L, 1L, 2L, 3L -> {
+
+                        }
+                        else -> {
+                            IconButton(onClick = {
+                                favPlaylists.toggle(playlistId)
+                                isFavourited = !isFavourited
+                            }, shape = RoundedCornerShape(0.dp)) {
+                                Icon(
+                                    painterResource(if (isFavourited) R.drawable.heart_filled else R.drawable.heart_outline),
+                                    "Favourite playlist",
+                                    tint = CyanPrimary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                     }
                     // Play all button
                     IconButton(onClick = {

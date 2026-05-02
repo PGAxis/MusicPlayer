@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.pg_axis.musicaxs.settings.SettingsSave
 
 sealed interface AlbumsUiState {
     data object Loading : AlbumsUiState
@@ -21,6 +22,7 @@ sealed interface AlbumsUiState {
 }
 
 class AlbumsViewModel(app: Application) : AndroidViewModel(app) {
+    private val settings = SettingsSave.getInstance(getApplication())
 
     private val _uiState = MutableStateFlow<AlbumsUiState>(AlbumsUiState.Loading)
     val uiState: StateFlow<AlbumsUiState> = _uiState.asStateFlow()
@@ -67,10 +69,14 @@ class AlbumsViewModel(app: Application) : AndroidViewModel(app) {
 
         val albums = mutableListOf<Album>()
 
+        val whatsAppFilter = if (settings.hideWhatsAppAudio)
+            "${MediaStore.Audio.Albums.ALBUM} != 'WhatsApp Audio'"
+        else null
+
         context.contentResolver.query(
             MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
             projection,
-            null,
+            whatsAppFilter,
             null,
             "${MediaStore.Audio.Albums.ALBUM} ASC"
         )?.use { cursor ->
