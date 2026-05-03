@@ -7,7 +7,10 @@ data class Song(
     val title: String,
     val artist: String,
     val album: String,
+    val albumId: Long,
     val uri: Uri,           // content:// URI for playback
     val durationMs: Long,
-    val albumArtUri: Uri?   // null → show default cover
+    val albumArtUri: Uri?,
+    val track: Int,
+    val dateAdded: Long = 0L
 )

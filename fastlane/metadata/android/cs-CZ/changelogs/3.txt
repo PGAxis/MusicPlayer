@@ -1,0 +1,3 @@
+Přepnuto na plnou verzi
+Načtené skladby nastaveny jako seznam sdílený v celé aplikaci
+Alba se automaticky znovu načítají, není potřeba restart

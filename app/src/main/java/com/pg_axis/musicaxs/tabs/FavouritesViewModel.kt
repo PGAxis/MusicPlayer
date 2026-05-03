@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.pg_axis.musicaxs.models.Playlist
 import com.pg_axis.musicaxs.settings.FavouritedPlaylistsSave
 import com.pg_axis.musicaxs.settings.FavouritesSave
-import com.pg_axis.musicaxs.settings.PlaylistRepository
+import com.pg_axis.musicaxs.repositories.PlaylistRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

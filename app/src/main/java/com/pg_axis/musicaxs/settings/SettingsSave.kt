@@ -37,6 +37,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var queueSource by mutableStateOf(QueueSource.MANUAL)
     // settings
     override var hideWhatsAppAudio by mutableStateOf(false)
+    override var normalizeVolume by mutableStateOf(false)
 
     fun save() {
         val data = SettingsData(
@@ -49,7 +50,8 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueArtists = lastQueueArtists,
             repeatMode = repeatMode,
             queueSource = queueSource,
-            hideWhatsAppAudio = hideWhatsAppAudio
+            hideWhatsAppAudio = hideWhatsAppAudio,
+            normalizeVolume = normalizeVolume
         )
         val json = gson.toJson(data)
         settingsPath.writeText(json)
@@ -73,6 +75,7 @@ class SettingsSave private constructor(context: Context): ISettings {
                 repeatMode = it.repeatMode
                 queueSource = it.queueSource
                 hideWhatsAppAudio = it.hideWhatsAppAudio
+                normalizeVolume = it.normalizeVolume
             }
         } catch (_: Exception) {
         }
@@ -92,7 +95,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         val repeatMode: Int = 2,
         val queueSource: QueueSource = QueueSource.MANUAL,
         // settings
-        val hideWhatsAppAudio: Boolean = false
+        val hideWhatsAppAudio: Boolean = false,
+        val normalizeVolume: Boolean = false
     )
 
     init {

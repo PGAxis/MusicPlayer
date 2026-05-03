@@ -50,6 +50,7 @@ class MusicService : MediaSessionService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var playCountJob: Job? = null
+    private var playStartTime: Long = 0L
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
@@ -500,16 +501,24 @@ class MusicService : MediaSessionService() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 mediaItem ?: return
                 val uri = mediaItem.localConfiguration?.uri ?: return
+
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
                 updateNotificationButtons(mediaSession!!)
 
                 playCountJob?.cancel()
+                playStartTime = 0L
                 playCountJob = serviceScope.launch {
-                    delay(1000)
-                    val player = instance?.mediaSession?.player ?: return@launch
-                    if (player.isPlaying) {
-                        PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
+                    while (true) {
+                        delay(500)
+                        val player = instance?.mediaSession?.player ?: return@launch
+                        if (player.isPlaying) {
+                            playStartTime += 500
+                            if (playStartTime >= 5000) {
+                                PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
+                                break
+                            }
+                        }
                     }
                 }
             }

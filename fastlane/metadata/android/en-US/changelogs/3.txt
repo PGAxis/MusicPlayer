@@ -1,0 +1,3 @@
+Switched to a full release
+Set loaded songs as a list shared throughout the app
+Made Albums reload automatically, not on restart

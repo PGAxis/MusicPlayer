@@ -49,6 +49,7 @@ import com.pg_axis.musicaxs.ui.theme.TextSecondary
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onScan: () -> Unit,
     vm: SettingsViewModel = viewModel()
 ) {
     Column(
@@ -62,7 +63,7 @@ fun SettingsScreen(
                 .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
                 Icon(painterResource(R.drawable.back), "Back", tint = CyanPrimary)
             }
             Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
@@ -81,9 +82,9 @@ fun SettingsScreen(
             SettingsGroup(title = "Library") {
                 SettingsToggleRow(
                     label = "Hide WhatsApp Audio",
-                    description = "Hides songs from the \"WhatsApp Audio\" album. It does not remove them from playlists. Applies on restart",
+                    description = "Hides songs from the \"WhatsApp Audio\" album.",
                     checked = vm.settings.hideWhatsAppAudio,
-                    onCheckedChange = vm::onHideWhatsAppChanged
+                    onCheckedChange = { value -> vm.onHideWhatsAppChanged(value, onScan) }
                 )
             }
         }

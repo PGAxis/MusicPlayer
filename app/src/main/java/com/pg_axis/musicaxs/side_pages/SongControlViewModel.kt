@@ -1,16 +1,13 @@
 package com.pg_axis.musicaxs.side_pages
 
 import android.app.Application
-import android.content.ContentUris
-import android.content.Context
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.pg_axis.musicaxs.models.Song
+import com.pg_axis.musicaxs.repositories.SongRepository
 import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.settings.FavouritesSave
 import com.pg_axis.musicaxs.settings.SettingsSave
@@ -119,28 +116,6 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
         else -> PlayType.Continue
     }
 
-    fun resolveSongFromUri(context: Context, uri: Uri): Song? {
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DURATION,
-        )
-        return context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-            if (!cursor.moveToFirst()) return null
-            val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
-            val albumId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID))
-            Song(
-                id = id,
-                title = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)) ?: "Unknown",
-                artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)) ?: "Unknown",
-                album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)) ?: "Unknown",
-                uri = uri,
-                durationMs = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                albumArtUri = ContentUris.withAppendedId("content://media/external/audio/albumart".toUri(), albumId)
-            )
-        }
-    }
+    fun resolveSongFromUri(uri: Uri): Song? =
+        SongRepository.getInstance().songs.value.find { it.uri == uri }
 }

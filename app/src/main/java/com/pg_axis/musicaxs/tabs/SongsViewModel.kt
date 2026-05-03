@@ -2,13 +2,8 @@ package com.pg_axis.musicaxs.tabs
 
 import android.Manifest
 import android.app.Application
-import android.content.ContentUris
 import android.content.pm.PackageManager
-import android.database.ContentObserver
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,21 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
-import com.pg_axis.musicaxs.services.AlbumArtPreloader
-import com.pg_axis.musicaxs.settings.SettingsSave
-
-// MIME types
-private val SUPPORTED_MIME_TYPES = setOf(
-    "audio/mpeg",       // mp3
-    "audio/wav",        // wav
-    "audio/x-wav",      // wav (alternate)
-    "audio/flac",       // flac
-    "audio/x-flac",     // flac (alternate)
-    "audio/ogg",        // ogg vorbis
-    "audio/mp4",        // m4a / aac
-    "audio/m4a",        // m4a (alternate)
-)
+import com.pg_axis.musicaxs.repositories.SongRepository
 
 sealed interface SongsUiState {
     data object Loading : SongsUiState
@@ -42,17 +23,10 @@ sealed interface SongsUiState {
 }
 
 class SongsViewModel(app: Application) : AndroidViewModel(app) {
-    private val settings = SettingsSave.getInstance(getApplication())
+    private val songRepo = SongRepository.getInstance()
 
     private val _uiState = MutableStateFlow<SongsUiState>(SongsUiState.Loading)
     val uiState: StateFlow<SongsUiState> = _uiState.asStateFlow()
-
-    // Fires whenever MediaStore's audio table changes (file added / deleted / renamed)
-    private val mediaObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) {
-            scanSongs()
-        }
-    }
 
     private fun hasPermission(): Boolean {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -65,104 +39,25 @@ class SongsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     init {
-        getApplication<Application>().contentResolver.registerContentObserver(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            true,
-            mediaObserver
-        )
-        if (hasPermission()) {
-            scanSongs()
-        } else {
-            _uiState.value = SongsUiState.PermissionRequired
+        viewModelScope.launch {
+            songRepo.songs.collect { songs ->
+                if (songs.isNotEmpty()) _uiState.value = SongsUiState.Ready(songs)
+                else if (!hasPermission()) _uiState.value = SongsUiState.PermissionRequired
+            }
         }
     }
 
-    fun scanSongs() {
+    fun scanSongs(scan: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = SongsUiState.Loading
 
             try {
-                val songs = querySongs()
-                _uiState.value = SongsUiState.Ready(songs)
-
-                prewarmAlbumArtCache(songs)
+                scan()
             } catch (_: SecurityException) {
                 _uiState.value = SongsUiState.PermissionRequired
             } catch (e: Exception) {
                 _uiState.value = SongsUiState.Error(e.message ?: "Unknown error")
             }
         }
-    }
-
-    private fun prewarmAlbumArtCache(songs: List<Song>) {
-        viewModelScope.launch {
-            AlbumArtPreloader.preloadAll(context = getApplication(), songs = songs)
-            AlbumArtPreloader.cleanup(context = getApplication(), songs = songs)
-        }
-    }
-
-    private fun querySongs(): List<Song> {
-        val context = getApplication<Application>()
-
-        val projection = arrayOf(
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.ALBUM_ID,
-            MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.MIME_TYPE,
-        )
-
-        val songs = mutableListOf<Song>()
-
-        val whatsAppFilter = if (settings.hideWhatsAppAudio)
-            " AND ${MediaStore.Audio.Media.ALBUM} != 'WhatsApp Audio'"
-        else ""
-
-        context.contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            "${MediaStore.Audio.Media.IS_MUSIC} != 0$whatsAppFilter",
-            null,
-            "${MediaStore.Audio.Media.TITLE} ASC"
-        )?.use { cursor ->
-            val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-            val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-            val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-            val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
-
-            while (cursor.moveToNext()) {
-                val mimeType = cursor.getString(mimeCol) ?: continue
-                if (mimeType !in SUPPORTED_MIME_TYPES) continue
-
-                val id = cursor.getLong(idCol)
-                val albumId = cursor.getLong(albumIdCol)
-
-                songs.add(
-                    Song(
-                        id = id,
-                        title = cursor.getString(titleCol) ?: "Unknown",
-                        artist = cursor.getString(artistCol) ?: "Unknown",
-                        album = cursor.getString(albumCol) ?: "Unknown",
-                        uri = ContentUris.withAppendedId(
-                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id),
-                        durationMs = cursor.getLong(durationCol),
-                        albumArtUri = ContentUris.withAppendedId(
-                            "content://media/external/audio/albumart".toUri(), albumId)
-                    )
-                )
-            }
-        }
-
-        return songs
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver)
     }
 }

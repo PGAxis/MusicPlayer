@@ -8,8 +8,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val context = getApplication<Application>()
     val settings = SettingsSave.getInstance(context)
 
-    fun onHideWhatsAppChanged(value: Boolean) {
+    fun onHideWhatsAppChanged(value: Boolean, onScan: () -> Unit) {
         settings.hideWhatsAppAudio = value
         settings.save()
+        onScan()
     }
 }

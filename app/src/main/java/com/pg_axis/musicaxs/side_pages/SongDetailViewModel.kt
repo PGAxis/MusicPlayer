@@ -12,7 +12,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.pg_axis.musicaxs.repositories.SongRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jaudiotagger.audio.AudioFileIO
@@ -69,53 +71,34 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
         currentUri = uri
 
         viewModelScope.launch(Dispatchers.IO) {
+            val song = SongRepository.getInstance().songs.value.find { it.uri == uri }
+
             val projection = arrayOf(
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.TRACK,
-                MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.MIME_TYPE,
                 MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.DATA
             )
 
             context.contentResolver.query(uri, projection, null, null, null)
                 ?.use { cursor ->
                     if (cursor.moveToFirst()) {
-                        val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-                        val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                        val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-                        val trackCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-                        val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-                        val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
-                        val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+                        val m = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)) ?: ""
+                        val s = formatBytes(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)))
+                        val path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
 
-                        val t = cursor.getString(titleCol) ?: ""
-                        val a = cursor.getString(artistCol) ?: ""
-                        val al = cursor.getString(albumCol) ?: ""
-                        val tr = decodeTrackNumber(cursor.getInt(trackCol)).toString()
-                        val d = formatDuration(cursor.getLong(durationCol))
-                        val m = cursor.getString(mimeCol) ?: ""
-                        val s = formatBytes(cursor.getLong(sizeCol))
+                        val t = song?.title ?: ""
+                        val a = song?.artist ?: ""
+                        val al = song?.album ?: ""
+                        val tr = (song?.track ?: 0).toString()
+                        val d = formatDuration(song?.durationMs ?: 0L)
 
                         withContext(Dispatchers.Main) {
-                            title = t
-                            artist = a
-                            album = al
-                            track = tr
-                            duration = d
-                            mimeType = m
-                            fileSize = s
-
-                            isEditable = mimeType == "audio/mpeg"
-
-                            originalTitle = t
-                            originalArtist = a
-                            originalAlbum = al
-                            originalTrack = tr
-
-                            filePath = resolvePath(uri)
-
+                            title = t; artist = a; album = al; track = tr
+                            duration = d; mimeType = m; fileSize = s
+                            isEditable = m == "audio/mpeg"
+                            originalTitle = t; originalArtist = a
+                            originalAlbum = al; originalTrack = tr
+                            filePath = path?.let { formatStoragePath(it) }
                             isLoading = false
                         }
                     }
@@ -194,6 +177,8 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                     originalAlbum = album
                     originalTrack = track
                     isSaving = false
+                    delay(500)
+                    load(currentUri!!)
                     onDone()
                 }
             } catch (e: Exception) {
@@ -214,19 +199,6 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
             }
 
         return null
-    }
-
-    private fun resolvePath(uri: Uri): String? {
-        val projection = arrayOf(MediaStore.Audio.Media.DATA)
-
-        val rawPath = context.contentResolver.query(uri, projection, null, null, null)
-            ?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    cursor.getString(0)
-                } else null
-            }
-
-        return rawPath?.let { formatStoragePath(it) }
     }
 
     private fun formatStoragePath(path: String): String {
@@ -259,8 +231,6 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
         return if (h > 0) "%d:%02d:%02d".format(h, m, s)
         else "%d:%02d".format(m, s)
     }
-
-    private fun decodeTrackNumber(raw: Int): Int = raw % 1000
 
     fun formatBytes(bytes: Long): String {
         if (bytes <= 0) return "0 B"

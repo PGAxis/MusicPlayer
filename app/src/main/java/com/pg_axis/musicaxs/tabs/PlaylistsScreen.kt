@@ -76,7 +76,7 @@ fun PlaylistsScreen(
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
         val playlist = exportTargetPlaylist ?: return@rememberLauncherForActivityResult
-        val songs = vm.getSongsForExport(context, playlist)
+        val songs = vm.getSongsForExport(playlist)
         context.contentResolver.openOutputStream(uri)?.use {
             M3uHandler.export(context, songs, it)
         }

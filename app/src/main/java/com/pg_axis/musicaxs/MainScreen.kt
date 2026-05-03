@@ -42,6 +42,8 @@ fun MainScreen(
     goToSearch: () -> Unit,
     goToSettings: () -> Unit,
     onChooseSongsForPlaylist: (playlistId: String) -> Unit,
+    onOpenAlbum: (albumId: String) -> Unit,
+    onOpenArtist: (name: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
     val currentSong by vm.currentSong.collectAsState()
@@ -177,9 +179,9 @@ fun MainScreen(
                     when (page) {
                         0 -> FavouritesScreen(goToPlaylist )
                         1 -> PlaylistsScreen(goToPlaylist)
-                        2 -> SongsScreen(goToDetail = goToDetail )
-                        3 -> AlbumsScreen(goToDetail = goToDetail )
-                        4 -> ArtistsScreen(goToDetail = goToDetail )
+                        2 -> SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll )
+                        3 -> AlbumsScreen(onOpenAlbum = onOpenAlbum )
+                        4 -> ArtistsScreen(onOpenArtist = onOpenArtist )
                     }
                 }
             }

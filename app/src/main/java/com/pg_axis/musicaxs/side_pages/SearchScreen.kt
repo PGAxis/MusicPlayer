@@ -44,7 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Song
-import com.pg_axis.musicaxs.settings.PlaylistRepository
+import com.pg_axis.musicaxs.repositories.PlaylistRepository
 import com.pg_axis.musicaxs.templates.AddToSheet
 import com.pg_axis.musicaxs.templates.SongRow
 import com.pg_axis.musicaxs.ui.theme.CyanPrimary

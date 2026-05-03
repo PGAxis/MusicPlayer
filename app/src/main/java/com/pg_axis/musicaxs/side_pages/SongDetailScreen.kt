@@ -43,6 +43,7 @@ private val MIME_TO_EXTENSION = mapOf(
 @Composable
 fun SongDetailScreen(
     songUri: Uri,
+    onScan: () -> Unit,
     onBack: () -> Unit
 ) {
     val vm: SongDetailViewModel = viewModel()
@@ -229,7 +230,7 @@ fun SongDetailScreen(
                         IntentSenderRequest.Builder(request.intentSender).build()
                     )
                 } else {
-                    vm.save()
+                    vm.save(onScan)
                 }
             },
             enabled = vm.isModified && !vm.isSaving,

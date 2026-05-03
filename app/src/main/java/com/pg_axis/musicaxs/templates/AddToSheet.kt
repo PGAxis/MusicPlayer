@@ -23,7 +23,7 @@ import com.pg_axis.musicaxs.R
 import com.pg_axis.musicaxs.models.Song
 import com.pg_axis.musicaxs.services.MusicService
 import com.pg_axis.musicaxs.settings.FavouritesSave
-import com.pg_axis.musicaxs.settings.PlaylistRepository
+import com.pg_axis.musicaxs.repositories.PlaylistRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

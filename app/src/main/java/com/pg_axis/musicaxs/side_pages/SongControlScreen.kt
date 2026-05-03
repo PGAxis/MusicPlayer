@@ -235,7 +235,7 @@ fun SongControlScreen(
                     modifier = Modifier.clickable {
                         MusicService.addToQueue(
                             context,
-                            vm.resolveSongFromUri(context, currentSong.songUri!!.toUri())!!
+                            vm.resolveSongFromUri(currentSong.songUri!!.toUri())!!
                         )
                         showAddToSheet = false
                     }

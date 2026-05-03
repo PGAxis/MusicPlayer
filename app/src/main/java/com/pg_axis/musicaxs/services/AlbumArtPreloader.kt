@@ -20,7 +20,7 @@ object AlbumArtPreloader {
                 .filter {
                     // skip songs already cached or already known to have no art
                     !File(dir, "song_${it.id}.jpg").exists() &&
-                            !File(dir, "song_${it.id}.none").exists()
+                    !File(dir, "song_${it.id}.none").exists()
                 }
                 .forEach { song ->
                     launch { extractAndCache(context, song, dir) }

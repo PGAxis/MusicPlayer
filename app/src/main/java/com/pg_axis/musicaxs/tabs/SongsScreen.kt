@@ -62,6 +62,7 @@ private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, 
 @Composable
 fun SongsScreen(
     goToDetail: (uri: String) -> Unit,
+    scanSongs: () -> Unit,
     vm: SongsViewModel = viewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -74,7 +75,7 @@ fun SongsScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) vm.scanSongs()
+        if (granted) vm.scanSongs(scanSongs)
     }
 
     var selectedSong by remember { mutableStateOf<Song?>(null) }
