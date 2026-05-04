@@ -102,7 +102,7 @@ fun PlaylistsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = PlayerBarDefaults.TotalHeight)
         ) {
-            // ── Smart playlist row ────────────────────────────────────────────
+            // -- Smart playlist row
             item {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -195,7 +195,7 @@ fun PlaylistsScreen(
                         }
                     )
 
-                    // Export — shows sub-list of playlists to pick from
+                    // Export
                     if (playlists.isEmpty()) {
                         ListItem(headlineContent = { Text("Export .m3u — no playlists yet") })
                     } else {

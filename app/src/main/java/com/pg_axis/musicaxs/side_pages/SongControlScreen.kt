@@ -91,7 +91,7 @@ fun SongControlScreen(
 
         Spacer(Modifier.height(15.dp))
 
-        // -- Album art placeholder (morphing image lives in ExpandablePlayer)
+        // -- Album art placeholder
         Spacer(
             modifier = Modifier
                 .padding(horizontal = 50.dp, vertical = 10.dp)

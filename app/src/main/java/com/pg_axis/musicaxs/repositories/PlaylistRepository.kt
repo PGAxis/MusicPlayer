@@ -31,8 +31,6 @@ class PlaylistRepository private constructor(context: Context) {
         loadAll()
     }
 
-    // ── CRUD ──────────────────────────────────────────────────────────────────
-
     fun create(name: String): Playlist {
         val id = System.currentTimeMillis()
         val playlist = Playlist(id = id, name = name, songIds = emptyList())
@@ -83,7 +81,6 @@ class PlaylistRepository private constructor(context: Context) {
         save(playlist.copy(songIds = songIds))
     }
 
-    // ── Persistence ───────────────────────────────────────────────────────────
 
     private fun save(playlist: Playlist) {
         fileFor(playlist.id).writeText(gson.toJson(PlaylistData.from(playlist)))
@@ -107,7 +104,6 @@ class PlaylistRepository private constructor(context: Context) {
 
     private fun fileFor(id: Long): File = playlistsDir.resolve("$id.json")
 
-    // ── Serialization model ───────────────────────────────────────────────────
 
     private data class PlaylistData(
         val id: Long = 0,

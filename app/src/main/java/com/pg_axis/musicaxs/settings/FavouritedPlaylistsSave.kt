@@ -22,7 +22,7 @@ class FavouritedPlaylistsSave private constructor(context: Context) {
     private val path = context.filesDir.resolve("favourited_playlists.json")
     private val gson = Gson()
 
-    private val _favourites = mutableStateMapOf<Long, Long>() // id -> timestamp
+    private val _favourites = mutableStateMapOf<Long, Long>()
 
     fun isFavourited(playlistId: Long): Boolean = playlistId in _favourites
 

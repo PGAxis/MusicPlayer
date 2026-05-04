@@ -38,10 +38,10 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     val playlists: StateFlow<List<Playlist>> = repo.playlists
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Smart playlists — resolved as Song lists
+    // Smart playlists
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val recentlyAdded: StateFlow<List<Song>> =
-        recentlyAddedFlow(getApplication()) // emits Unit
+        recentlyAddedFlow(getApplication())
             .debounce(300)
             .mapLatest {
                 withContext(Dispatchers.IO) {
@@ -61,7 +61,7 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
                 entries.entries
                     .sortedByDescending { it.value.lastPlayedMs }
                     .take(50)
-                    .map { it.key } // List<String> (URIs)
+                    .map { it.key }
             }
             .mapLatest { uris ->
                 withContext(Dispatchers.IO) {
@@ -103,7 +103,7 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     fun getSongsForExport(playlist: Playlist): List<Song> {
         return playlist.songIds.mapNotNull { id ->
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            querySong(uri) // already exists in the VM
+            querySong(uri)
         }
     }
 

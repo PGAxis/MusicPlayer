@@ -52,6 +52,9 @@ fun SettingsScreen(
     onScan: () -> Unit,
     vm: SettingsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val ytcnvReady = remember { vm.isYTCnvInstalled(context) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,10 +85,21 @@ fun SettingsScreen(
             SettingsGroup(title = "Library") {
                 SettingsToggleRow(
                     label = "Hide WhatsApp Audio",
-                    description = "Hides songs from the \"WhatsApp Audio\" album.",
+                    description = "Hides songs from the \"WhatsApp Audio\" album",
                     checked = vm.settings.hideWhatsAppAudio,
                     onCheckedChange = { value -> vm.onHideWhatsAppChanged(value, onScan) }
                 )
+            }
+
+            if (ytcnvReady) {
+                SettingsGroup(title = "Integration") {
+                    SettingsToggleRow(
+                        label = "Allow YouTube Conv.axs to add songs",
+                        description = "YouTube Conv.axs can add downloaded songs directly to your playlists",
+                        checked = vm.settings.allowYTCnv,
+                        onCheckedChange = vm::onAllowYTCnvChanged
+                    )
+                }
             }
         }
 
