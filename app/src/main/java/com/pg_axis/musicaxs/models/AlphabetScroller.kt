@@ -26,7 +26,6 @@ fun AlphabetScroller(
             .padding(end = 4.dp, top = 8.dp, bottom = 8.dp)
             .pointerInput(letters) {
                 awaitEachGesture {
-                    // Handle both tap and drag with a single gesture detector
                     val down = awaitFirstDown()
                     onLetterSelected(letterAtOffset(down.position.y, size.height, letters))
 

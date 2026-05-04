@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <permission android:name="com.pg_axis.musicaxs.PLAYLIST_ACCESS" android:protectionLevel="normal" />
+
+    <queries>
+        <package android:name="com.pg_axis.ytcnv" />
+    </queries>
+
     <application
         android:name=".MusicAxsApplication"
         android:allowBackup="true"
@@ -20,6 +26,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Musicaxs">
+        <provider
+            android:name=".services.MusicAxsProvider"
+            android:authorities="com.pg_axis.musicaxs.provider"
+            android:exported="true"
+            android:permission="com.pg_axis.musicaxs.PLAYLIST_ACCESS" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -50,7 +50,7 @@ fun FavouritesDetailScreen(
     var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     Column(Modifier.fillMaxSize()) {
-        // ── Header ────────────────────────────────────────────────────────────
+        // -- Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,7 +99,7 @@ fun FavouritesDetailScreen(
 
         HorizontalDivider()
 
-        // ── Song list ─────────────────────────────────────────────────────────
+        // -- Song list
         if (songs.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()

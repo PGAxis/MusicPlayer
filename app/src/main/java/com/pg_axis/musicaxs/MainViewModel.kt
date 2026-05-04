@@ -68,7 +68,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val tabs = listOf("Favourites", "Playlists", "Songs", "Albums", "Artists")
 
-    // Index of the last active tab, persisted via settings
     private val _currentPageIndex = MutableStateFlow(settings.lastTabIndex)
     val currentPageIndex: StateFlow<Int> = _currentPageIndex.asStateFlow()
 
@@ -97,7 +96,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Called when the pager settles
     fun onPageChanged(index: Int) {
         _currentPageIndex.value = index
         settings.lastTabIndex = index
@@ -192,8 +190,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 albumRepo.update(albums)
                 artistRepo.update(artists)
                 prewarmAlbumArtCache(songs)
-            } catch (_: SecurityException) {
-                // permission not granted yet — SongsScreen will handle asking
             } catch (_: Exception) { }
         }
     }

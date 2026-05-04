@@ -22,7 +22,6 @@ class PlayCountTracker private constructor(context: Context) {
     private val gson = Gson()
     private val file = context.filesDir.resolve("play_counts.json")
 
-    // uri string -> PlayEntry
     private val entries = mutableMapOf<String, PlayEntry>()
 
     private val _entriesFlow = MutableStateFlow<Map<String, PlayEntry>>(emptyMap())

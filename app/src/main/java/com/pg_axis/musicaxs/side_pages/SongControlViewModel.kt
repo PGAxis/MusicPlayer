@@ -39,7 +39,6 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
-    // Scrubbing state — true while user is dragging the slider
     private val _isScrubbing = MutableStateFlow(false)
 
     private var lastScrubPositionMs: Long = 0L

@@ -45,7 +45,7 @@ class MusicService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
-    // ── Queue state ───────────────────────────────────────────────────────────
+    // -- Queue state
     private var currentSource: QueueSource = QueueSource.MANUAL
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -72,7 +72,7 @@ class MusicService : MediaSessionService() {
         var isLiked = false
             private set
 
-        // ── Public queue API ──────────────────────────────────────────────────
+        // -- Public queue API
 
         val playerInstance get() = instance?.mediaSession?.player
 
@@ -165,7 +165,7 @@ class MusicService : MediaSessionService() {
         private fun applyQueueReorder(targetUris: List<String>) {
             val player = instance?.mediaSession?.player ?: return
 
-            // Mirror of the current player queue so we can simulate moves
+            // Mirror of the current player queue
             val current = (0 until player.mediaItemCount)
                 .map { player.getMediaItemAt(it).localConfiguration?.uri?.toString() ?: "" }
                 .toMutableList()
@@ -173,7 +173,7 @@ class MusicService : MediaSessionService() {
             for (targetIndex in targetUris.indices) {
                 val targetUri = targetUris[targetIndex]
 
-                // Find first occurrence at or after targetIndex (positions before are already settled)
+                // Find first occurrence at or after targetIndex
                 var currentIndex = -1
                 for (i in targetIndex until current.size) {
                     if (current[i] == targetUri) {
@@ -256,7 +256,7 @@ class MusicService : MediaSessionService() {
         private const val EXTRA_INIT_ONLY = "extra_init_only"
     }
 
-    // ── Internal queue operations ─────────────────────────────────────────────
+    // -- Internal queue operations
 
     private fun Song.toMediaItem() = MediaItem.Builder()
         .setUri(uri)
@@ -341,7 +341,7 @@ class MusicService : MediaSessionService() {
         player.play()
     }
 
-    // ── Session callback ──────────────────────────────────────────────────────
+    // -- Session callback
 
     @OptIn(UnstableApi::class)
     private inner class MusicSessionCallback : MediaSession.Callback {
@@ -443,7 +443,7 @@ class MusicService : MediaSessionService() {
         }
     }
 
-    // ── Notification ──────────────────────────────────────────────────────────
+    // -- Notification
 
     @OptIn(UnstableApi::class)
     private class CustomNotificationProvider(context: Context)
@@ -462,7 +462,7 @@ class MusicService : MediaSessionService() {
         }
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // -- Lifecycle
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -624,7 +624,7 @@ class MusicService : MediaSessionService() {
         super.onDestroy()
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // -- Helpers
 
     private fun setAndPlay(uri: String, title: String, artist: String, startPositionMs: Long = 0L) {
         mediaSession?.player?.apply {

@@ -35,7 +35,6 @@ private sealed interface SongListItem {
     data class Item(val song: Song) : SongListItem
 }
 
-// Returns a flat list of headers + items, and a map of letter → first index in that flat list
 private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, Int>> {
     val items = mutableListOf<SongListItem>()
     val letterIndex = mutableMapOf<String, Int>()
@@ -169,7 +168,6 @@ fun SongsScreen(
                             }
                         )
 
-                        // Scrub popup — large letter shown in center while dragging
                         activeLetter?.let { letter ->
                             Box(
                                 modifier = Modifier

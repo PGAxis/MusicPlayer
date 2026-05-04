@@ -8,7 +8,7 @@ data class Song(
     val artist: String,
     val album: String,
     val albumId: Long,
-    val uri: Uri,           // content:// URI for playback
+    val uri: Uri,
     val durationMs: Long,
     val albumArtUri: Uri?,
     val track: Int,

@@ -23,7 +23,6 @@ class FavouritesSave private constructor(context: Context) {
     private val path = context.filesDir.resolve("favourites.json")
     private val gson = Gson()
 
-    // id -> timestamp added (ms). Backed by Compose state so UI reacts automatically.
     private val _favourites = mutableStateMapOf<Long, Long>()
 
     fun isFavourite(uri: Uri): Boolean = idOf(uri) in _favourites

@@ -70,7 +70,6 @@ fun ExpandablePlayer(
     val barHeightPx = with(density) { PlayerBarDefaults.Height.toPx() }
     val vMarginPx = with(density) { PlayerBarDefaults.VerticalMargin.toPx() }
 
-    // ── Vertical (player expand) state ────────────────────────────────────────
     @Suppress("DEPRECATION")
     val playerState = remember {
         AnchoredDraggableState(
@@ -82,7 +81,6 @@ fun ExpandablePlayer(
         )
     }
 
-    // ── Horizontal (queue panel) state ────────────────────────────────────────
     @Suppress("DEPRECATION")
     val queueState = remember {
         AnchoredDraggableState(

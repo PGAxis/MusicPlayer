@@ -38,6 +38,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     // settings
     override var hideWhatsAppAudio by mutableStateOf(false)
     override var normalizeVolume by mutableStateOf(false)
+    override var allowYTCnv by mutableStateOf(false)
 
     fun save() {
         val data = SettingsData(
@@ -51,7 +52,8 @@ class SettingsSave private constructor(context: Context): ISettings {
             repeatMode = repeatMode,
             queueSource = queueSource,
             hideWhatsAppAudio = hideWhatsAppAudio,
-            normalizeVolume = normalizeVolume
+            normalizeVolume = normalizeVolume,
+            allowYTCnv = allowYTCnv
         )
         val json = gson.toJson(data)
         settingsPath.writeText(json)
@@ -76,12 +78,13 @@ class SettingsSave private constructor(context: Context): ISettings {
                 queueSource = it.queueSource
                 hideWhatsAppAudio = it.hideWhatsAppAudio
                 normalizeVolume = it.normalizeVolume
+                allowYTCnv = it.allowYTCnv
             }
         } catch (_: Exception) {
         }
     }
 
-    // ─── Data class ───────────────────────────────────────────────────────────
+    // -- Data class
 
     data class SettingsData(
         // media playback persistency
@@ -96,7 +99,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         val queueSource: QueueSource = QueueSource.MANUAL,
         // settings
         val hideWhatsAppAudio: Boolean = false,
-        val normalizeVolume: Boolean = false
+        val normalizeVolume: Boolean = false,
+        val allowYTCnv: Boolean = false
     )
 
     init {

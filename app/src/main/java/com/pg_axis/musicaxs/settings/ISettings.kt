@@ -17,4 +17,5 @@ interface ISettings {
     // settings
     var hideWhatsAppAudio: Boolean
     var normalizeVolume: Boolean
+    var allowYTCnv: Boolean
 }

@@ -80,7 +80,7 @@ fun MainScreen(
         }
 
         Column(Modifier.fillMaxSize()) {
-            // -- Header -------------------
+            // -- Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,7 +131,7 @@ fun MainScreen(
                 }
             }
 
-            // -- Tab titles -------------------------------------------------------------------------
+            // -- Tab titles
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -165,7 +165,7 @@ fun MainScreen(
                 Spacer(Modifier.width(padDp))
             }
 
-            // -- Content pager --------------------------------------
+            // -- Content pager
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -187,7 +187,7 @@ fun MainScreen(
             }
         }
 
-        // -- Now Playing bar -------------------------------------------------------------------------------------
+        // -- Now Playing bar
         currentSong?.let { it1 ->
             ExpandablePlayer(
                 currentSong = it1,
