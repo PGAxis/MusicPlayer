@@ -38,6 +38,7 @@ import com.pg_axis.musicaxs.repositories.PlaylistRepository
 import com.pg_axis.musicaxs.repositories.SongRepository
 import com.pg_axis.musicaxs.services.AlbumArtPreloader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class CurrentSong(
@@ -73,6 +74,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
+
+    private var songHasBeenSet = false
 
     var isPlaying by mutableStateOf(false)
         private set
@@ -113,6 +116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSong(song: Song) {
+        songHasBeenSet = true
         _currentSong.value = CurrentSong(title = song.title, artist = song.artist, songUri = song.uri.toString())
         settings.lastSongUri = song.uri.toString()
         settings.save()
@@ -139,6 +143,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             controller?.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing
+                    if (!songHasBeenSet) {
+                        val uri = controller?.currentMediaItem?.localConfiguration?.uri ?: return
+                        val song = resolveSongFromUri(uri) ?: return
+                        setSong(song)
+                    }
                 }
 
                 override fun onMediaItemTransition(
@@ -158,6 +167,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val lastUri = settings.lastSongUri
         if (lastUri.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
+                songRepo.isLoaded.first { it }
                 val song = resolveSongFromUri(lastUri.toUri())
                 if (song != null) {
                     _currentSong.value = CurrentSong(
@@ -165,6 +175,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         artist = song.artist,
                         songUri = song.uri.toString()
                     )
+                    songHasBeenSet = true
                 }
             }
         }

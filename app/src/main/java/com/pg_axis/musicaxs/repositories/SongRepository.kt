@@ -20,7 +20,10 @@ class SongRepository private constructor() {
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
 
+    val isLoaded = MutableStateFlow(false)
+
     fun update(songs: List<Song>) {
         _songs.value = songs
+        isLoaded.value = true
     }
 }

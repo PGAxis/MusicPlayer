@@ -1,0 +1,1 @@
+Fixed a bug -> last played song was not reloaded on app restart
