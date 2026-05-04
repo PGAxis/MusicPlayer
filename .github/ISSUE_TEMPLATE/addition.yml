@@ -1,5 +1,5 @@
 name: Addition
-description: Request a feature to be added to YouTube Converter
+description: Request a feature to be added to Music.axs
 labels: ["Addition"]
 body:
   - type: textarea
