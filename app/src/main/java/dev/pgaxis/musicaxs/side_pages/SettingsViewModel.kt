@@ -26,7 +26,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     @Suppress("DEPRECATION")
     fun isYTCnvInstalled(context: Context): Boolean {
         return try {
-            val info = context.packageManager.getPackageInfo("dev.pgaxis.ytcnv", 0)
+            val info = context.packageManager.getPackageInfo("com.pg_axis.ytcnv", 0)
             val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                 info.longVersionCode else info.versionCode.toLong()
             versionCode >= MusicAxsContract.MIN_YTCNV_VERSION
