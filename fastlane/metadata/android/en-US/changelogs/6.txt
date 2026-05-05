@@ -1,1 +1,1 @@
-Chnaged package name
+Changed package name
