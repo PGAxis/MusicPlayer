@@ -8,7 +8,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.pg_axis.musicaxs"
+    namespace = "dev.pgaxis.musicaxs"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pg_axis.musicaxs"
+        applicationId = "dev.pgaxis.musicaxs"
         minSdk = 26
         targetSdk = 36
         versionCode = 5
