@@ -102,6 +102,7 @@ private fun PlaylistTile(playlist: Playlist, onClick: () -> Unit) {
 
         Spacer(Modifier.height(6.dp))
 
+        val songCount by playlist.songCount.collectAsStateWithLifecycle()
         Text(
             text = playlist.name,
             fontWeight = FontWeight.Bold,
@@ -110,7 +111,7 @@ private fun PlaylistTile(playlist: Playlist, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = if (playlist.getSongCount() != 1) "${playlist.getSongCount()} tracks" else "${playlist.getSongCount()} track",
+            text = if (songCount != 1) "$songCount tracks" else "$songCount track",
             fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

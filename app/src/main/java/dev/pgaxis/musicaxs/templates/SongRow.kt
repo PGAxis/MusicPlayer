@@ -1,7 +1,13 @@
 package dev.pgaxis.musicaxs.templates
 
 import android.annotation.SuppressLint
+import android.app.RecoverableSecurityException
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -45,8 +51,13 @@ fun SongRow(
 ) {
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
+
+    val deleteRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { }
 
     Row(
         modifier = Modifier
@@ -145,9 +156,45 @@ fun SongRow(
                 }
                 DropdownMenuItem(
                     text = { Text("Delete") },
-                    onClick = { menuExpanded = false }
+                    onClick = { menuExpanded = false; showDeleteDialog = true }
                 )
             }
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Delete song") },
+                text = { Text("\"${song.title}\" will be permanently deleted from your device. This action is irreversible.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDeleteDialog = false
+                        when {
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                                val intent = MediaStore.createDeleteRequest(
+                                    context.contentResolver, listOf(song.uri)
+                                )
+                                deleteRequestLauncher.launch(
+                                    IntentSenderRequest.Builder(intent.intentSender).build()
+                                )
+                            }
+                            Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
+                                try {
+                                    context.contentResolver.delete(song.uri, null, null)
+                                } catch (e: RecoverableSecurityException) {
+                                    deleteRequestLauncher.launch(
+                                        IntentSenderRequest.Builder(e.userAction.actionIntent.intentSender).build()
+                                    )
+                                }
+                            }
+                            else -> context.contentResolver.delete(song.uri, null, null)
+                        }
+                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                }
+            )
         }
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import dev.pgaxis.musicaxs.PlayerBarDefaults
 import dev.pgaxis.musicaxs.R
@@ -80,6 +81,7 @@ fun FavouritesDetailScreen(
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                val songCount by playlist.songCount.collectAsStateWithLifecycle()
                 Text(
                     text = playlist.name,
                     fontWeight = FontWeight.Bold,
@@ -88,7 +90,7 @@ fun FavouritesDetailScreen(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (playlist.getSongCount() != 1) "${playlist.getSongCount()} songs" else "${playlist.getSongCount()} song",
+                    text = if (songCount != 1) "$songCount songs" else "$songCount song",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     maxLines = 1,

@@ -92,7 +92,7 @@ fun SettingsScreen(
             }
 
             if (ytcnvReady) {
-                SettingsGroup(title = "Integration") {
+                SettingsGroup(title = "Integration", initiallyExpanded = false) {
                     SettingsToggleRow(
                         label = "Allow YouTube Conv.axs to add songs",
                         description = "YouTube Conv.axs can add downloaded songs directly to your playlists",

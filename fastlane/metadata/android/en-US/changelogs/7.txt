@@ -1,0 +1,2 @@
+Song count for playlists now respects song deletion
+Delete button (for songs) now works

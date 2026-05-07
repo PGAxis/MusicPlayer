@@ -1,0 +1,2 @@
+Počet skladeb v playlistech nyní respektuje mazání skladeb
+Tlačítko Smazat (pro skladby) nyní funguje

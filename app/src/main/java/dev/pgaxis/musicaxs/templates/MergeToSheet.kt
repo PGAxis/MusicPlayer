@@ -12,11 +12,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Playlist
 
@@ -46,9 +48,10 @@ fun MergeIntoSheet(
                 ListItem(headlineContent = { Text("No other playlists to merge into.") })
             } else {
                 candidates.forEach { target ->
+                    val songCount by target.songCount.collectAsStateWithLifecycle()
                     ListItem(
                         headlineContent = { Text(target.name) },
-                        supportingContent = { Text("${target.getSongCount()} songs") },
+                        supportingContent = { Text("$songCount songs") },
                         leadingContent = {
                             Icon(painterResource(R.drawable.default_playlist), null, Modifier.size(15.dp))
                         },

@@ -181,7 +181,7 @@ fun PlaylistsScreen(
                     HorizontalDivider()
 
                     ListItem(
-                        headlineContent = { Text("Import .m3u") },
+                        headlineContent = { Text("Import playlist from .m3u") },
                         leadingContent = {
                             Icon(
                                 painter = painterResource(R.drawable.import_icon),
@@ -197,14 +197,16 @@ fun PlaylistsScreen(
 
                     // Export
                     if (playlists.isEmpty()) {
-                        ListItem(headlineContent = { Text("Export .m3u — no playlists yet") })
+                        ListItem(headlineContent = { Text("Export to .m3u — no playlists yet") })
                     } else {
                         Text("Export", fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                         playlists.forEach { playlist ->
+                            val songCount by playlist.songCount.collectAsStateWithLifecycle()
+
                             ListItem(
                                 headlineContent = { Text(playlist.name) },
-                                supportingContent = { Text("${playlist.getSongCount()} songs") },
+                                supportingContent = { Text("$songCount songs") },
                                 modifier = Modifier.clickable {
                                     showSheet = false
                                     exportTargetPlaylist = playlist
@@ -348,6 +350,7 @@ private fun PlaylistRow(
     onToggleFavourite: () -> Unit
 ) {
     val context = LocalContext.current
+    val songCount by playlist.songCount.collectAsStateWithLifecycle()
     var menuExpanded by remember { mutableStateOf(false) }
 
     Row(
@@ -384,7 +387,7 @@ private fun PlaylistRow(
         )
 
         Text(
-            text = "${playlist.getSongCount()} songs",
+            text = "$songCount songs",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

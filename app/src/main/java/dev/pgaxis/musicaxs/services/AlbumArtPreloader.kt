@@ -4,14 +4,17 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.net.toUri
 import dev.pgaxis.musicaxs.models.Song
+import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
 object AlbumArtPreloader {
+
     suspend fun preloadAll(context: Context, songs: List<Song>) =
         withContext(Dispatchers.IO) {
             val dir = File(context.cacheDir, "album_art").also { it.mkdirs() }
@@ -36,6 +39,16 @@ object AlbumArtPreloader {
                 .removePrefix("song_")
                 .toLongOrNull() ?: return@forEach
             if (id !in validIds) file.delete()
+        }
+
+        val playlistRepo = PlaylistRepository.getInstance(context)
+        playlistRepo.playlists.value.forEach { playlist ->
+            playlist.songIds.forEach { songId ->
+                if (songId !in validIds) {
+                    Log.d("Preloader", "$songId")
+                    playlistRepo.removeSong(playlist.id, songId)
+                }
+            }
         }
     }
 

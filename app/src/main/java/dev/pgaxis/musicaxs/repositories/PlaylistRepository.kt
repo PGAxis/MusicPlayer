@@ -51,18 +51,23 @@ class PlaylistRepository private constructor(context: Context) {
 
     fun addSong(playlistId: Long, songId: Long) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
-        save(playlist.copy(songIds = playlist.songIds + songId))
+        val newIds = playlist.songIds + songId
+        playlist.setSongCount(newIds.size)
+        save(playlist.copy(songIds = newIds))
     }
 
-    /*fun removeSong(playlistId: Long, songId: Long) {
+    fun removeSong(playlistId: Long, songId: Long) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
-        save(playlist.copy(songIds = playlist.songIds - songId))
-    }*/
+        val newIds = playlist.songIds.filter { it != songId }
+        playlist.setSongCount(newIds.size)
+        save(playlist.copy(songIds = newIds))
+    }
 
     fun removeSongAt(playlistId: Long, index: Int) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
         if (index !in playlist.songIds.indices) return
         val newIds = playlist.songIds.toMutableList().also { it.removeAt(index) }
+        playlist.setSongCount(newIds.size)
         save(playlist.copy(songIds = newIds))
     }
 
@@ -78,6 +83,7 @@ class PlaylistRepository private constructor(context: Context) {
 
     fun reorderSongs(playlistId: Long, songIds: List<Long>) {
         val playlist = _playlists.value.find { it.id == playlistId } ?: return
+        playlist.setSongCount(songIds.size)
         save(playlist.copy(songIds = songIds))
     }
 
