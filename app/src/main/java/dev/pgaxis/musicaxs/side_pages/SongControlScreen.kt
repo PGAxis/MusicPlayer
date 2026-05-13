@@ -1,6 +1,13 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import android.app.RecoverableSecurityException
+import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,10 +18,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -30,6 +39,7 @@ import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 @Composable
 fun SongControlScreen(
     currentSong: CurrentSong,
+    artSizeDp: Dp,
     onSeeDetail: (uri: String) -> Unit,
     onCollapse: () -> Unit,
     onOpenQueue: () -> Unit,
@@ -47,55 +57,20 @@ fun SongControlScreen(
 
     var menuExpanded  by remember { mutableStateOf(false) }
     var showAddToSheet by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(15.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // -- Header
-        Row(modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onCollapse, shape = RoundedCornerShape(0.dp)) {
-                Icon(painterResource(R.drawable.back), "Back",
-                    tint = CyanPrimary, modifier = Modifier.size(25.dp))
-            }
+    val deleteRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { }
 
-            Spacer(Modifier.weight(1f))
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-            Box {
-                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(36.dp)) {
-                    Icon(painterResource(R.drawable.settings), "Song options",
-                        tint = CyanPrimary, modifier = Modifier.size(25.dp))
-                }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text("See details") },
-                        onClick = {
-                            menuExpanded = false
-                            onSeeDetail(Uri.encode(currentSong.songUri.toString()))
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Add to") },
-                        onClick = { menuExpanded = false; showAddToSheet = true }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete") },
-                        onClick = { menuExpanded = false }
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(15.dp))
-
+    val artAndMeta = @Composable {
         // -- Album art placeholder
         Spacer(
             modifier = Modifier
-                .padding(horizontal = 50.dp, vertical = 10.dp)
-                .aspectRatio(1f)
+                .size(artSizeDp)
         )
 
         Spacer(Modifier.height(15.dp))
@@ -104,9 +79,9 @@ fun SongControlScreen(
         Text(currentSong.title, textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold, color = CyanPrimary)
         Text(currentSong.artist, textAlign = TextAlign.Center, color = CyanPrimary)
+    }
 
-        Spacer(Modifier.weight(1f))
-
+    val controls = @Composable {
         // -- Secondary controls
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenQueue, shape = RoundedCornerShape(0.dp)) {
@@ -217,6 +192,80 @@ fun SongControlScreen(
         }
     }
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(15.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // -- Header
+        Row(modifier = Modifier.fillMaxWidth()) {
+            IconButton(onClick = onCollapse, shape = RoundedCornerShape(0.dp)) {
+                Icon(
+                    painter = painterResource(R.drawable.back),
+                    contentDescription = "Back",
+                    tint = CyanPrimary, modifier = Modifier.size(25.dp)
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Box {
+                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(36.dp)) {
+                    Icon(painterResource(R.drawable.settings), "Song options",
+                        tint = CyanPrimary, modifier = Modifier.size(25.dp))
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text("See details") },
+                        onClick = {
+                            menuExpanded = false
+                            onSeeDetail(Uri.encode(currentSong.songUri.toString()))
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Add to") },
+                        onClick = { menuExpanded = false; showAddToSheet = true }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = { menuExpanded = false; showDeleteDialog = true }
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(15.dp))
+
+       if (isLandscape) {
+           Column(
+               modifier = Modifier.weight(1f),
+               horizontalAlignment = Alignment.CenterHorizontally,
+               verticalArrangement = Arrangement.Center
+           ) {
+               artAndMeta()
+           }
+           Column(
+               modifier = Modifier.weight(1f),
+               horizontalAlignment = Alignment.CenterHorizontally,
+               verticalArrangement = Arrangement.Center
+           ) {
+               controls()
+           }
+       } else {
+           Column(
+               modifier = Modifier
+                   .fillMaxSize(),
+               horizontalAlignment = Alignment.CenterHorizontally
+           ) {
+               artAndMeta()
+               Spacer(Modifier.weight(1f))
+               controls()
+           }
+       }
+    }
+
     if (showAddToSheet) {
         ModalBottomSheet(onDismissRequest = { showAddToSheet = false }) {
             Column(
@@ -262,6 +311,42 @@ fun SongControlScreen(
                 )
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete song") },
+            text = { Text("\"${currentSong.title}\" will be permanently deleted from your device. This action is irreversible.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    when {
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                            val intent = MediaStore.createDeleteRequest(
+                                context.contentResolver, listOf(currentSong.songUri!!.toUri())
+                            )
+                            deleteRequestLauncher.launch(
+                                IntentSenderRequest.Builder(intent.intentSender).build()
+                            )
+                        }
+                        Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
+                            try {
+                                context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                            } catch (e: RecoverableSecurityException) {
+                                deleteRequestLauncher.launch(
+                                    IntentSenderRequest.Builder(e.userAction.actionIntent.intentSender).build()
+                                )
+                            }
+                        }
+                        else -> context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                    }
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 

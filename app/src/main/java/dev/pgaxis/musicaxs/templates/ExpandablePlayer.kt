@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.templates
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import androidx.activity.compose.BackHandler
@@ -28,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -146,15 +148,26 @@ fun ExpandablePlayer(
             alpha = 1f
         )
 
+        val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
         // Image morph values
         val imageCollapsedSizePx = with(density) { 44.dp.toPx() }
-        val imageExpandedSizePx = with(density) { (maxWidth - 100.dp).toPx() }
+        val imageExpandedSizePx = with(density) {
+            if (isLandscape) (maxHeight - 100.dp).toPx()  // smaller, fits left column
+            else (maxWidth - 100.dp).toPx()
+        }
         val imageSizePx = lerp(imageCollapsedSizePx, imageExpandedSizePx, progress)
 
         val collapsedXPx = with(density) { 10.dp.toPx() }
         val collapsedYPx = (barHeightPx - imageCollapsedSizePx) / 2f
-        val expandedXPx = (fullWidthPx - imageExpandedSizePx) / 2f
-        val expandedYPx = with(density) { 71.dp.toPx() }
+        val expandedXPx = if (isLandscape)
+            with(density) { 50.dp.toPx() }
+        else
+            (fullWidthPx - imageExpandedSizePx) / 2f
+        val expandedYPx = with(density) {
+            if (isLandscape) (maxHeight.toPx() - imageExpandedSizePx) / 2f
+            else 71.dp.toPx()
+        }
 
         val imageX = with(density) { lerp(collapsedXPx, expandedXPx, progress).toDp() }
         val imageY = with(density) { lerp(collapsedYPx, expandedYPx, progress).toDp() }
@@ -238,6 +251,7 @@ fun ExpandablePlayer(
                     ) {
                         SongControlScreen(
                             currentSong = currentSong,
+                            artSizeDp = with(density) { imageExpandedSizePx.toDp() },
                             onSeeDetail = onSeeDetail,
                             onCollapse = { scope.launch { playerState.animateTo(PlayerState.Collapsed) } },
                             onOpenQueue = { scope.launch { queueState.animateTo(QueuePanelState.Visible) } },

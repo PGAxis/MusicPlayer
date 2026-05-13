@@ -14,13 +14,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun onHideWhatsAppChanged(value: Boolean, onScan: () -> Unit) {
         settings.hideWhatsAppAudio = value
-        settings.save()
         onScan()
     }
 
     fun onAllowYTCnvChanged(value: Boolean) {
         settings.allowYTCnv = value
-        settings.save()
     }
 
     @Suppress("DEPRECATION")

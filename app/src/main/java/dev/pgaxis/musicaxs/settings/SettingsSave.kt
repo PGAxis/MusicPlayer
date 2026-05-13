@@ -7,8 +7,13 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import dev.pgaxis.axs.AxsBoundObject
+import dev.pgaxis.axs.AxsFile
 import dev.pgaxis.musicaxs.services.QueueSource
+import java.io.File
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
 
 class SettingsSave private constructor(context: Context): ISettings {
 
@@ -22,88 +27,126 @@ class SettingsSave private constructor(context: Context): ISettings {
             }
     }
 
-    private val settingsPath = context.filesDir.resolve("settings.json")
-    private val gson = Gson()
+    private val axsPath = context.filesDir.resolve("settings.axs").path
+
+    // --- AXS setup ---
+    private val axsFile = AxsFile(axsPath)
+    private lateinit var boundSettings: AxsBoundObject<SettingsData>
+
+    // --- Setting fun ---
+    private fun <V : Any> setting(
+        initial: V,
+        prop: KMutableProperty1<SettingsData, V>
+    ): ReadWriteProperty<Any?, V> = object : ReadWriteProperty<Any?, V> {
+        private var state by mutableStateOf(initial)
+
+        override fun getValue(thisRef: Any?, property: KProperty<*>): V = state
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
+            state = value
+            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+        }
+    }
+
+    private fun intSetting(
+        initial: Int,
+        prop: KMutableProperty1<SettingsData, Int>
+    ): ReadWriteProperty<Any?, Int> = object : ReadWriteProperty<Any?, Int> {
+        private var state by mutableIntStateOf(initial)
+
+        override fun getValue(thisRef: Any?, property: KProperty<*>): Int = state
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+            state = value
+            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+        }
+    }
+
+    private fun longSetting(
+        initial: Long,
+        prop: KMutableProperty1<SettingsData, Long>
+    ): ReadWriteProperty<Any?, Long> = object : ReadWriteProperty<Any?, Long> {
+        private var state by mutableLongStateOf(initial)
+
+        override fun getValue(thisRef: Any?, property: KProperty<*>): Long = state
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) {
+            state = value
+            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+        }
+    }
 
     // media playback persistency
-    override var lastTabIndex by mutableIntStateOf(2)
-    override var lastSongUri by mutableStateOf("")
-    override var lastPositionMs by mutableLongStateOf(0L)
-    override var lastDurationMs by mutableLongStateOf(0L)
-    override var lastQueueUris by mutableStateOf<List<String>>(emptyList())
-    override var lastQueueTitles by mutableStateOf<List<String>>(emptyList())
-    override var lastQueueArtists by mutableStateOf<List<String>>(emptyList())
-    override var repeatMode by mutableIntStateOf(2)
-    override var queueSource by mutableStateOf(QueueSource.MANUAL)
+    override var lastTabIndex by intSetting(2, SettingsData::lastTabIndex)
+    override var lastSongUri by setting("", SettingsData::lastSongUri)
+    override var lastPositionMs by longSetting(0L, SettingsData::lastPositionMs)
+    override var lastDurationMs by longSetting(0L, SettingsData::lastDurationMs)
+    override var lastQueueUris by setting(emptyList(), SettingsData::lastQueueUris)
+    override var lastQueueTitles by setting(emptyList(), SettingsData::lastQueueTitles)
+    override var lastQueueArtists by setting(emptyList(), SettingsData::lastQueueArtists)
+    override var repeatMode by intSetting(2, SettingsData::repeatMode)
+    override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
     // settings
-    override var hideWhatsAppAudio by mutableStateOf(false)
-    override var normalizeVolume by mutableStateOf(false)
-    override var allowYTCnv by mutableStateOf(false)
-
-    fun save() {
-        val data = SettingsData(
-            lastTabIndex = lastTabIndex,
-            lastSongUri = lastSongUri,
-            lastPositionMs = lastPositionMs,
-            lastDurationMs = lastDurationMs,
-            lastQueueUris = lastQueueUris,
-            lastQueueTitles = lastQueueTitles,
-            lastQueueArtists = lastQueueArtists,
-            repeatMode = repeatMode,
-            queueSource = queueSource,
-            hideWhatsAppAudio = hideWhatsAppAudio,
-            normalizeVolume = normalizeVolume,
-            allowYTCnv = allowYTCnv
-        )
-        val json = gson.toJson(data)
-        settingsPath.writeText(json)
-    }
-
-    fun load() {
-        if (!settingsPath.exists()) {
-            return
-        }
-        try {
-            val text = settingsPath.readText()
-            val type = object : TypeToken<SettingsData>() {}.type
-            gson.fromJson<SettingsData>(text, type)?.let {
-                lastTabIndex = it.lastTabIndex
-                lastSongUri = it.lastSongUri ?: ""
-                lastPositionMs = it.lastPositionMs
-                lastDurationMs = it.lastDurationMs
-                lastQueueUris = it.lastQueueUris
-                lastQueueTitles = it.lastQueueTitles
-                lastQueueArtists = it.lastQueueArtists
-                repeatMode = it.repeatMode
-                queueSource = it.queueSource
-                hideWhatsAppAudio = it.hideWhatsAppAudio
-                normalizeVolume = it.normalizeVolume
-                allowYTCnv = it.allowYTCnv
-            }
-        } catch (_: Exception) {
-        }
-    }
+    override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
+    override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
 
     // -- Data class
-
     data class SettingsData(
         // media playback persistency
-        val lastTabIndex: Int = 2,
-        val lastSongUri: String? = null,
-        val lastPositionMs: Long = 0L,
-        val lastDurationMs: Long = 0L,
-        val lastQueueUris: List<String> = emptyList(),
-        val lastQueueTitles: List<String> = emptyList(),
-        val lastQueueArtists: List<String> = emptyList(),
-        val repeatMode: Int = 2,
-        val queueSource: QueueSource = QueueSource.MANUAL,
+        var lastTabIndex: Int = 2,
+        var lastSongUri: String = "",
+        var lastPositionMs: Long = 0L,
+        var lastDurationMs: Long = 0L,
+        var lastQueueUris: List<String> = emptyList(),
+        var lastQueueTitles: List<String> = emptyList(),
+        var lastQueueArtists: List<String> = emptyList(),
+        var repeatMode: Int = 2,
+        var queueSource: QueueSource = QueueSource.MANUAL,
         // settings
-        val hideWhatsAppAudio: Boolean = false,
-        val normalizeVolume: Boolean = false,
-        val allowYTCnv: Boolean = false
+        var hideWhatsAppAudio: Boolean = false,
+        var allowYTCnv: Boolean = false
     )
 
+    fun flush() {
+        if (::boundSettings.isInitialized) boundSettings.flush()
+    }
+
     init {
-        load()
+        axsFile.open()
+
+        // One-time migration from JSON
+        val oldSettingsPath = context.filesDir.resolve("settings.json")
+        val gson = Gson()
+
+        val initialSettings = try {
+            if (axsFile.get("SettingsClass") == null && oldSettingsPath.exists()) {
+                gson.fromJson(oldSettingsPath.readText(), SettingsData::class.java) ?: SettingsData()
+            } else SettingsData()
+        } catch (_: Exception) {
+            axsFile.close()
+            File(axsPath).delete()
+            axsFile.open()
+            SettingsData()
+        }
+
+        boundSettings = axsFile.bind(initialSettings)
+
+        // Load settings into delegates
+        val s = boundSettings.get()
+        lastTabIndex = s.lastTabIndex
+        lastSongUri = s.lastSongUri
+        lastPositionMs = s.lastPositionMs
+        lastDurationMs = s.lastDurationMs
+        lastQueueUris = s.lastQueueUris
+        lastQueueTitles = s.lastQueueTitles
+        lastQueueArtists = s.lastQueueArtists
+        repeatMode = s.repeatMode
+        queueSource = s.queueSource
+
+        hideWhatsAppAudio = s.hideWhatsAppAudio
+        allowYTCnv = s.allowYTCnv
+
+        // Clean up old files after migration
+        oldSettingsPath.delete()
     }
 }

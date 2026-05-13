@@ -32,6 +32,7 @@ Music player that mimics default Samsung Music app... except with fixed/added th
 - [Media3](https://github.com/androidx/media) - media playback
 - [Coil](https://github.com/coil-kt/coil) — image loading
 - [Gson](https://github.com/google/gson) — JSON serialization
+- [AXS](https://github.com/PGAxis/AxsFileFormat) - Settings handling
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) — UI
 - [Reorderable](https://github.com/Calvin-LL/Reorderable) - song queue reordering
 - [Jaudiotagger](https://github.com/Kaned1as/jaudiotagger) - metadata editing

@@ -1,0 +1,2 @@
+Přechod na AXS formát nastavení
+Tlačítko Smazat na ovládací obrazovce nyní funguje

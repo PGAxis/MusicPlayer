@@ -39,7 +39,6 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         MusicService.moveQueueItem(from, to)
 
         settings.lastQueueUris = queue.mapNotNull { it.localConfiguration?.uri?.toString() }
-        settings.save()
     }
 
     fun removeAt(index: Int) {

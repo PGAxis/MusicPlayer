@@ -1,18 +1,28 @@
 package dev.pgaxis.musicaxs
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import dev.pgaxis.musicaxs.services.AlbumArtFetcher
 import dev.pgaxis.musicaxs.services.MusicService
+import dev.pgaxis.musicaxs.settings.SettingsSave
 
 class MusicAxsApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         MusicService.initFromSettings(this)
         MusicService.initializeService(this)
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                SettingsSave.getInstance(this@MusicAxsApplication).flush()
+            }
+        })
     }
 
     override fun newImageLoader(): ImageLoader {

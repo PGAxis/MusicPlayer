@@ -40,4 +40,4 @@ val BorderColor = Color(0xFF1E3A4A)
 // Popup backgrounds
 val PopupDefault = Color(0xFF1E3A4A)
 val PopupSuccess = Color(0xFF1B5E20)
-val PopupError = Color(0xFF7F0000)
+val PopupError = Color(0xFFAF0000)

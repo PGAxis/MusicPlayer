@@ -1,0 +1,2 @@
+Switched to AXS settings format
+Delete button on the Control screen now works

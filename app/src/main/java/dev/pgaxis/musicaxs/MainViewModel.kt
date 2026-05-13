@@ -102,7 +102,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onPageChanged(index: Int) {
         _currentPageIndex.value = index
         settings.lastTabIndex = index
-        settings.save()
     }
 
     fun onPlayPause() {
@@ -119,7 +118,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         songHasBeenSet = true
         _currentSong.value = CurrentSong(title = song.title, artist = song.artist, songUri = song.uri.toString())
         settings.lastSongUri = song.uri.toString()
-        settings.save()
     }
 
     fun resolveSongFromUri(uri: Uri): Song? =
@@ -137,9 +135,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         if (hasPermission()) scanAll()
 
+
         controllerFuture = MediaController.Builder(context, token).buildAsync()
         controllerFuture?.addListener({
             controller = controllerFuture?.get()
+            controller?.let { isPlaying = it.isPlaying }
             controller?.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     isPlaying = playing

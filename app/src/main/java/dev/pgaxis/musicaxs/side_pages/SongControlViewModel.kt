@@ -78,7 +78,6 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
             MusicService.seekTo(lastScrubPositionMs)
         } else {
             settings.lastPositionMs = lastScrubPositionMs
-            settings.save()
             _positionMs.value = lastScrubPositionMs
         }
     }

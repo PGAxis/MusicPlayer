@@ -270,7 +270,6 @@ class MusicService : MediaSessionService() {
 
     private fun setRepeatInternal(repeatMode: Int) {
         settings.repeatMode = repeatMode
-        settings.save()
     }
 
     private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
@@ -280,7 +279,6 @@ class MusicService : MediaSessionService() {
             QueueSource.PLAYLIST -> {
                 currentSource = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
-                settings.save()
                 player.setMediaItem(song.toMediaItem(), startPositionMs)
             }
             QueueSource.MANUAL -> {
@@ -296,7 +294,6 @@ class MusicService : MediaSessionService() {
         val player = mediaSession?.player ?: return
         currentSource = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.save()
 
         val save = ShuffleSave.getInstance(this)
         save.updateShuffled(false)
@@ -312,7 +309,6 @@ class MusicService : MediaSessionService() {
         if (currentSource == QueueSource.PLAYLIST) {
             currentSource = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
-            settings.save()
         }
     }
 
@@ -335,7 +331,6 @@ class MusicService : MediaSessionService() {
         }
         currentSource = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.save()
         player.setMediaItems(items)
         player.prepare()
         player.play()
@@ -494,7 +489,6 @@ class MusicService : MediaSessionService() {
                     val settings = SettingsSave.getInstance(this@MusicService)
                     settings.lastPositionMs = player.currentPosition
                     settings.lastDurationMs = player.duration.coerceAtLeast(0L)
-                    settings.save()
                 }
             }
 
@@ -536,7 +530,6 @@ class MusicService : MediaSessionService() {
                 settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
                 settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
                 settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }
-                settings.save()
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -612,7 +605,6 @@ class MusicService : MediaSessionService() {
             val settings = SettingsSave.getInstance(this)
             settings.lastPositionMs = player.currentPosition
             settings.lastDurationMs = player.duration.coerceAtLeast(0L)
-            settings.save()
         }
         instance = null
         mediaSession?.run {
