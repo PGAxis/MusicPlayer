@@ -69,11 +69,10 @@ fun SongControlScreen(
     val artAndMeta = @Composable {
         // -- Album art placeholder
         Spacer(
-            modifier = Modifier
-                .size(artSizeDp)
+            modifier = Modifier.size(artSizeDp)
         )
 
-        Spacer(Modifier.height(15.dp))
+        Spacer(Modifier.height(if (isLandscape) 1.dp else 15.dp))
 
         // -- Song info
         Text(currentSong.title, textAlign = TextAlign.Center,
@@ -81,7 +80,7 @@ fun SongControlScreen(
         Text(currentSong.artist, textAlign = TextAlign.Center, color = CyanPrimary)
     }
 
-    val controls = @Composable {
+    val controls = @Composable fun (modifier: Modifier) {
         // -- Secondary controls
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenQueue, shape = RoundedCornerShape(0.dp)) {
@@ -125,7 +124,7 @@ fun SongControlScreen(
             }
         }
 
-        Spacer(Modifier.height(15.dp))
+        Spacer(modifier = modifier)
 
         // -- Progress bar
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -158,7 +157,7 @@ fun SongControlScreen(
             )
         }
 
-        Spacer(Modifier.height(15.dp))
+        Spacer(modifier = modifier)
 
         // -- Playback controls
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -239,19 +238,21 @@ fun SongControlScreen(
         Spacer(Modifier.height(15.dp))
 
        if (isLandscape) {
-           Column(
-               modifier = Modifier.weight(1f),
-               horizontalAlignment = Alignment.CenterHorizontally,
-               verticalArrangement = Arrangement.Center
-           ) {
-               artAndMeta()
-           }
-           Column(
-               modifier = Modifier.weight(1f),
-               horizontalAlignment = Alignment.CenterHorizontally,
-               verticalArrangement = Arrangement.Center
-           ) {
-               controls()
+           Row(Modifier.fillMaxSize()) {
+               Column(
+                   modifier = Modifier.weight(1f),
+                   horizontalAlignment = Alignment.CenterHorizontally,
+                   verticalArrangement = Arrangement.Center
+               ) {
+                   artAndMeta()
+               }
+               Column(
+                   modifier = Modifier.weight(1f),
+                   horizontalAlignment = Alignment.CenterHorizontally,
+                   verticalArrangement = Arrangement.Center
+               ) {
+                   controls(Modifier.weight(1f))
+               }
            }
        } else {
            Column(
@@ -261,7 +262,7 @@ fun SongControlScreen(
            ) {
                artAndMeta()
                Spacer(Modifier.weight(1f))
-               controls()
+               controls(Modifier.height(15.dp))
            }
        }
     }

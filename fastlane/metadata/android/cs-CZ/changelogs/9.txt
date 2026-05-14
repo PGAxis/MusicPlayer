@@ -1,0 +1,1 @@
+Zahájena práce na režimu na šířku (momentálně pouze na obrazovce Ovládání)

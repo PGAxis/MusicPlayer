@@ -135,7 +135,7 @@ fun MainScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
+                    .height(35.dp)
                     .horizontalScroll(tabScrollState, enabled = true)
             ) {
                 Spacer(Modifier.width(padDp))

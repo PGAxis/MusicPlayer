@@ -112,11 +112,11 @@ fun ExpandablePlayer(
             playerState.updateAnchors(DraggableAnchors {
                 PlayerState.Collapsed at collapsedOffset
                 PlayerState.Expanded at 0f
-            })
+            }, playerState.currentValue)
             queueState.updateAnchors(DraggableAnchors {
                 QueuePanelState.Hidden at -fullWidthPx
                 QueuePanelState.Visible at 0f
-            })
+            }, queueState.currentValue)
         }
 
         val rawPlayerOffset = if (playerState.offset.isNaN()) collapsedOffset else playerState.offset
@@ -153,7 +153,10 @@ fun ExpandablePlayer(
         // Image morph values
         val imageCollapsedSizePx = with(density) { 44.dp.toPx() }
         val imageExpandedSizePx = with(density) {
-            if (isLandscape) (maxHeight - 100.dp).toPx()  // smaller, fits left column
+            if (isLandscape) minOf(
+                (maxHeight * 0.55f).toPx(),
+                (maxWidth / 2 - 80.dp).toPx()
+            )
             else (maxWidth - 100.dp).toPx()
         }
         val imageSizePx = lerp(imageCollapsedSizePx, imageExpandedSizePx, progress)
@@ -161,11 +164,11 @@ fun ExpandablePlayer(
         val collapsedXPx = with(density) { 10.dp.toPx() }
         val collapsedYPx = (barHeightPx - imageCollapsedSizePx) / 2f
         val expandedXPx = if (isLandscape)
-            with(density) { 50.dp.toPx() }
+            (fullWidthPx / 2f - imageExpandedSizePx) / 2f
         else
             (fullWidthPx - imageExpandedSizePx) / 2f
         val expandedYPx = with(density) {
-            if (isLandscape) (maxHeight.toPx() - imageExpandedSizePx) / 2f
+            if (isLandscape) (maxHeight.toPx() - imageExpandedSizePx) / 3f
             else 71.dp.toPx()
         }
 

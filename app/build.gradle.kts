@@ -19,8 +19,8 @@ android {
         applicationId = "dev.pgaxis.musicaxs"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.2.0"
+        versionCode = 9
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,7 +37,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        create("releaseTest") {
+            initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
     }
     compileOptions {
