@@ -2,6 +2,23 @@
 
 Music player that mimics default Samsung Music app... except with fixed/added things that I wanted in there and removed things that I didn't.
 
+<div align=center>
+
+<p align=center>
+  <a href="https://apt.izzysoft.de/packages/dev.pgaxis.musicaxs"><img src="https://izzyondroid.org/assets/static/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid"/></a>
+</p>
+
+<p align=center>
+  <a href="https://apt.izzysoft.de/packages/dev.pgaxis.musicaxs"><img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/dev.pgaxis.musicaxs&label=IzzyOnDroid"/></a>
+  <a href="https://apt.izzysoft.de/packages/dev.pgaxis.musicaxs"><img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['dev.pgaxis.musicaxs']&label=IzzyOnDroid%20yearly%20downloads"/></a>
+</p>
+
+<p align=center>
+  <a href="https://shields.rbtlog.dev/dev.pgaxis.musicaxs"><img src="https://shields.rbtlog.dev/simple/dev.pgaxis.musicaxs"/></a>
+</p>
+
+</div>
+
 ## Features
 
 - Album art extraction for even embedded album art
