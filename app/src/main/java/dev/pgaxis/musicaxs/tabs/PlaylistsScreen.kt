@@ -332,10 +332,18 @@ private fun SmartPlaylistCard(
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(name, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1,
-            overflow = TextOverflow.Ellipsis)
-        Text("$songCount songs", fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = name,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = "$songCount songs",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

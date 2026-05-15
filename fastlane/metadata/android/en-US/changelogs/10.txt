@@ -1,0 +1,3 @@
+Finished landscape mode for all tab screens
+Fixed navigation bug
+  -> Double-tapping the back button on any screen that had it would only show a gray screen in the app.

@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.tabs
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +33,7 @@ fun AlbumsScreen(
     vm: AlbumsViewModel = viewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     TabSurface {
         when (val state = uiState) {
@@ -51,7 +54,7 @@ fun AlbumsScreen(
                     }
                 } else {
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                        columns = GridCells.Fixed(if (isLandscape) 4 else 2),
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
                             start  = 12.dp,

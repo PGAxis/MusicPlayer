@@ -120,9 +120,7 @@ fun PlaylistDetailScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     when (playlistId) {
-                        0L, 1L, 2L, 3L -> {
-
-                        }
+                        0L, 1L, 2L, 3L -> { }
                         else -> {
                             IconButton(onClick = {
                                 favPlaylists.toggle(playlistId)
@@ -199,7 +197,7 @@ fun PlaylistDetailScreen(
                                         song = keyed.song,
                                         onSeeDetails = onSeeDetail,
                                         onAddTo = { selectedSong = keyed.song },
-                                        showRemoveFromQueue = true,
+                                        showRemoveFromQueue = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
                                         removeLabel = "Remove from playlist",
                                         onRemoveFromQueue = {
                                             vm.removeSong(playlistId, index)

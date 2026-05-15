@@ -76,7 +76,7 @@ class MusicService : MediaSessionService() {
 
         val playerInstance get() = instance?.mediaSession?.player
 
-        val isShuffled get() = ShuffleSave.getInstance(instance!!).isShuffled
+        val isShuffled get() = instance?.let { ShuffleSave.getInstance(it).isShuffled } ?: false
 
         fun toggleShuffle(context: Context) {
             val save = ShuffleSave.getInstance(context)

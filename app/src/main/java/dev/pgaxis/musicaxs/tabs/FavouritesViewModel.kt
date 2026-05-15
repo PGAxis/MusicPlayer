@@ -28,9 +28,6 @@ class FavouritesViewModel(app: Application) : AndroidViewModel(app) {
     private val _uiState = MutableStateFlow<FavouritesUiState>(FavouritesUiState.Loading)
     val uiState: StateFlow<FavouritesUiState> = _uiState.asStateFlow()
 
-    private val _selectedPlaylist= MutableStateFlow<Playlist?>(null)
-    val selectedPlaylist: StateFlow<Playlist?> = _selectedPlaylist.asStateFlow()
-
     init {
         viewModelScope.launch {
             combine(
@@ -49,9 +46,5 @@ class FavouritesViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.value = FavouritesUiState.Ready(playlists)
             }
         }
-    }
-
-    fun onBackFromDetail() {
-        _selectedPlaylist.value = null
     }
 }

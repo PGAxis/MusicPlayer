@@ -2,6 +2,7 @@ package dev.pgaxis.musicaxs
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -18,6 +19,15 @@ import dev.pgaxis.musicaxs.side_pages.SettingsScreen
 fun AppNavigation() {
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
+
+    var lastNavTime = remember { 0L }
+    fun popBack() {
+        val now = System.currentTimeMillis()
+        if (now - lastNavTime > 500) {
+            lastNavTime = now
+            navController.popBackStack()
+        }
+    }
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
@@ -39,7 +49,7 @@ fun AppNavigation() {
             SongDetailScreen(
                 songUri = uri,
                 onScan = mainViewModel::scanAll,
-                onBack = { navController.popBackStack() }
+                onBack = { popBack() }
             )
         }
         composable("playlist/{playlistId}") { backstackEntry ->
@@ -48,12 +58,12 @@ fun AppNavigation() {
 
             PlaylistDetailScreen(
                 id,
-                onBack = { navController.popBackStack() },
+                onBack = { popBack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") })
         }
         composable("search") {
             SearchScreen(
-                onBack = { navController.popBackStack() },
+                onBack = { popBack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
             )
         }
@@ -70,13 +80,13 @@ fun AppNavigation() {
             )
         }
         composable("settings") {
-            SettingsScreen(onBack = { navController.popBackStack() }, onScan = { mainViewModel.scanAll() })
+            SettingsScreen(onBack = { popBack() }, onScan = { mainViewModel.scanAll() })
         }
         composable("album/{albumId}") { backStackEntry ->
             val albumId = backStackEntry.arguments?.getString("albumId")!!.toLong()
             AlbumDetailScreen(
                 albumId = albumId,
-                onBack = { navController.popBackStack() },
+                onBack = { popBack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
             )
         }
@@ -85,7 +95,7 @@ fun AppNavigation() {
             val artistName = Uri.decode(backStackEntry.arguments?.getString("artistName")!!)
             ArtistDetailScreen(
                 artistName = artistName,
-                onBack = { navController.popBackStack() },
+                onBack = { popBack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
             )
         }

@@ -1,0 +1,3 @@
+Dokončen režim na šířku pro všechny základní obrazovky
+Opravena chyba navigace
+  -> Dvojitým klepnutím na tlačítko zpět na libovolné obrazovce, která jej obsahovala, bylo možné v aplikaci zobrazit pouze šedou obrazovku.

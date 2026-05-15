@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -72,7 +73,7 @@ fun MainScreen(
         val tabWidthPx = with(density) { tabWidthDp.toPx() }
 
         var isDraggingTab by remember { mutableStateOf(false) }
-        LaunchedEffect(pagerState.currentPage, pagerState.currentPageOffsetFraction) {
+        LaunchedEffect(pagerState.currentPage, pagerState.currentPageOffsetFraction, tabWidthPx) {
             if (!isDraggingTab) {
                 val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
                 tabScrollState.scrollTo((continuousPage * tabWidthPx).toInt())
@@ -84,7 +85,7 @@ fun MainScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
+                    .padding(horizontal = 15.dp, vertical = 10.dp)
                     .height(35.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -135,7 +136,7 @@ fun MainScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(35.dp)
+                    .height(40.dp)
                     .horizontalScroll(tabScrollState, enabled = true)
             ) {
                 Spacer(Modifier.width(padDp))
@@ -150,6 +151,7 @@ fun MainScreen(
                         modifier = Modifier
                             .width(tabWidthDp)
                             .fillMaxHeight()
+                            .graphicsLayer {}
                             .clickable { scope.launch { pagerState.animateScrollToPage(index) } },
                         contentAlignment = Alignment.Center
                     ) {
