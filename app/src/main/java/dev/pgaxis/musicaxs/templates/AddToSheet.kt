@@ -24,6 +24,7 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
+import dev.pgaxis.musicaxs.services.PlaylistToQueue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +96,7 @@ fun AddToSheet(
                         },
                         modifier = Modifier.clickable {
                             PlaylistRepository.getInstance(context).addSong(playlist.id, song.id)
+                            PlaylistToQueue(context).addSongIfCurrent(playlist.id, song)
                             onDismiss()
                         }
                     )

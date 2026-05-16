@@ -1,0 +1,3 @@
+Opraveno resetování nastavení kvůlli R8 po přidání nového klíče
+Přidána podpora pro tematické ikony
+Změny v aktuálně přehrávaném playlistu nyní odpovídajícím způsobem mění frontu

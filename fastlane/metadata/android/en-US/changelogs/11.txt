@@ -1,0 +1,3 @@
+Fixed R8 resetting settings after new key is added
+Added support for themed icons
+Changes to currently playing playlist now change the queue accordingly

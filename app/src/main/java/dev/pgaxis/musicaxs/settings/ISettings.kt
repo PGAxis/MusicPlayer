@@ -8,6 +8,7 @@ interface ISettings {
     var lastSongUri: String
     var lastPositionMs: Long
     var lastDurationMs: Long
+    var lastPlaylistId: Long
     var lastQueueUris: List<String>
     var lastQueueTitles: List<String>
     var lastQueueArtists: List<String>

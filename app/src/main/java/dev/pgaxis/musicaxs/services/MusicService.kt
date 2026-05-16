@@ -131,9 +131,9 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        fun replaceQueue(context: Context, songs: List<Song>) {
+        fun replaceQueue(context: Context, songs: List<Song>, playlistId: Long = -1L) {
             if (songs.isEmpty()) return
-            instance?.replaceQueueInternal(songs) ?: run {
+            instance?.replaceQueueInternal(songs, playlistId) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
                     putStringArrayListExtra(EXTRA_QUEUE_URIS, ArrayList(songs.map { it.uri.toString() }))
                     putStringArrayListExtra(EXTRA_QUEUE_TITLES, ArrayList(songs.map { it.title }))
@@ -143,10 +143,10 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        fun addToQueue(context: Context, song: Song) {
+        fun addToQueue(context: Context, song: Song, applyShuffleRandomness: Boolean = false, resetPlaylist: Boolean = true) {
             val save = ShuffleSave.getInstance(context)
             if (save.isShuffled) save.addToOriginal(song.uri.toString())
-            instance?.addToQueueInternal(song) ?: playSingular(context, song)
+            instance?.addToQueueInternal(song, applyShuffleRandomness, resetPlaylist) ?: playSingular(context, song)
         }
 
         fun moveQueueItem(from: Int, to: Int) {
@@ -160,6 +160,14 @@ class MusicService : MediaSessionService() {
                 ShuffleSave.getInstance(instance!!).removeFromOriginal(uri)
             }
             player.removeMediaItem(index)
+        }
+
+        fun removeFromQueue(uri: String) {
+            val player = instance?.mediaSession?.player ?: return
+            val index = (0 until player.mediaItemCount)
+                .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
+                ?: return
+            removeFromQueue(index)
         }
 
         private fun applyQueueReorder(targetUris: List<String>) {
@@ -189,9 +197,9 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        fun reorderQueue(from: Int, to: Int) {
+        /*fun reorderQueue(from: Int, to: Int) {
             instance?.mediaSession?.player?.moveMediaItem(from, to)
-        }
+        }*/
 
         fun initFromSettings(context: Context) {
             val settings = SettingsSave.getInstance(context)
@@ -286,14 +294,18 @@ class MusicService : MediaSessionService() {
                 player.seekTo(0, startPositionMs)
             }
         }
+
+        settings.lastPlaylistId = -1L
+
         player.prepare()
         player.play()
     }
 
-    private fun replaceQueueInternal(songs: List<Song>) {
+    private fun replaceQueueInternal(songs: List<Song>, playlistId: Long = -1L) {
         val player = mediaSession?.player ?: return
         currentSource = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
+        settings.lastPlaylistId = playlistId
 
         val save = ShuffleSave.getInstance(this)
         save.updateShuffled(false)
@@ -304,9 +316,16 @@ class MusicService : MediaSessionService() {
         player.play()
     }
 
-    private fun addToQueueInternal(song: Song) {
-        mediaSession?.player?.addMediaItem(song.toMediaItem())
-        if (currentSource == QueueSource.PLAYLIST) {
+    private fun addToQueueInternal(song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
+        val player = mediaSession?.player ?: return
+        if (applyShuffleRandomness && player.mediaItemCount > 0) {
+            val randomIndex = (0 until player.mediaItemCount).random()
+            player.addMediaItem(randomIndex, song.toMediaItem())
+        } else {
+            player.addMediaItem(song.toMediaItem())
+        }
+        if (currentSource == QueueSource.PLAYLIST && resetPlaylist) {
+            settings.lastPlaylistId = -1L
             currentSource = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
         }

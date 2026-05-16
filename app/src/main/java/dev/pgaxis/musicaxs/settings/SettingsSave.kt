@@ -1,12 +1,12 @@
 package dev.pgaxis.musicaxs.settings
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.google.gson.Gson
 import dev.pgaxis.axs.AxsBoundObject
 import dev.pgaxis.axs.AxsFile
 import dev.pgaxis.musicaxs.services.QueueSource
@@ -81,6 +81,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastSongUri by setting("", SettingsData::lastSongUri)
     override var lastPositionMs by longSetting(0L, SettingsData::lastPositionMs)
     override var lastDurationMs by longSetting(0L, SettingsData::lastDurationMs)
+    override var lastPlaylistId by longSetting(6L, SettingsData::lastPlaylistId) // TODO replace with null once I add null support to AXS
     override var lastQueueUris by setting(emptyList(), SettingsData::lastQueueUris)
     override var lastQueueTitles by setting(emptyList(), SettingsData::lastQueueTitles)
     override var lastQueueArtists by setting(emptyList(), SettingsData::lastQueueArtists)
@@ -91,12 +92,14 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
 
     // -- Data class
+    @Keep
     data class SettingsData(
         // media playback persistency
         var lastTabIndex: Int = 2,
         var lastSongUri: String = "",
         var lastPositionMs: Long = 0L,
         var lastDurationMs: Long = 0L,
+        var lastPlaylistId: Long = 6L,
         var lastQueueUris: List<String> = emptyList(),
         var lastQueueTitles: List<String> = emptyList(),
         var lastQueueArtists: List<String> = emptyList(),
@@ -114,39 +117,28 @@ class SettingsSave private constructor(context: Context): ISettings {
     init {
         axsFile.open()
 
-        // One-time migration from JSON
-        val oldSettingsPath = context.filesDir.resolve("settings.json")
-        val gson = Gson()
+        try {
+            boundSettings = axsFile.bind(SettingsData())
 
-        val initialSettings = try {
-            if (axsFile.get("SettingsClass") == null && oldSettingsPath.exists()) {
-                gson.fromJson(oldSettingsPath.readText(), SettingsData::class.java) ?: SettingsData()
-            } else SettingsData()
+            val s = boundSettings.get()
+
+            lastTabIndex = s.lastTabIndex
+            lastSongUri = s.lastSongUri
+            lastPositionMs = s.lastPositionMs
+            lastDurationMs = s.lastDurationMs
+            lastPlaylistId = s.lastPlaylistId
+            lastQueueUris = s.lastQueueUris
+            lastQueueTitles = s.lastQueueTitles
+            lastQueueArtists = s.lastQueueArtists
+            repeatMode = s.repeatMode
+            queueSource = s.queueSource
+            hideWhatsAppAudio = s.hideWhatsAppAudio
+            allowYTCnv = s.allowYTCnv
         } catch (_: Exception) {
             axsFile.close()
             File(axsPath).delete()
             axsFile.open()
-            SettingsData()
+            boundSettings = axsFile.bind(SettingsData())
         }
-
-        boundSettings = axsFile.bind(initialSettings)
-
-        // Load settings into delegates
-        val s = boundSettings.get()
-        lastTabIndex = s.lastTabIndex
-        lastSongUri = s.lastSongUri
-        lastPositionMs = s.lastPositionMs
-        lastDurationMs = s.lastDurationMs
-        lastQueueUris = s.lastQueueUris
-        lastQueueTitles = s.lastQueueTitles
-        lastQueueArtists = s.lastQueueArtists
-        repeatMode = s.repeatMode
-        queueSource = s.queueSource
-
-        hideWhatsAppAudio = s.hideWhatsAppAudio
-        allowYTCnv = s.allowYTCnv
-
-        // Clean up old files after migration
-        oldSettingsPath.delete()
     }
 }

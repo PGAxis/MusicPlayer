@@ -33,6 +33,7 @@ import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
+import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
@@ -77,6 +78,7 @@ fun PlaylistDetailScreen(
             val reorderState = rememberReorderableLazyListState(listState) { from, to ->
                 songs = songs.toMutableList().apply { add(to.index, removeAt(from.index)) }
                 vm.moveSong(playlistId, songs.map { it.song })
+                PlaylistToQueue(context).reorderIfCurrent(playlistId, songs.map { it.song })
             }
 
             val density = LocalDensity.current
@@ -137,7 +139,7 @@ fun PlaylistDetailScreen(
                     }
                     // Play all button
                     IconButton(onClick = {
-                        if (state.songs.isNotEmpty()) MusicService.replaceQueue(context, state.songs)
+                        if (state.songs.isNotEmpty()) MusicService.replaceQueue(context, state.songs, playlistId)
                     }, shape = RoundedCornerShape(0.dp)) {
                         Icon(painterResource(R.drawable.play), "Play all",
                             tint = CyanPrimary, modifier = Modifier.size(28.dp))
@@ -197,10 +199,11 @@ fun PlaylistDetailScreen(
                                         song = keyed.song,
                                         onSeeDetails = onSeeDetail,
                                         onAddTo = { selectedSong = keyed.song },
-                                        showRemoveFromQueue = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
+                                        showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
                                         removeLabel = "Remove from playlist",
-                                        onRemoveFromQueue = {
+                                        onRemoveFrom = {
                                             vm.removeSong(playlistId, index)
+                                            PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
                                         },
                                         dragHandleModifier = Modifier.draggableHandle()
                                     )

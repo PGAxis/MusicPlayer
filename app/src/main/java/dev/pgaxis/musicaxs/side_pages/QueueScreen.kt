@@ -99,8 +99,8 @@ fun QueueScreen(
                         onSeeDetails = onSeeDetail,
                         onAddTo = { selectedSong = song },
                         isCurrentlyPlaying = index == currentIndex,
-                        showRemoveFromQueue = true,
-                        onRemoveFromQueue = { vm.removeAt(index) },
+                        showRemoveFrom = true,
+                        onRemoveFrom = { vm.removeAt(index) },
                         dragHandleModifier = Modifier.draggableHandle(),
                         onClick = {
                             MusicService.playerInstance?.let {

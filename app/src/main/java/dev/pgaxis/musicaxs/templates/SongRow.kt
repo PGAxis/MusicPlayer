@@ -43,9 +43,9 @@ fun SongRow(
     onAddTo: () -> Unit,
     showsImage: Boolean = true,
     isCurrentlyPlaying: Boolean = false,
-    showRemoveFromQueue: Boolean = false,
+    showRemoveFrom: Boolean = false,
     removeLabel: String = "Remove from queue",
-    onRemoveFromQueue: () -> Unit = {},
+    onRemoveFrom: () -> Unit = {},
     dragHandleModifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -77,7 +77,7 @@ fun SongRow(
                 isPlaying = isPlaying,
                 modifier = Modifier.width(16.dp)
             )
-        } else if (showRemoveFromQueue) {
+        } else if (showRemoveFrom) {
             Spacer(Modifier.width(16.dp))
         }
 
@@ -105,19 +105,19 @@ fun SongRow(
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFromQueue) CyanPrimary else Color.White
+                color = if (showRemoveFrom) CyanPrimary else Color.White
             )
             Text(
                 text = song.artist,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFromQueue) CyanPrimary else Color.White
+                color = if (showRemoveFrom) CyanPrimary else Color.White
             )
         }
 
         // Drag handle — only shown in queue
-        if (showRemoveFromQueue) {
+        if (showRemoveFrom) {
             Icon(
                 painter = painterResource(R.drawable.drag_handle),
                 contentDescription = "Reorder",
@@ -133,7 +133,7 @@ fun SongRow(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Song options",
-                    tint = if (showRemoveFromQueue) CyanPrimary else Color.White
+                    tint = if (showRemoveFrom) CyanPrimary else Color.White
                 )
             }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -148,10 +148,10 @@ fun SongRow(
                     text = { Text("Add to") },
                     onClick = { menuExpanded = false; onAddTo() }
                 )
-                if (showRemoveFromQueue) {
+                if (showRemoveFrom) {
                     DropdownMenuItem(
                         text = { Text(removeLabel) },
-                        onClick = { menuExpanded = false; onRemoveFromQueue() }
+                        onClick = { menuExpanded = false; onRemoveFrom() }
                     )
                 }
                 DropdownMenuItem(
