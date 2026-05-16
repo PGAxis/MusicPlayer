@@ -149,7 +149,11 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         safeSet(tag, FieldKey.TITLE, title)
                         safeSet(tag, FieldKey.ARTIST, artist)
                         safeSet(tag, FieldKey.ALBUM, album)
-                        safeSet(tag, FieldKey.TRACK, track.ifBlank { "0" })
+
+                        tag.deleteField(FieldKey.TRACK)
+                        tag.deleteField(FieldKey.TRACK_TOTAL)
+                        tag.setField(FieldKey.TRACK, track.ifBlank { "0" })
+                        
                         audio.commit()
 
                         context.contentResolver.openOutputStream(uri, "rwt")?.use { out ->

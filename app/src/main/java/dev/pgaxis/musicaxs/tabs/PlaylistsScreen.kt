@@ -26,7 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import dev.pgaxis.musicaxs.PlayerBarDefaults
+import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Playlist
 import dev.pgaxis.musicaxs.services.M3uHandler
@@ -100,7 +100,7 @@ fun PlaylistsScreen(
     TabSurface {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = PlayerBarDefaults.TotalHeight)
+            contentPadding = PaddingValues(bottom = LocalPlayerBarTotalHeight.current)
         ) {
             // -- Smart playlist row
             item {

@@ -1,0 +1,4 @@
+Added propper landscape mode to the song Detail screen
+Tab title scroll now also changes the currently "active" page
+Padding in scroll lists on all tab screen is now only there, if the play bar is visible
+Editing track number now actually changes it

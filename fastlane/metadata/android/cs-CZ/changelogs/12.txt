@@ -1,0 +1,4 @@
+Přidán režim na šířku na obrazovce detailu písně
+Posouvání záložek nyní také mění "aktivní" stránku
+Odsazení v seznamech je nyní pouze tehdy, když je přehrávač viditelný
+Úprava čísla skladby ho nyní skutečně změní

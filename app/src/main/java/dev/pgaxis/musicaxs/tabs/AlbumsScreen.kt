@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import dev.pgaxis.musicaxs.PlayerBarDefaults
+import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Album
 
@@ -60,7 +60,7 @@ fun AlbumsScreen(
                             start  = 12.dp,
                             end = 12.dp,
                             top = 12.dp,
-                            bottom = PlayerBarDefaults.TotalHeight
+                            bottom = LocalPlayerBarTotalHeight.current
                         ),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)

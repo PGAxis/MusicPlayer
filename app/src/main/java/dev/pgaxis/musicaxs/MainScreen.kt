@@ -3,6 +3,9 @@ package dev.pgaxis.musicaxs
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -15,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -24,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.tabs.AlbumsScreen
 import dev.pgaxis.musicaxs.tabs.FavouritesScreen
 import dev.pgaxis.musicaxs.tabs.ArtistsScreen
@@ -31,8 +37,10 @@ import dev.pgaxis.musicaxs.tabs.PlaylistsScreen
 import dev.pgaxis.musicaxs.tabs.SongsScreen
 import dev.pgaxis.musicaxs.templates.ExpandablePlayer
 import dev.pgaxis.musicaxs.ui.theme.*
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @SuppressLint("FrequentlyChangingValue")
 @OptIn(ExperimentalFoundationApi::class)
@@ -47,6 +55,7 @@ fun MainScreen(
     onOpenArtist: (name: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
 
@@ -80,157 +89,189 @@ fun MainScreen(
             }
         }
 
-        Column(Modifier.fillMaxSize()) {
-            // -- Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 15.dp, vertical = 10.dp)
-                    .height(35.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    modifier = Modifier.weight(1f),
-                    color = CyanPrimary
-                )
-
-                val onPlaylists = pagerState.settledPage == 1
-                IconButton(
-                    onClick = { showCreateDialog = true },
-                    enabled = onPlaylists,
-                    modifier = Modifier.size(35.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.plus),
-                        contentDescription = "Add playlist",
-                        modifier = Modifier.alpha(if (onPlaylists) 1f else 0f),
-                        tint = CyanPrimary
-                    )
+        LaunchedEffect(tabScrollState) {
+            snapshotFlow { tabScrollState.isScrollInProgress }
+                .filter { !it }
+                .collect {
+                    if (isDraggingTab) {
+                        isDraggingTab = false
+                        val closestIndex = (tabScrollState.value / tabWidthPx)
+                            .roundToInt()
+                            .coerceIn(0, vm.tabs.size - 1)
+                        scope.launch { tabScrollState.animateScrollTo((closestIndex * tabWidthPx).toInt()) }
+                        scope.launch { pagerState.animateScrollToPage(closestIndex) }
+                    }
                 }
+        }
 
-                Spacer(Modifier.width(4.dp))
-
-                IconButton(onClick = goToSearch, modifier = Modifier.size(35.dp)) {
-                    Icon(
-                        painter = painterResource(R.drawable.magglass),
-                        contentDescription = "Search",
-                        tint = CyanPrimary
-                    )
-                }
-
-                Spacer(Modifier.width(4.dp))
-
-                IconButton(onClick = goToSettings, modifier = Modifier.size(35.dp)) {
-                    Icon(
-                        painter = painterResource(R.drawable.settings),
-                        contentDescription = "Settings",
-                        tint = CyanPrimary
-                    )
-                }
+        val settings = remember { SettingsSave.getInstance(context) }
+        val totalHeight by remember {
+            derivedStateOf {
+                if (settings.lastSongUri.isEmpty()) 0.dp
+                else PlayerBarDefaults.Height + PlayerBarDefaults.VerticalMargin * 2
             }
+        }
 
-            // -- Tab titles
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .horizontalScroll(tabScrollState, enabled = true)
-            ) {
-                Spacer(Modifier.width(padDp))
+        CompositionLocalProvider(LocalPlayerBarTotalHeight provides totalHeight) {
+            Column(Modifier.fillMaxSize()) {
+                // -- Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 15.dp, vertical = 10.dp)
+                        .height(35.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                        modifier = Modifier.weight(1f),
+                        color = CyanPrimary
+                    )
 
-                vm.tabs.forEachIndexed { index, label ->
-                    val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
-                    val distance = abs(index - continuousPage).coerceIn(0f, 1f)
-                    val fontSize = lerp(20f, 15f, distance)
-                    val isCurrent = pagerState.settledPage == index
-
-                    Box(
-                        modifier = Modifier
-                            .width(tabWidthDp)
-                            .fillMaxHeight()
-                            .graphicsLayer {}
-                            .clickable { scope.launch { pagerState.animateScrollToPage(index) } },
-                        contentAlignment = Alignment.Center
+                    val onPlaylists = pagerState.settledPage == 1
+                    IconButton(
+                        onClick = { showCreateDialog = true },
+                        enabled = onPlaylists,
+                        modifier = Modifier.size(35.dp)
                     ) {
-                        Text(
-                            text = label,
-                            fontSize = fontSize.sp,
-                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onBackground
+                        Icon(
+                            painter = painterResource(R.drawable.plus),
+                            contentDescription = "Add playlist",
+                            modifier = Modifier.alpha(if (onPlaylists) 1f else 0f),
+                            tint = CyanPrimary
+                        )
+                    }
+
+                    Spacer(Modifier.width(4.dp))
+
+                    IconButton(onClick = goToSearch, modifier = Modifier.size(35.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.magglass),
+                            contentDescription = "Search",
+                            tint = CyanPrimary
+                        )
+                    }
+
+                    Spacer(Modifier.width(4.dp))
+
+                    IconButton(onClick = goToSettings, modifier = Modifier.size(35.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.settings),
+                            contentDescription = "Settings",
+                            tint = CyanPrimary
                         )
                     }
                 }
 
-                Spacer(Modifier.width(padDp))
-            }
-
-            // -- Content pager
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) { page ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (page) {
-                        0 -> FavouritesScreen(goToPlaylist )
-                        1 -> PlaylistsScreen(goToPlaylist)
-                        2 -> SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll )
-                        3 -> AlbumsScreen(onOpenAlbum = onOpenAlbum )
-                        4 -> ArtistsScreen(onOpenArtist = onOpenArtist )
-                    }
-                }
-            }
-        }
-
-        // -- Now Playing bar
-        currentSong?.let { it1 ->
-            ExpandablePlayer(
-                currentSong = it1,
-                isPlaying = vm.isPlaying,
-                bgColor = bgColor,
-                onBgColorChange = { bgColor = it },
-                onPrevious = vm::onPrevious,
-                onPlayPause = vm::onPlayPause,
-                onNext = vm::onNext,
-                onSeeDetail = goToDetail
-            )
-        }
-
-        if (showCreateDialog) {
-            AlertDialog(
-                onDismissRequest = { showCreateDialog = false; newPlaylistName = "" },
-                title = { Text("New Playlist") },
-                text = {
-                    OutlinedTextField(
-                        value = newPlaylistName,
-                        onValueChange = { newPlaylistName = it },
-                        label = { Text("Name") },
-                        singleLine = true
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        if (newPlaylistName.isNotBlank()) {
-                            val playlist = vm.createAndGetPlaylist(newPlaylistName)
-                            showCreateDialog = false
-                            newPlaylistName = ""
-                            onChooseSongsForPlaylist(playlist.id.toString())
+                // -- Tab titles
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                awaitFirstDown(requireUnconsumed = false)
+                                isDraggingTab = true
+                                waitForUpOrCancellation()
+                            }
                         }
-                    }) { Text("Create") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showCreateDialog = false; newPlaylistName = "" }) {
-                        Text("Cancel")
+                        .horizontalScroll(tabScrollState, enabled = true)
+                ) {
+                    Spacer(Modifier.width(padDp))
+
+                    vm.tabs.forEachIndexed { index, label ->
+                        val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        val distance = abs(index - continuousPage).coerceIn(0f, 1f)
+                        val fontSize = lerp(20f, 15f, distance)
+                        val isCurrent = pagerState.settledPage == index
+
+                        Box(
+                            modifier = Modifier
+                                .width(tabWidthDp)
+                                .fillMaxHeight()
+                                .graphicsLayer {}
+                                .clickable { scope.launch { pagerState.animateScrollToPage(index) } },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = fontSize.sp,
+                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(padDp))
+                }
+
+                // -- Content pager
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) { page ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when (page) {
+                            0 -> FavouritesScreen(goToPlaylist )
+                            1 -> PlaylistsScreen(goToPlaylist)
+                            2 -> SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll )
+                            3 -> AlbumsScreen(onOpenAlbum = onOpenAlbum )
+                            4 -> ArtistsScreen(onOpenArtist = onOpenArtist )
+                        }
                     }
                 }
-            )
+            }
+
+            // -- Now Playing bar
+            currentSong?.let { it1 ->
+                ExpandablePlayer(
+                    currentSong = it1,
+                    isPlaying = vm.isPlaying,
+                    bgColor = bgColor,
+                    onBgColorChange = { bgColor = it },
+                    onPrevious = vm::onPrevious,
+                    onPlayPause = vm::onPlayPause,
+                    onNext = vm::onNext,
+                    onSeeDetail = goToDetail
+                )
+            }
+
+            if (showCreateDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCreateDialog = false; newPlaylistName = "" },
+                    title = { Text("New Playlist") },
+                    text = {
+                        OutlinedTextField(
+                            value = newPlaylistName,
+                            onValueChange = { newPlaylistName = it },
+                            label = { Text("Name") },
+                            singleLine = true
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (newPlaylistName.isNotBlank()) {
+                                val playlist = vm.createAndGetPlaylist(newPlaylistName)
+                                showCreateDialog = false
+                                newPlaylistName = ""
+                                onChooseSongsForPlaylist(playlist.id.toString())
+                            }
+                        }) { Text("Create") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showCreateDialog = false; newPlaylistName = "" }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
         }
     }
 }

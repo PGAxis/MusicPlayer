@@ -237,34 +237,34 @@ fun SongControlScreen(
 
         Spacer(Modifier.height(15.dp))
 
-       if (isLandscape) {
-           Row(Modifier.fillMaxSize()) {
-               Column(
-                   modifier = Modifier.weight(1f),
-                   horizontalAlignment = Alignment.CenterHorizontally,
-                   verticalArrangement = Arrangement.Center
-               ) {
-                   artAndMeta()
-               }
-               Column(
-                   modifier = Modifier.weight(1f),
-                   horizontalAlignment = Alignment.CenterHorizontally,
-                   verticalArrangement = Arrangement.Center
-               ) {
-                   controls(Modifier.weight(1f))
-               }
-           }
-       } else {
-           Column(
-               modifier = Modifier
-                   .fillMaxSize(),
-               horizontalAlignment = Alignment.CenterHorizontally
-           ) {
-               artAndMeta()
-               Spacer(Modifier.weight(1f))
-               controls(Modifier.height(15.dp))
-           }
-       }
+        if (isLandscape) {
+            Row(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    artAndMeta()
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    controls(Modifier.weight(1f))
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                artAndMeta()
+                Spacer(Modifier.weight(1f))
+                controls(Modifier.height(15.dp))
+            }
+        }
     }
 
     if (showAddToSheet) {

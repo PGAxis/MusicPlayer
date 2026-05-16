@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.side_pages
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -67,6 +69,123 @@ fun SongDetailScreen(
         return
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val albumArt = @Composable {
+        AsyncImage(
+            model = songUri,
+            contentDescription = null,
+            error = painterResource(R.drawable.default_cover),
+            placeholder = painterResource(R.drawable.default_cover),
+            modifier = Modifier
+                .size(150.dp)
+                .clip(RoundedCornerShape(10.dp)),
+            contentScale = ContentScale.Crop
+        )
+    }
+
+    val info = @Composable {
+        OutlinedTextField(
+            value = vm.title,
+            onValueChange = vm::updateTitle,
+            label = { Text("Title") },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = BlueTertiary
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = vm.artist,
+            onValueChange = vm::updateArtist,
+            label = { Text("Artist") },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = BlueTertiary
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = vm.album,
+            onValueChange = vm::updateAlbum,
+            label = { Text("Album") },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = BlueTertiary
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = vm.track,
+            onValueChange = vm::updateTrack,
+            label = { Text("Track number") },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = BlueTertiary
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = vm.duration,
+            onValueChange = { },
+            label = { Text("Duration") },
+            readOnly = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = BorderColor,
+                focusedLabelColor = TextSecondary,
+                cursorColor = Color.Transparent
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
+            onValueChange = { },
+            label = { Text("File type") },
+            readOnly = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = BorderColor,
+                focusedLabelColor = TextSecondary,
+                cursorColor = Color.Transparent
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = vm.fileSize,
+            onValueChange = { },
+            label = { Text("Size") },
+            readOnly = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = BorderColor,
+                focusedLabelColor = TextSecondary,
+                cursorColor = Color.Transparent
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        vm.filePath?.let {
+            OutlinedTextField(
+                value = it,
+                onValueChange = { },
+                label = { Text("Path") },
+                readOnly = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = BorderColor,
+                    focusedLabelColor = TextSecondary,
+                    cursorColor = Color.Transparent
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -97,125 +216,41 @@ fun SongDetailScreen(
             )
         }
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                model = songUri,
-                contentDescription = null,
-                error = painterResource(R.drawable.default_cover),
-                placeholder = painterResource(R.drawable.default_cover),
+        if (isLandscape) {
+            Row(Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    albumArt()
+                }
+                Spacer(modifier = Modifier.width(15.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .imePadding()
+                        .padding(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    info()
+                }
+            }
+        } else {
+            Column(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.height(15.dp))
-
-            OutlinedTextField(
-                value = vm.title,
-                onValueChange = vm::updateTitle,
-                label = { Text("Title") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BlueTertiary
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = vm.artist,
-                onValueChange = vm::updateArtist,
-                label = { Text("Artist") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BlueTertiary
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = vm.album,
-                onValueChange = vm::updateAlbum,
-                label = { Text("Album") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BlueTertiary
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = vm.track,
-                onValueChange = vm::updateTrack,
-                label = { Text("Track number") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BlueTertiary
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = vm.duration,
-                onValueChange = { },
-                label = { Text("Duration") },
-                readOnly = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = BorderColor,
-                    focusedLabelColor = TextSecondary,
-                    cursorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
-                onValueChange = { },
-                label = { Text("File type") },
-                readOnly = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = BorderColor,
-                    focusedLabelColor = TextSecondary,
-                    cursorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = vm.fileSize,
-                onValueChange = { },
-                label = { Text("Size") },
-                readOnly = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = BorderColor,
-                    focusedLabelColor = TextSecondary,
-                    cursorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            vm.filePath?.let {
-                OutlinedTextField(
-                    value = it,
-                    onValueChange = { },
-                    label = { Text("Path") },
-                    readOnly = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.White,
-                        unfocusedBorderColor = BorderColor,
-                        focusedLabelColor = TextSecondary,
-                        cursorColor = Color.Transparent
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                albumArt()
+                Spacer(modifier = Modifier.height(15.dp))
+                info()
             }
         }
 

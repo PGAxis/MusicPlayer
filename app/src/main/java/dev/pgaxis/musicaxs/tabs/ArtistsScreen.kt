@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.pgaxis.musicaxs.PlayerBarDefaults
+import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.models.AlphabetScroller
 import dev.pgaxis.musicaxs.models.Artist
 import kotlinx.coroutines.delay
@@ -99,7 +99,7 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(end = 20.dp),
-            contentPadding = PaddingValues(bottom = PlayerBarDefaults.TotalHeight)
+            contentPadding = PaddingValues(bottom = LocalPlayerBarTotalHeight.current)
         ) {
             items(flatItems, key = { "${it.letter}_${it.interpret.name}" }) { item ->
                 if (item.letter != null) {
@@ -124,7 +124,7 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
             letters = letters,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(bottom = PlayerBarDefaults.TotalHeight),
+                .padding(bottom = LocalPlayerBarTotalHeight.current),
             onLetterSelected = { letter ->
                 activeLetter = letter
                 val index = letterIndex[letter] ?: return@AlphabetScroller

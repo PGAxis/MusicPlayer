@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import dev.pgaxis.musicaxs.PlayerBarDefaults
+import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.templates.AddToSheet
@@ -127,7 +127,7 @@ fun AlbumDetailScreen(
         } else {
             Box(Modifier.fillMaxSize()) {
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 8.dp, bottom = PlayerBarDefaults.TotalHeight)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = LocalPlayerBarTotalHeight.current)
                 ) {
                     items(songs, key = { it.id }) { song ->
                         SongRow(
