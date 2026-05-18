@@ -31,9 +31,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,8 +76,8 @@ fun SongControlScreen(
 
         // -- Song info
         Text(currentSong.title, textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold, color = CyanPrimary)
-        Text(currentSong.artist, textAlign = TextAlign.Center, color = CyanPrimary)
+            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(currentSong.artist, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.primary)
     }
 
     val controls = @Composable fun (modifier: Modifier) {
@@ -85,7 +85,7 @@ fun SongControlScreen(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenQueue, shape = RoundedCornerShape(0.dp)) {
                 Icon(painterResource(R.drawable.queue), "Queue",
-                    tint = CyanPrimary, modifier = Modifier.size(25.dp))
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
             }
 
             Spacer(Modifier.weight(1f))
@@ -94,7 +94,7 @@ fun SongControlScreen(
             IconButton(onClick = { vm.onLike() }, shape = RoundedCornerShape(0.dp)) {
                 Icon(
                     painterResource(if (isFav) R.drawable.heart_filled else R.drawable.heart_outline),
-                    "Like", tint = CyanPrimary, modifier = Modifier.size(25.dp)
+                    "Like", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)
                 )
             }
 
@@ -105,7 +105,7 @@ fun SongControlScreen(
                 Icon(
                     painter = painterResource(R.drawable.shuffle),
                     contentDescription = "Shuffle",
-                    tint = if (isShuffled) CyanPrimary else CyanPrimary.copy(alpha = 0.5f),
+                    tint = if (isShuffled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                     modifier = Modifier.size(25.dp)
                 )
             }
@@ -119,7 +119,7 @@ fun SongControlScreen(
                         PlayType.RepeatOnce -> R.drawable.repeat_once
                         PlayType.Continue -> R.drawable.continue_play
                     }),
-                    "RepeatType", tint = CyanPrimary, modifier = Modifier.size(25.dp)
+                    "RepeatType", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)
                 )
             }
         }
@@ -130,7 +130,7 @@ fun SongControlScreen(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = if (durationMs > 0) positionMs.toTimestamp() else "-:--",
-                fontSize = 12.sp, color = CyanPrimary
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.primary
             )
             Slider(
                 value = if (durationMs > 0) positionMs / durationMs.toFloat() else 0f,
@@ -138,22 +138,22 @@ fun SongControlScreen(
                 onValueChangeFinished = { vm.onScrubStop() },
                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 thumb = {
-                    Box(Modifier.size(14.dp).clip(CircleShape).background(CyanPrimary))
+                    Box(Modifier.size(14.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                 },
                 track = { sliderState ->
                     SliderDefaults.Track(
                         sliderState = sliderState,
                         modifier = Modifier.height(3.dp),
                         colors = SliderDefaults.colors(
-                            activeTrackColor   = CyanPrimary,
-                            inactiveTrackColor = CyanPrimary.copy(alpha = 0.3f)
+                            activeTrackColor   = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                     )
                 }
             )
             Text(
                 text = if (durationMs > 0) durationMs.toTimestamp() else "-:--",
-                fontSize = 12.sp, color = CyanPrimary
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -163,30 +163,30 @@ fun SongControlScreen(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onPrevious) {
                 Icon(painterResource(R.drawable.prev), "Previous",
-                    tint = CyanPrimary, modifier = Modifier.size(28.dp))
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { vm.seekBack10() }) {
                 Icon(painterResource(R.drawable.rewind), "-10s",
-                    tint = CyanPrimary, modifier = Modifier.size(28.dp))
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
                 Icon(
                     painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
                     if (isPlaying) "Pause" else "Play",
-                    tint = CyanPrimary, modifier = Modifier.size(36.dp)
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)
                 )
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { vm.seekForward10() }) {
                 Icon(painterResource(R.drawable.forward), "+10s",
-                    tint = CyanPrimary, modifier = Modifier.size(28.dp))
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onNext) {
                 Icon(painterResource(R.drawable.next), "Next",
-                    tint = CyanPrimary, modifier = Modifier.size(28.dp))
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             }
         }
     }
@@ -204,7 +204,7 @@ fun SongControlScreen(
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
-                    tint = CyanPrimary, modifier = Modifier.size(25.dp)
+                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)
                 )
             }
 
@@ -213,7 +213,7 @@ fun SongControlScreen(
             Box {
                 IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(36.dp)) {
                     Icon(painterResource(R.drawable.settings), "Song options",
-                        tint = CyanPrimary, modifier = Modifier.size(25.dp))
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
@@ -285,7 +285,7 @@ fun SongControlScreen(
                     modifier = Modifier.clickable {
                         MusicService.addToQueue(
                             context,
-                            vm.resolveSongFromUri(currentSong.songUri!!.toUri())!!
+                            SongRepository.getInstance().resolveSong(currentSong.songUri!!.toUri())!!
                         )
                         showAddToSheet = false
                     }

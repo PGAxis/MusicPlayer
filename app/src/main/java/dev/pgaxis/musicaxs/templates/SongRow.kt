@@ -31,7 +31,6 @@ import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,14 +104,14 @@ fun SongRow(
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) CyanPrimary else Color.White
+                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
             )
             Text(
                 text = song.artist,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) CyanPrimary else Color.White
+                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
             )
         }
 
@@ -124,7 +123,7 @@ fun SongRow(
                 modifier = dragHandleModifier
                     .size(24.dp)
                     .padding(4.dp),
-                tint = CyanPrimary
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -133,7 +132,7 @@ fun SongRow(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Song options",
-                    tint = if (showRemoveFrom) CyanPrimary else Color.White
+                    tint = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
                 )
             }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {

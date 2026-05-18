@@ -1,13 +1,10 @@
 package dev.pgaxis.musicaxs.side_pages
 
 import android.app.Application
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
-import dev.pgaxis.musicaxs.models.Song
-import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.SettingsSave
@@ -113,7 +110,4 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
         2 -> PlayType.Repeat
         else -> PlayType.Continue
     }
-
-    fun resolveSongFromUri(uri: Uri): Song? =
-        SongRepository.getInstance().songs.value.find { it.uri == uri }
 }

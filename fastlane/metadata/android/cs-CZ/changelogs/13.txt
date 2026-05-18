@@ -1,0 +1,4 @@
+Přidáno přizpůsobení motivu (momentálně tři, další přibydou)
+„Fronta závislá na playlistu" se nyní aktualizuje i při přidání skladby přes aplikaci YouTube Conv.axs
+Opravena chyba
+  -> klepnutí na řádek záložky způsobilo zobrazení správné stránky, avšak samotný řádek se neposunul

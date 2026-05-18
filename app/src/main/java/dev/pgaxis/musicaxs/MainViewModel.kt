@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.ContentUris
 import android.content.pm.PackageManager
 import android.database.ContentObserver
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -120,9 +119,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settings.lastSongUri = song.uri.toString()
     }
 
-    fun resolveSongFromUri(uri: Uri): Song? =
-        SongRepository.getInstance().songs.value.find { it.uri == uri }
-
     init {
         val context = getApplication<Application>()
         val token = SessionToken(context, ComponentName(context, MusicService::class.java))
@@ -145,7 +141,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     isPlaying = playing
                     if (!songHasBeenSet) {
                         val uri = controller?.currentMediaItem?.localConfiguration?.uri ?: return
-                        val song = resolveSongFromUri(uri) ?: return
+                        val song = songRepo.resolveSong(uri) ?: return
                         setSong(song)
                     }
                 }
@@ -157,7 +153,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     mediaItem ?: return
 
                     val uri = mediaItem.localConfiguration?.uri ?: return
-                    val song = resolveSongFromUri(uri) ?: return
+                    val song = songRepo.resolveSong(uri) ?: return
 
                     setSong(song)
                 }
@@ -168,7 +164,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (lastUri.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
                 songRepo.isLoaded.first { it }
-                val song = resolveSongFromUri(lastUri.toUri())
+                val song = songRepo.resolveSong(lastUri.toUri())
                 if (song != null) {
                     _currentSong.value = CurrentSong(
                         title = song.title,

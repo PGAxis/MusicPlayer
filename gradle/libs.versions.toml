@@ -19,6 +19,7 @@ paletteKtx = "1.0.0"
 reorderable = "3.1.0"
 axs = "1.0.10"
 lifecycleProcess = "2.10.0"
+material3 = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -47,6 +48,7 @@ androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", versi
 reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 axs = { group = "dev.pgaxis", name = "axs", version.ref = "axs" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

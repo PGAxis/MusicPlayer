@@ -37,7 +37,6 @@ import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -113,7 +112,7 @@ fun PlaylistDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
-                        Icon(painterResource(R.drawable.back), "Back", tint = CyanPrimary)
+                        Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
                     }
                     Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
@@ -131,7 +130,7 @@ fun PlaylistDetailScreen(
                                 Icon(
                                     painterResource(if (isFavourited) R.drawable.heart_filled else R.drawable.heart_outline),
                                     "Favourite playlist",
-                                    tint = CyanPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -142,7 +141,7 @@ fun PlaylistDetailScreen(
                         if (state.songs.isNotEmpty()) MusicService.replaceQueue(context, state.songs, playlistId)
                     }, shape = RoundedCornerShape(0.dp)) {
                         Icon(painterResource(R.drawable.play), "Play all",
-                            tint = CyanPrimary, modifier = Modifier.size(28.dp))
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                     }
                 }
 

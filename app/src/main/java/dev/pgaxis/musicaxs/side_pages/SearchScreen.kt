@@ -47,7 +47,6 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 
 @Composable
 fun SearchScreen(
@@ -78,7 +77,7 @@ fun SearchScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
-                Icon(painterResource(R.drawable.back), "Back", tint = CyanPrimary)
+                Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
             }
             OutlinedTextField(
                 value = query,
@@ -95,7 +94,7 @@ fun SearchScreen(
                     }
                     onBack()
                 }) {
-                    Icon(painterResource(R.drawable.check), "Confirm", tint = CyanPrimary)
+                    Icon(painterResource(R.drawable.check), "Confirm", tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }

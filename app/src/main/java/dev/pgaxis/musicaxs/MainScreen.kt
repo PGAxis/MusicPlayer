@@ -36,7 +36,6 @@ import dev.pgaxis.musicaxs.tabs.ArtistsScreen
 import dev.pgaxis.musicaxs.tabs.PlaylistsScreen
 import dev.pgaxis.musicaxs.tabs.SongsScreen
 import dev.pgaxis.musicaxs.templates.ExpandablePlayer
-import dev.pgaxis.musicaxs.ui.theme.*
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -127,7 +126,7 @@ fun MainScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 25.sp,
                         modifier = Modifier.weight(1f),
-                        color = CyanPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     val onPlaylists = pagerState.settledPage == 1
@@ -140,7 +139,7 @@ fun MainScreen(
                             painter = painterResource(R.drawable.plus),
                             contentDescription = "Add playlist",
                             modifier = Modifier.alpha(if (onPlaylists) 1f else 0f),
-                            tint = CyanPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -150,7 +149,7 @@ fun MainScreen(
                         Icon(
                             painter = painterResource(R.drawable.magglass),
                             contentDescription = "Search",
-                            tint = CyanPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -160,7 +159,7 @@ fun MainScreen(
                         Icon(
                             painter = painterResource(R.drawable.settings),
                             contentDescription = "Settings",
-                            tint = CyanPrimary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -174,7 +173,10 @@ fun MainScreen(
                             awaitEachGesture {
                                 awaitFirstDown(requireUnconsumed = false)
                                 isDraggingTab = true
-                                waitForUpOrCancellation()
+                                val upOrCancel = waitForUpOrCancellation()
+                                if (upOrCancel != null) {
+                                    if (!tabScrollState.isScrollInProgress) isDraggingTab = false
+                                }
                             }
                         }
                         .horizontalScroll(tabScrollState, enabled = true)

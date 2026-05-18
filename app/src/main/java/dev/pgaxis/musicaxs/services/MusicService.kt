@@ -146,7 +146,39 @@ class MusicService : MediaSessionService() {
         fun addToQueue(context: Context, song: Song, applyShuffleRandomness: Boolean = false, resetPlaylist: Boolean = true) {
             val save = ShuffleSave.getInstance(context)
             if (save.isShuffled) save.addToOriginal(song.uri.toString())
-            instance?.addToQueueInternal(song, applyShuffleRandomness, resetPlaylist) ?: playSingular(context, song)
+            instance?.addToQueueInternal(song, applyShuffleRandomness, resetPlaylist)
+                ?: if (isAppInForeground(context)) {
+                    playSingular(context, song)
+                } else {
+                    addToSettingsQueue(context, song, applyShuffleRandomness, resetPlaylist)
+                }
+        }
+
+        private fun addToSettingsQueue(context: Context, song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
+            val settings = SettingsSave.getInstance(context)
+            val uris = settings.lastQueueUris.toMutableList()
+            val titles = settings.lastQueueTitles.toMutableList()
+            val artists = settings.lastQueueArtists.toMutableList()
+
+            if (applyShuffleRandomness && uris.isNotEmpty()) {
+                val randomIndex = (0 until uris.size).random()
+                uris.add(randomIndex, song.uri.toString())
+                titles.add(randomIndex, song.title)
+                artists.add(randomIndex, song.artist)
+            } else {
+                uris.add(song.uri.toString())
+                titles.add(song.title)
+                artists.add(song.artist)
+            }
+
+            settings.lastQueueUris = uris
+            settings.lastQueueTitles = titles
+            settings.lastQueueArtists = artists
+
+            if (resetPlaylist) {
+                settings.lastPlaylistId = -1L
+                settings.queueSource = QueueSource.MANUAL
+            }
         }
 
         fun moveQueueItem(from: Int, to: Int) {

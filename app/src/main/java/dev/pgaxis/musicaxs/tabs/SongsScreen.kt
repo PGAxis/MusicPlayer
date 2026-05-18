@@ -26,7 +26,6 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.models.AlphabetScroller
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -207,7 +206,7 @@ private fun SectionHeader(letter: String) {
         text = letter,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
-        color = CyanPrimary,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)

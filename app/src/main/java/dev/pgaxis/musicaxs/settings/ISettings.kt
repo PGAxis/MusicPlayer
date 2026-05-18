@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.settings
 
 import dev.pgaxis.musicaxs.services.QueueSource
+import dev.pgaxis.musicaxs.services.Theme
 
 interface ISettings {
     // media playback persistency
@@ -18,4 +19,5 @@ interface ISettings {
     // settings
     var hideWhatsAppAudio: Boolean
     var allowYTCnv: Boolean
+    var theme: Theme
 }

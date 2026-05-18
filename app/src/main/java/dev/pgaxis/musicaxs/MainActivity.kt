@@ -8,9 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dev.pgaxis.musicaxs.services.MusicService
+import dev.pgaxis.musicaxs.services.Theme
+import dev.pgaxis.musicaxs.settings.SettingsSave
+import dev.pgaxis.musicaxs.ui.theme.MusicAxsCyanScheme
+import dev.pgaxis.musicaxs.ui.theme.MusicAxsEmberScheme
+import dev.pgaxis.musicaxs.ui.theme.MusicAxsGrayscaleScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicaxsTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,7 +38,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MusicaxsTheme {
+            val settings = remember { SettingsSave.getInstance(this) }
+            val colorScheme = when (settings.theme) {
+                Theme.CYAN -> MusicAxsCyanScheme
+                Theme.GRAYSCALE -> MusicAxsGrayscaleScheme
+                Theme.EMBER -> MusicAxsEmberScheme
+            }
+            MusicaxsTheme(colorScheme = colorScheme) {
                 AppNavigation()
             }
         }

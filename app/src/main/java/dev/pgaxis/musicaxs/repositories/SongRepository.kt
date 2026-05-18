@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.repositories
 
+import android.net.Uri
 import dev.pgaxis.musicaxs.models.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,4 +27,10 @@ class SongRepository private constructor() {
         _songs.value = songs
         isLoaded.value = true
     }
+
+    fun resolveSong(uri: Uri): Song? =
+        songs.value.find { it.uri == uri }
+
+    fun resolveSong(id: Long): Song? =
+        songs.value.find { it.id == id }
 }

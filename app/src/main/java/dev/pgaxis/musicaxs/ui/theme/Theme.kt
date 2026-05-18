@@ -1,44 +1,107 @@
 package dev.pgaxis.musicaxs.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val MusicAxsColorScheme = darkColorScheme(
+val MusicAxsCyanScheme = darkColorScheme(
     primary = CyanPrimary,
-    onPrimary = TextOnButton,
-    primaryContainer = SurfaceVariantDark,
-    onPrimaryContainer = TextPrimary,
+    onPrimary = TextWhitePrimary,
+    primaryContainer = SurfaceVariantCyanDark,
+    onPrimaryContainer = TextWhitePrimary,
 
     secondary = BlueSecondary,
-    onSecondary = TextPrimary,
-    secondaryContainer = CardDark,
-    onSecondaryContainer = TextPrimary,
+    onSecondary = TextWhitePrimary,
+    secondaryContainer = CardCyanDark,
+    onSecondaryContainer = TextWhitePrimary,
 
     tertiary = BlueTertiary,
-    onTertiary = TextPrimary,
-    tertiaryContainer = SurfaceVariantDark,
-    onTertiaryContainer = TextPrimary,
+    onTertiary = TextWhitePrimary,
+    tertiaryContainer = SurfaceVariantCyanDark,
+    onTertiaryContainer = TextWhitePrimary,
 
-    background = BackgroundDark,
-    onBackground = TextPrimary,
+    background = BackgroundCyanDark,
+    onBackground = TextWhitePrimary,
 
-    surface = SurfaceDark,
-    onSurface = TextPrimary,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = TextSecondary,
+    surface = SurfaceCyanDark,
+    onSurface = TextWhitePrimary,
+    surfaceVariant = SurfaceVariantCyanDark,
+    onSurfaceVariant = TextCyanSecondary,
 
-    outline = BorderColor,
-    outlineVariant = DividerColor,
+    outline = BorderCyanColor,
+    outlineVariant = DividerCyanColor,
 
     error = PopupError,
-    onError = TextPrimary,
+    onError = TextWhitePrimary,
+)
+
+val MusicAxsGrayscaleScheme = darkColorScheme(
+    primary = Gray300,
+    onPrimary = TextWhitePrimary,
+    primaryContainer = Gray900,
+    onPrimaryContainer = TextWhitePrimary,
+
+    secondary = Gray400,
+    onSecondary = TextWhitePrimary,
+    secondaryContainer = OffBlack,
+    onSecondaryContainer = TextWhitePrimary,
+
+    tertiary = Gray500,
+    onTertiary = TextWhitePrimary,
+    tertiaryContainer = Gray900,
+    onTertiaryContainer = TextWhitePrimary,
+
+    background = Gray950,
+    onBackground = TextWhitePrimary,
+
+    surface = OffBlack,
+    onSurface = TextWhitePrimary,
+    surfaceVariant = Gray900,
+    onSurfaceVariant = TextCyanSecondary,
+
+    outline = Gray200,
+    outlineVariant = Gray600,
+
+    error = PopupError,
+    onError = TextWhitePrimary,
+)
+
+val MusicAxsEmberScheme = darkColorScheme(
+    primary = EmberPrimary,
+    onPrimary = TextWhitePrimary,
+    primaryContainer = EmberSurfaceVariant,
+    onPrimaryContainer = TextWhitePrimary,
+
+    secondary = EmberSecondary,
+    onSecondary = TextWhitePrimary,
+    secondaryContainer = EmberCard,
+    onSecondaryContainer = TextWhitePrimary,
+
+    tertiary = EmberTertiary,
+    onTertiary = TextWhitePrimary,
+    tertiaryContainer = EmberSurfaceVariant,
+    onTertiaryContainer = TextWhitePrimary,
+
+    background = EmberBackground,
+    onBackground = TextWhitePrimary,
+
+    surface = EmberSurface,
+    onSurface = TextWhitePrimary,
+    surfaceVariant = EmberSurfaceVariant,
+    onSurfaceVariant = TextEmberSecondary,
+
+    outline = EmberBorder,
+    outlineVariant = EmberDivider,
+
+    error = PopupError,
+    onError = TextWhitePrimary,
 )
 
 @Composable
-fun MusicaxsTheme(content: @Composable () -> Unit) {
+fun MusicaxsTheme(colorScheme: ColorScheme, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = MusicAxsColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content
     )

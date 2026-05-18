@@ -7,11 +7,13 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
+import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.SettingsSave
 
 class MusicAxsProvider : ContentProvider() {
 
     private val repo by lazy { PlaylistRepository.getInstance(context!!) }
+    private val ptq by lazy { PlaylistToQueue(context!!) }
 
     override fun onCreate() = true
 
@@ -20,6 +22,8 @@ class MusicAxsProvider : ContentProvider() {
         selection: String?, selectionArgs: Array<out String>?,
         sortOrder: String?
     ): Cursor? {
+        Log.d("MusicAxsProvider", "query called, uri=$uri")
+        Log.d("MusicAxsProvider", "isAllowed=${isAllowed()}")
         if (!isAllowed()) return null
 
         return when (uri) {
@@ -51,7 +55,9 @@ class MusicAxsProvider : ContentProvider() {
             MusicAxsContract.Songs.URI -> {
                 val playlistId = values.getAsLong(MusicAxsContract.Songs.PLAYLIST_ID) ?: return null
                 val songId = values.getAsLong(MusicAxsContract.Songs.SONG_ID) ?: return null
+                val song = SongRepository.getInstance().resolveSong(songId) ?: return null
                 repo.addSong(playlistId, songId)
+                ptq.addSongIfCurrent(playlistId, song)
                 MusicAxsContract.Songs.URI
             }
             else -> null

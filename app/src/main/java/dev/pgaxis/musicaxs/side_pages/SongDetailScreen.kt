@@ -26,10 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import dev.pgaxis.musicaxs.R
-import dev.pgaxis.musicaxs.ui.theme.BlueTertiary
-import dev.pgaxis.musicaxs.ui.theme.BorderColor
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
-import dev.pgaxis.musicaxs.ui.theme.TextSecondary
 
 private val MIME_TO_EXTENSION = mapOf(
     "audio/mpeg" to "MP3",       // mp3
@@ -91,7 +87,7 @@ fun SongDetailScreen(
             onValueChange = vm::updateTitle,
             label = { Text("Title") },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = BlueTertiary
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -101,7 +97,7 @@ fun SongDetailScreen(
             onValueChange = vm::updateArtist,
             label = { Text("Artist") },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = BlueTertiary
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -111,7 +107,7 @@ fun SongDetailScreen(
             onValueChange = vm::updateAlbum,
             label = { Text("Album") },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = BlueTertiary
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -121,7 +117,7 @@ fun SongDetailScreen(
             onValueChange = vm::updateTrack,
             label = { Text("Track number") },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = BlueTertiary
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
@@ -134,8 +130,8 @@ fun SongDetailScreen(
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
-                unfocusedBorderColor = BorderColor,
-                focusedLabelColor = TextSecondary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 cursorColor = Color.Transparent
             ),
             modifier = Modifier.fillMaxWidth()
@@ -148,8 +144,8 @@ fun SongDetailScreen(
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
-                unfocusedBorderColor = BorderColor,
-                focusedLabelColor = TextSecondary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 cursorColor = Color.Transparent
             ),
             modifier = Modifier.fillMaxWidth()
@@ -162,8 +158,8 @@ fun SongDetailScreen(
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
-                unfocusedBorderColor = BorderColor,
-                focusedLabelColor = TextSecondary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 cursorColor = Color.Transparent
             ),
             modifier = Modifier.fillMaxWidth()
@@ -177,8 +173,8 @@ fun SongDetailScreen(
                 readOnly = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
-                    unfocusedBorderColor = BorderColor,
-                    focusedLabelColor = TextSecondary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     cursorColor = Color.Transparent
                 ),
                 modifier = Modifier.fillMaxWidth()
@@ -203,7 +199,7 @@ fun SongDetailScreen(
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
-                    tint = CyanPrimary
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -212,7 +208,7 @@ fun SongDetailScreen(
             Text(
                 text = "Detail",
                 fontSize = 25.sp,
-                color = CyanPrimary
+                color = MaterialTheme.colorScheme.primary
             )
         }
 

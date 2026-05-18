@@ -21,7 +21,6 @@ import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -52,7 +51,7 @@ fun QueueScreen(
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
-                    tint = CyanPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(25.dp)
                 )
             }
@@ -61,7 +60,7 @@ fun QueueScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 modifier = Modifier.weight(1f),
-                color = CyanPrimary
+                color = MaterialTheme.colorScheme.primary
             )
         }
 

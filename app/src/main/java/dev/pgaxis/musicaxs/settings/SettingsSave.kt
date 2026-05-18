@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import dev.pgaxis.axs.AxsBoundObject
 import dev.pgaxis.axs.AxsFile
 import dev.pgaxis.musicaxs.services.QueueSource
+import dev.pgaxis.musicaxs.services.Theme
 import java.io.File
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty1
@@ -90,6 +91,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     // settings
     override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
+    override var theme by setting(Theme.CYAN, SettingsData::theme)
 
     // -- Data class
     @Keep
@@ -107,7 +109,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         var queueSource: QueueSource = QueueSource.MANUAL,
         // settings
         var hideWhatsAppAudio: Boolean = false,
-        var allowYTCnv: Boolean = false
+        var allowYTCnv: Boolean = false,
+        var theme: Theme = Theme.CYAN
     )
 
     fun flush() {
@@ -134,6 +137,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             queueSource = s.queueSource
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
+            theme = s.theme
         } catch (_: Exception) {
             axsFile.close()
             File(axsPath).delete()

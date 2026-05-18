@@ -4,6 +4,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -11,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.pgaxis.musicaxs.ui.theme.CyanPrimary
 
 @Composable
 fun EqualizerBars(
@@ -47,7 +47,7 @@ fun EqualizerBars(
                     .width(barWidth)
                     .height(height)
                     .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                    .background(CyanPrimary)
+                    .background(MaterialTheme.colorScheme.primary)
             )
         }
     }

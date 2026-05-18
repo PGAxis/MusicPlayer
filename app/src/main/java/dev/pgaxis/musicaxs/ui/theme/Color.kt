@@ -14,10 +14,10 @@ val Gray950 = Color(0xFF141414)
 val OffBlack = Color(0xFF1F1F1F)
 
 // Backgrounds
-val BackgroundDark = Color(0xFF0D1117)
-val SurfaceDark = Color(0xFF161B22)
-val SurfaceVariantDark = Color(0xFF1E2A35)
-val CardDark = Color(0xFF1A2332)
+val BackgroundCyanDark = Color(0xFF0D1117)
+val SurfaceCyanDark = Color(0xFF161B22)
+val SurfaceVariantCyanDark = Color(0xFF1E2A35)
+val CardCyanDark = Color(0xFF1A2332)
 
 //Blues / Cyans / Aquas
 val CyanPrimary = Color(0xFF00BCD4)
@@ -29,15 +29,25 @@ val BlueLight = Color(0xFF29B6F6)
 val MidnightBlue = Color(0xFF0A1628)
 
 // Text
-val TextPrimary = Color(0xFFE8F4FD)
-val TextSecondary = Color(0xFFB0BEC5)
+val TextWhitePrimary = Color(0xFFE8E8E8)
+val TextCyanSecondary = Color(0xFFB0B0B0)
 val TextOnButton = Color(0xFFB2EBF2)
 
 // Dividers / Borders
-val DividerColor = Color(0xFF00ACC1)
-val BorderColor = Color(0xFF1E3A4A)
+val DividerCyanColor = Color(0xFF00ACC1)
+val BorderCyanColor = Color(0xFF1E3A4A)
 
 // Popup backgrounds
-val PopupDefault = Color(0xFF1E3A4A)
-val PopupSuccess = Color(0xFF1B5E20)
 val PopupError = Color(0xFFAF0000)
+
+// Ember theme colors
+val EmberPrimary = Color(0xFFFFB347)
+val EmberSecondary = Color(0xFFE07B39)
+val EmberTertiary = Color(0xFFFF8C00)
+val EmberBackground = Color(0xFF0F0A00)
+val EmberSurface = Color(0xFF1A1100)
+val EmberSurfaceVariant = Color(0xFF2A1F00)
+val EmberCard = Color(0xFF221800)
+val EmberBorder = Color(0xFF3D2B00)
+val EmberDivider = Color(0xFFFF8C00)
+val TextEmberSecondary = Color(0xFFBBA080)

@@ -1,0 +1,4 @@
+Added theme customization (currently three, more on their way)
+The "Playlist-aware queue" now changes even when a song is added via the YouTube Conv.axs app
+Fixed a bug
+  -> tapping on the tab title row would cause correct page to appear, but the row itself would not scroll

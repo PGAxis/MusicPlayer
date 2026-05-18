@@ -1,6 +1,8 @@
 package dev.pgaxis.musicaxs.services
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.settings.SettingsSave
@@ -16,12 +18,14 @@ class PlaylistToQueue(
         Log.d("PlaylistToQueue", "try: $playlistId, current: ${settings.lastPlaylistId}, matched: ${playlistId == settings.lastPlaylistId}")
         if (settings.lastPlaylistId != playlistId) return false
 
-        MusicService.addToQueue(
-            context = context,
-            song = song,
-            applyShuffleRandomness = MusicService.isShuffled,
-            resetPlaylist = false
-        )
+        Handler(Looper.getMainLooper()).post {
+            MusicService.addToQueue(
+                context = context,
+                song = song,
+                applyShuffleRandomness = MusicService.isShuffled,
+                resetPlaylist = false
+            )
+        }
 
         return true
     }

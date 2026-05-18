@@ -4,13 +4,20 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import dev.pgaxis.musicaxs.services.MusicAxsContract
+import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.settings.SettingsSave
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val context = getApplication<Application>()
     val settings = SettingsSave.getInstance(context)
+
+    val themeOptions = mapOf(Theme.CYAN to "Cyan", Theme.EMBER to "Ember", Theme.GRAYSCALE to "Grayscale")
+    var selectedTheme by mutableStateOf(settings.theme)
 
     fun onHideWhatsAppChanged(value: Boolean, onScan: () -> Unit) {
         settings.hideWhatsAppAudio = value
@@ -19,6 +26,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun onAllowYTCnvChanged(value: Boolean) {
         settings.allowYTCnv = value
+    }
+
+    fun onThemeChanged(key: Theme) {
+        selectedTheme = key
+        settings.theme = key
     }
 
     @Suppress("DEPRECATION")
