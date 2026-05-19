@@ -1,0 +1,9 @@
+Opravy chyb:
+- Smazané skladby jsou nyní odstraněny z fronty
+- Rozbalovací přehrávač již nelze přetáhnout dolů při zobrazení obrazovky Fronty
+- Řádek záložek nyní správně reaguje na klepnutí
+
+Přídavky:
+- 4 nové motivy
+- Aktuálně přehrávaná skladba zobrazuje animaci ekvalizéru i mimo obrazovku Fronty
+- Přehrávací lišta (rozbalovací přehrávač ve sbaleném stavu) plynule přechází mezi barvami pozadí

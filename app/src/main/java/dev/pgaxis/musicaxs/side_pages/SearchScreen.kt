@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +69,7 @@ fun SearchScreen(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header
         Row(

@@ -3,6 +3,7 @@ package dev.pgaxis.musicaxs.tabs
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -135,7 +135,7 @@ fun PlaylistsScreen(
                     )
                     IconButton(onClick = { showSheet = true }, modifier = Modifier.size(24.dp)) {
                         Icon(painterResource(R.drawable.import_export), "Import / Export",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -405,10 +405,14 @@ private fun PlaylistRow(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Playlist options",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+            ) {
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -418,6 +422,7 @@ private fun PlaylistRow(
                         ) {
                             Text(
                                 text = if (isFavourited) "Remove from Favourites" else "Add to Favourites",
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -432,11 +437,11 @@ private fun PlaylistRow(
                     onClick = { menuExpanded = false; onToggleFavourite() }
                 )
                 DropdownMenuItem(
-                    text = { Text("Rename") },
+                    text = { Text("Rename", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onRename() }
                 )
                 DropdownMenuItem(
-                    text = { Text("Merge into…") },
+                    text = { Text("Merge into…", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onMerge() }
                 )
                 DropdownMenuItem(

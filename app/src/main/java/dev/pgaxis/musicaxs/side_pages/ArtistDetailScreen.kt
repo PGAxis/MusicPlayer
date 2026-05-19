@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,7 +67,11 @@ fun ArtistDetailScreen(
 
     val currentArtist = artist ?: return
 
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -79,7 +83,7 @@ fun ArtistDetailScreen(
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
@@ -92,7 +96,7 @@ fun ArtistDetailScreen(
                     fontSize = 20.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "${currentArtist.albumCount} ${if (currentArtist.albumCount == 1) "album" else "albums"} · ${currentArtist.songCount} ${if (currentArtist.songCount == 1) "song" else "songs"}",

@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.templates
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,12 +43,14 @@ fun AddToSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Text(
                 text = "Add to",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
             HorizontalDivider()
@@ -65,7 +69,7 @@ fun AddToSheet(
             val isFav = favourites.isFavourite(song.uri)
             ListItem(
                 headlineContent = {
-                    Text(if (isFav) "Remove from Favourites" else "Add to Favourites")
+                    Text(if (isFav) "Remove from Favourites" else "Add to Favourites", color = MaterialTheme.colorScheme.onSecondaryContainer)
                 },
                 leadingContent = {
                     Icon(
@@ -86,11 +90,12 @@ fun AddToSheet(
                     text = "Add to playlist",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 playlists.forEach { playlist ->
                     ListItem(
-                        headlineContent = { Text(playlist.name) },
+                        headlineContent = { Text(playlist.name, color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         leadingContent = {
                             Icon(painterResource(R.drawable.default_playlist), null, Modifier.size(15.dp))
                         },

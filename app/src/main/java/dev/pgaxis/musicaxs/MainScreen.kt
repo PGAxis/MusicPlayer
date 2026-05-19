@@ -1,11 +1,13 @@
 package dev.pgaxis.musicaxs
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -36,6 +39,8 @@ import dev.pgaxis.musicaxs.tabs.ArtistsScreen
 import dev.pgaxis.musicaxs.tabs.PlaylistsScreen
 import dev.pgaxis.musicaxs.tabs.SongsScreen
 import dev.pgaxis.musicaxs.templates.ExpandablePlayer
+import dev.pgaxis.musicaxs.ui.theme.TextDarkPrimary
+import dev.pgaxis.musicaxs.ui.theme.TextWhitePrimary
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -67,6 +72,22 @@ fun MainScreen(
     var newPlaylistName  by remember { mutableStateOf("") }
 
     var bgColor by remember { mutableStateOf(Color.DarkGray) }
+    val animatedBgColor by animateColorAsState(
+        targetValue = bgColor,
+        animationSpec = tween(
+            durationMillis = 500
+        ),
+        label = "bgColor"
+    )
+
+    var textColor by remember { mutableStateOf(Color.DarkGray.contrastColor()) }
+    val animatedTextColor by animateColorAsState(
+        targetValue = textColor,
+        animationSpec = tween(
+            durationMillis = 500
+        ),
+        label = "textColor"
+    )
 
     LaunchedEffect(pagerState.settledPage) {
         vm.onPageChanged(pagerState.settledPage)
@@ -74,7 +95,8 @@ fun MainScreen(
 
     BoxWithConstraints(Modifier
         .fillMaxSize()
-        .windowInsetsPadding(WindowInsets.systemBars)) {
+        .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
         val screenWidthDp = maxWidth
         val tabWidthDp = screenWidthDp * 0.275f
         val padDp = (screenWidthDp - tabWidthDp) / 2f
@@ -93,12 +115,12 @@ fun MainScreen(
                 .filter { !it }
                 .collect {
                     if (isDraggingTab) {
-                        isDraggingTab = false
                         val closestIndex = (tabScrollState.value / tabWidthPx)
                             .roundToInt()
                             .coerceIn(0, vm.tabs.size - 1)
                         scope.launch { tabScrollState.animateScrollTo((closestIndex * tabWidthPx).toInt()) }
                         scope.launch { pagerState.animateScrollToPage(closestIndex) }
+                        isDraggingTab = false
                     }
                 }
         }
@@ -112,7 +134,11 @@ fun MainScreen(
         }
 
         CompositionLocalProvider(LocalPlayerBarTotalHeight provides totalHeight) {
-            Column(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
                 // -- Header
                 Row(
                     modifier = Modifier
@@ -172,11 +198,14 @@ fun MainScreen(
                         .pointerInput(Unit) {
                             awaitEachGesture {
                                 awaitFirstDown(requireUnconsumed = false)
+
                                 isDraggingTab = true
-                                val upOrCancel = waitForUpOrCancellation()
-                                if (upOrCancel != null) {
-                                    if (!tabScrollState.isScrollInProgress) isDraggingTab = false
-                                }
+
+                                do {
+                                    val event = awaitPointerEvent()
+                                } while (event.changes.any { it.pressed })
+
+                                if (!tabScrollState.isScrollInProgress) isDraggingTab = false
                             }
                         }
                         .horizontalScroll(tabScrollState, enabled = true)
@@ -236,8 +265,10 @@ fun MainScreen(
                 ExpandablePlayer(
                     currentSong = it1,
                     isPlaying = vm.isPlaying,
-                    bgColor = bgColor,
+                    bgColor = animatedBgColor,
+                    txtColor = animatedTextColor,
                     onBgColorChange = { bgColor = it },
+                    onTxtColorChange = { textColor = it },
                     onPrevious = vm::onPrevious,
                     onPlayPause = vm::onPlayPause,
                     onNext = vm::onNext,
@@ -275,5 +306,13 @@ fun MainScreen(
                 )
             }
         }
+    }
+}
+
+fun Color.contrastColor(): Color {
+    return if (luminance() > 0.3f) {
+        TextDarkPrimary
+    } else {
+        TextWhitePrimary
     }
 }

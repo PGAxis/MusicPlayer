@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,6 +20,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
+import dev.pgaxis.musicaxs.settings.ShuffleSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
 import sh.calvin.reorderable.ReorderableItem
@@ -31,11 +33,24 @@ fun QueueScreen(
     vm: QueueViewModel = viewModel()
 ) {
     val listState = rememberLazyListState()
+    val context = LocalContext.current
     val currentIndex by vm.currentIndex.collectAsStateWithLifecycle()
     var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
         vm.onMove(from.index, to.index)
+    }
+
+    LaunchedEffect(Unit) {
+        if (currentIndex >= 0) {
+            listState.scrollToItem(currentIndex)
+        }
+    }
+
+    LaunchedEffect(ShuffleSave.getInstance(context).isShuffled) {
+        if (currentIndex >= 0) {
+            listState.scrollToItem(currentIndex)
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -97,7 +112,6 @@ fun QueueScreen(
                         song = song,
                         onSeeDetails = onSeeDetail,
                         onAddTo = { selectedSong = song },
-                        isCurrentlyPlaying = index == currentIndex,
                         showRemoveFrom = true,
                         onRemoveFrom = { vm.removeAt(index) },
                         dragHandleModifier = Modifier.draggableHandle(),

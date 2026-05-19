@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -182,46 +183,64 @@ fun SongDetailScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .windowInsetsPadding(WindowInsets.systemBars),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(25.dp)
+                .fillMaxSize()
+                .padding(16.dp)
+                .windowInsetsPadding(WindowInsets.systemBars),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.back),
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(25.dp)
+            ) {
+                IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+                    Icon(
+                        painter = painterResource(R.drawable.back),
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(Modifier.width(5.dp))
+
+                Text(
+                    text = "Detail",
+                    fontSize = 25.sp,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(Modifier.width(5.dp))
-
-            Text(
-                text = "Detail",
-                fontSize = 25.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        if (isLandscape) {
-            Row(Modifier.weight(1f)) {
-                Column(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    albumArt()
+            if (isLandscape) {
+                Row(Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        albumArt()
+                    }
+                    Spacer(modifier = Modifier.width(15.dp))
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .imePadding()
+                            .padding(vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        info()
+                    }
                 }
-                Spacer(modifier = Modifier.width(15.dp))
+            } else {
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -231,46 +250,34 @@ fun SongDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    albumArt()
+                    Spacer(modifier = Modifier.height(15.dp))
                     info()
                 }
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                    .padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+
+            Spacer(Modifier.height(5.dp))
+
+            Button(
+                onClick = {
+                    val request = vm.createWriteRequest()
+
+                    if (request != null) {
+                        writeLauncher.launch(
+                            IntentSenderRequest.Builder(request.intentSender).build()
+                        )
+                    } else {
+                        vm.save(onScan)
+                    }
+                },
+                enabled = vm.isModified && !vm.isSaving,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                albumArt()
-                Spacer(modifier = Modifier.height(15.dp))
-                info()
-            }
-        }
-
-        Spacer(Modifier.height(5.dp))
-
-        Button(
-            onClick = {
-                val request = vm.createWriteRequest()
-
-                if (request != null) {
-                    writeLauncher.launch(
-                        IntentSenderRequest.Builder(request.intentSender).build()
-                    )
+                if (vm.isSaving) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp))
                 } else {
-                    vm.save(onScan)
+                    Text(if (vm.isModified) "Save" else "Saved")
                 }
-            },
-            enabled = vm.isModified && !vm.isSaving,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (vm.isSaving) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp))
-            } else {
-                Text(if (vm.isModified) "Save" else "Saved")
             }
         }
     }

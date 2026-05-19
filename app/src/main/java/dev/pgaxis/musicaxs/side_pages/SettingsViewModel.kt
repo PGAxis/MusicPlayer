@@ -16,7 +16,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val context = getApplication<Application>()
     val settings = SettingsSave.getInstance(context)
 
-    val themeOptions = mapOf(Theme.CYAN to "Cyan", Theme.EMBER to "Ember", Theme.GRAYSCALE to "Grayscale")
+    val themeOptions = mapOf(Theme.CYAN to "Cyan", Theme.EMBER to "Ember", Theme.AETHER to "Aether", Theme.PHOSPHOR to "Phosphor", Theme.CHALK to "Chalk", Theme.SOLEIL to "Soleil", Theme.GRAYSCALE to "Grayscale")
     var selectedTheme by mutableStateOf(settings.theme)
 
     fun onHideWhatsAppChanged(value: Boolean, onScan: () -> Unit) {

@@ -9,7 +9,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +33,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
+import dev.pgaxis.musicaxs.templates.AddToSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,20 +215,24 @@ fun SongControlScreen(
                     Icon(painterResource(R.drawable.settings), "Song options",
                         tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
                 }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+                ) {
                     DropdownMenuItem(
-                        text = { Text("See details") },
+                        text = { Text("See details", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         onClick = {
                             menuExpanded = false
                             onSeeDetail(Uri.encode(currentSong.songUri.toString()))
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Add to") },
+                        text = { Text("Add to", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         onClick = { menuExpanded = false; showAddToSheet = true }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete") },
+                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                         onClick = { menuExpanded = false; showDeleteDialog = true }
                     )
                 }
@@ -268,50 +272,10 @@ fun SongControlScreen(
     }
 
     if (showAddToSheet) {
-        ModalBottomSheet(onDismissRequest = { showAddToSheet = false }) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
-            ) {
-                Text("Add to", fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
-
-                HorizontalDivider()
-
-                ListItem(
-                    headlineContent = { Text("Queue") },
-                    leadingContent = {
-                        Icon(painterResource(R.drawable.queue), null, Modifier.size(15.dp))
-                    },
-                    modifier = Modifier.clickable {
-                        MusicService.addToQueue(
-                            context,
-                            SongRepository.getInstance().resolveSong(currentSong.songUri!!.toUri())!!
-                        )
-                        showAddToSheet = false
-                    }
-                )
-
-                val isFav = favourites.isFavourite(currentSong.songUri!!.toUri())
-                ListItem(
-                    headlineContent = {
-                        Text(if (isFav) "Remove from Favourites" else "Add to Favourites")
-                    },
-                    leadingContent = {
-                        Icon(
-                            painterResource(if (isFav) R.drawable.heart_filled else R.drawable.heart_outline),
-                            null, Modifier.size(15.dp)
-                        )
-                    },
-                    modifier = Modifier.clickable {
-                        if (MusicService.currentUri == currentSong.songUri.toUri())
-                            MusicService.like(favourites)
-                        else
-                            favourites.toggle(currentSong.songUri.toUri(), !isFav)
-                        showAddToSheet = false
-                    }
-                )
-            }
-        }
+        AddToSheet(
+            song = SongRepository.getInstance().resolveSong(currentSong.songUri!!.toUri())!!,
+            onDismiss = { showAddToSheet = false }
+        )
     }
 
     if (showDeleteDialog) {

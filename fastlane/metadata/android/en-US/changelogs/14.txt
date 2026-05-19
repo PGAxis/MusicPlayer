@@ -1,0 +1,9 @@
+Bug fixes:
+- Deleted songs now get removed from queue
+- The expandable player bar now cannot be swiped down when on the Queue screen
+- The title tab row now properly works with taps
+
+Additions:
+- 4 new themes
+- "Now playing" song has the equalizer bars even outside of Queue screen
+- "Now playing" bar (expandable player in its shrunken state) transitions from one background color to another

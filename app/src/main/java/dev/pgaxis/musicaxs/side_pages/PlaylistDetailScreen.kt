@@ -2,6 +2,7 @@ package dev.pgaxis.musicaxs.side_pages
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -15,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -61,7 +61,7 @@ fun PlaylistDetailScreen(
 
     when (val state = uiState) {
         is DetailUiState.Loading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -101,7 +101,8 @@ fun PlaylistDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars),
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .background(MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header
@@ -115,7 +116,7 @@ fun PlaylistDetailScreen(
                         Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
                     }
                     Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+                        Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         Text("${state.songs.size} songs",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)

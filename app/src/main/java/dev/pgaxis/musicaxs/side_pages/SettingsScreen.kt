@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.side_pages
 
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -68,6 +68,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
@@ -78,7 +79,7 @@ fun SettingsScreen(
             IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
                 Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
             }
-            Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+            Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
         }
 
         HorizontalDivider()
@@ -91,7 +92,7 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SettingsGroup(title = "Library") {
+            SettingsGroup(title = "Library", initiallyExpanded = false) {
                 SettingsToggleRow(
                     label = "Hide WhatsApp Audio",
                     description = "Hides songs from the \"WhatsApp Audio\" album",
@@ -100,7 +101,7 @@ fun SettingsScreen(
                 )
             }
 
-            SettingsGroup(title = "Customization") {
+            SettingsGroup(title = "Customization", initiallyExpanded = false) {
                 SettingsDropdownRow(
                     label = "Color theme",
                     options = vm.themeOptions,
@@ -202,7 +203,7 @@ fun SettingsToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onPrimary)
+            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
             if (description != null) {
                 Text(
                     description,
@@ -251,7 +252,7 @@ fun SettingsDropdownRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onPrimary)
+            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
             if (description != null) {
                 Text(
                     description,
@@ -278,7 +279,7 @@ fun SettingsDropdownRow(
             ) {
                 Text(
                     text = options.entries.find { it.key == selected }?.value ?: selected.toString(),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
@@ -293,11 +294,11 @@ fun SettingsDropdownRow(
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.widthIn(min = minDropdownWidth)
+                modifier = Modifier.widthIn(min = minDropdownWidth).background(MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 options.forEach { (backendValue, displayLabel) ->
                     DropdownMenuItem(
-                        text = { Text(displayLabel, color = MaterialTheme.colorScheme.onPrimary) },
+                        text = { Text(displayLabel, color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         onClick = {
                             onSelectChange(backendValue)
                             expanded = false

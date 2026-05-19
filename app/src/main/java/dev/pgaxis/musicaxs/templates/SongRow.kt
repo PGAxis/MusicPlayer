@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.templates
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.net.Uri
 import android.os.Build
@@ -41,7 +42,6 @@ fun SongRow(
     onSeeDetails: (uri: String) -> Unit,
     onAddTo: () -> Unit,
     showsImage: Boolean = true,
-    isCurrentlyPlaying: Boolean = false,
     showRemoveFrom: Boolean = false,
     removeLabel: String = "Remove from queue",
     onRemoveFrom: () -> Unit = {},
@@ -53,10 +53,19 @@ fun SongRow(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
+    val currentUri by MusicService.currentUriState.collectAsStateWithLifecycle()
+
+    var pendingDelete by remember { mutableStateOf(false) }
+    val isCurrentlyPlaying = currentUri == song.uri
 
     val deleteRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
-    ) { }
+    ) { result ->
+        if (pendingDelete && result.resultCode == Activity.RESULT_OK) {
+            MusicService.removeAllFromQueue(song.uri.toString())
+        }
+        pendingDelete = false
+    }
 
     Row(
         modifier = Modifier
@@ -71,15 +80,6 @@ fun SongRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        if (isCurrentlyPlaying) {
-            EqualizerBars(
-                isPlaying = isPlaying,
-                modifier = Modifier.width(16.dp)
-            )
-        } else if (showRemoveFrom) {
-            Spacer(Modifier.width(16.dp))
-        }
-
         if (showsImage) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
@@ -104,18 +104,25 @@ fun SongRow(
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
+                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
                 text = song.artist,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
+                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
 
-        // Drag handle — only shown in queue
+        if (isCurrentlyPlaying) {
+            EqualizerBars(
+                isPlaying = isPlaying,
+                modifier = Modifier.width(16.dp)
+            )
+        }
+
+        // Drag handle — only shown in queue/playlist
         if (showRemoveFrom) {
             Icon(
                 painter = painterResource(R.drawable.drag_handle),
@@ -132,29 +139,33 @@ fun SongRow(
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = "Song options",
-                    tint = if (showRemoveFrom) MaterialTheme.colorScheme.primary else Color.White
+                    tint = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+            ) {
                 DropdownMenuItem(
-                    text = { Text("See details") },
+                    text = { Text("See details", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = {
                         menuExpanded = false
                         onSeeDetails(Uri.encode(song.uri.toString()))
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Add to") },
+                    text = { Text("Add to", color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onAddTo() }
                 )
                 if (showRemoveFrom) {
                     DropdownMenuItem(
-                        text = { Text(removeLabel) },
+                        text = { Text(removeLabel, color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         onClick = { menuExpanded = false; onRemoveFrom() }
                     )
                 }
                 DropdownMenuItem(
-                    text = { Text("Delete") },
+                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                     onClick = { menuExpanded = false; showDeleteDialog = true }
                 )
             }
@@ -163,7 +174,7 @@ fun SongRow(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Delete song") },
+                title = { Text("Delete song", color = MaterialTheme.colorScheme.onPrimary) },
                 text = { Text("\"${song.title}\" will be permanently deleted from your device. This action is irreversible.") },
                 confirmButton = {
                     TextButton(onClick = {
@@ -173,20 +184,26 @@ fun SongRow(
                                 val intent = MediaStore.createDeleteRequest(
                                     context.contentResolver, listOf(song.uri)
                                 )
+                                pendingDelete = true
                                 deleteRequestLauncher.launch(
                                     IntentSenderRequest.Builder(intent.intentSender).build()
                                 )
                             }
                             Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
                                 try {
-                                    context.contentResolver.delete(song.uri, null, null)
+                                    val deleted = context.contentResolver.delete(song.uri, null, null)
+                                    if (deleted > 0) MusicService.removeAllFromQueue(song.uri.toString())
                                 } catch (e: RecoverableSecurityException) {
+                                    pendingDelete = true
                                     deleteRequestLauncher.launch(
                                         IntentSenderRequest.Builder(e.userAction.actionIntent.intentSender).build()
                                     )
                                 }
                             }
-                            else -> context.contentResolver.delete(song.uri, null, null)
+                            else -> {
+                                val deleted = context.contentResolver.delete(song.uri, null, null)
+                                if (deleted > 0) MusicService.removeAllFromQueue(song.uri.toString())
+                            }
                         }
                     }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
                 },

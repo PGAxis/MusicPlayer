@@ -44,8 +44,10 @@ import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.PlayerBarDefaults
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.contrastColor
 import dev.pgaxis.musicaxs.side_pages.QueueScreen
 import dev.pgaxis.musicaxs.side_pages.SongControlScreen
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -60,7 +62,9 @@ fun ExpandablePlayer(
     currentSong: CurrentSong,
     isPlaying: Boolean,
     bgColor: Color,
+    txtColor: Color,
     onBgColorChange: (Color) -> Unit,
+    onTxtColorChange: (Color) -> Unit,
     onPrevious: () -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -68,6 +72,7 @@ fun ExpandablePlayer(
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
+    var paletteJob by remember { mutableStateOf<Job?>(null) }
 
     val barHeightPx = with(density) { PlayerBarDefaults.Height.toPx() }
     val vMarginPx = with(density) { PlayerBarDefaults.VerticalMargin.toPx() }
@@ -181,7 +186,11 @@ fun ExpandablePlayer(
                 .fillMaxWidth()
                 .offset { IntOffset(0, rawPlayerOffset.roundToInt()) }
                 .height(with(density) { (fullHeightPx - rawPlayerOffset).toDp() })
-                .anchoredDraggable(playerState, Orientation.Vertical)
+                .anchoredDraggable(
+                    playerState,
+                    Orientation.Vertical,
+                    enabled = queueState.currentValue == QueuePanelState.Hidden
+                )
                 .clickable(
                     enabled = playerState.currentValue == PlayerState.Collapsed,
                     indication = null,
@@ -215,13 +224,13 @@ fun ExpandablePlayer(
                             fontSize = 15.sp,
                             maxLines = 1,
                             modifier = Modifier.basicMarquee(),
-                            color = Color.White
+                            color = txtColor
                         )
                         Text(
                             text = currentSong.artist,
                             fontSize = 14.sp,
                             maxLines = 1,
-                            color = Color.White
+                            color = txtColor
                         )
                     }
 
@@ -230,16 +239,28 @@ fun ExpandablePlayer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onPrevious, modifier = Modifier.size(35.dp)) {
-                            Icon(painterResource(R.drawable.prev), null,
-                                Modifier.padding(8.dp), tint = Color.White)
+                            Icon(
+                                painter = painterResource(R.drawable.prev),
+                                contentDescription = "Previous",
+                                modifier = Modifier.padding(8.dp),
+                                tint = txtColor
+                            )
                         }
                         IconButton(onClick = onPlayPause, modifier = Modifier.size(35.dp)) {
-                            Icon(painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                                null, Modifier.padding(8.dp), tint = Color.White)
+                            Icon(
+                                painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                                contentDescription = "Play/Pause",
+                                modifier = Modifier.padding(8.dp),
+                                tint = txtColor
+                            )
                         }
                         IconButton(onClick = onNext, modifier = Modifier.size(35.dp)) {
-                            Icon(painterResource(R.drawable.next), null,
-                                Modifier.padding(8.dp), tint = Color.White)
+                            Icon(
+                                painter = painterResource(R.drawable.next),
+                                contentDescription = "Next",
+                                modifier = Modifier.padding(8.dp),
+                                tint = txtColor
+                            )
                         }
                     }
                 }
@@ -286,7 +307,16 @@ fun ExpandablePlayer(
                             .bitmap.copy(Bitmap.Config.ARGB_8888, false)
                         Palette.from(bitmap).generate { palette ->
                             palette?.getDominantColor(Color.DarkGray.toArgb())
-                                ?.let { onBgColorChange(Color(it).darken()) }
+                                ?.let { dominant ->
+                                    paletteJob?.cancel()
+
+                                    paletteJob = scope.launch {
+                                        delay(350)
+
+                                        onBgColorChange(Color(dominant))
+                                        onTxtColorChange(Color(dominant).contrastColor())
+                                    }
+                                }
                         }
                     },
                     onError = { onBgColorChange(Color.DarkGray) }
@@ -311,6 +341,3 @@ fun ExpandablePlayer(
         }
     }
 }
-
-private fun Color.darken(factor: Float = 0.75f) =
-    copy(red = red * factor, green = green * factor, blue = blue * factor, alpha = 1f)

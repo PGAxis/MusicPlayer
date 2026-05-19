@@ -63,6 +63,7 @@ class MusicService : MediaSessionService() {
         val COMMAND_PREVIOUS = SessionCommand("ACTION_PREVIOUS", Bundle.EMPTY)
         val COMMAND_NEXT = SessionCommand("ACTION_NEXT", Bundle.EMPTY)
         val currentUri: Uri? get() = instance?.mediaSession?.player?.currentMediaItem?.localConfiguration?.uri
+        val currentUriState = MutableStateFlow<Uri?>(null)
         val queueState = MutableStateFlow<List<MediaItem>>(emptyList())
         val isPlayingState = MutableStateFlow(false)
         val currentIndexState = MutableStateFlow(-1)
@@ -200,6 +201,14 @@ class MusicService : MediaSessionService() {
                 .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
                 ?: return
             removeFromQueue(index)
+        }
+
+        fun removeAllFromQueue(uri: String) {
+            val player = instance?.mediaSession?.player ?: return
+            (0 until player.mediaItemCount)
+                .filter { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
+                .reversed()
+                .forEach { removeFromQueue(it) }
         }
 
         private fun applyQueueReorder(targetUris: List<String>) {
@@ -544,11 +553,15 @@ class MusicService : MediaSessionService() {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                mediaItem ?: return
+                if (mediaItem == null) {
+                    currentUriState.value = null
+                    return
+                }
                 val uri = mediaItem.localConfiguration?.uri ?: return
 
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
+                currentUriState.value = uri
                 updateNotificationButtons(mediaSession!!)
 
                 playCountJob?.cancel()
