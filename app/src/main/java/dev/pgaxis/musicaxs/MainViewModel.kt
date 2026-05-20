@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Timeline
 import dev.pgaxis.musicaxs.models.Album
 import dev.pgaxis.musicaxs.models.Artist
 import dev.pgaxis.musicaxs.models.Playlist
@@ -144,6 +145,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         val song = songRepo.resolveSong(uri) ?: return
                         setSong(song)
                     }
+                }
+
+                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                    if (timeline.isEmpty) MusicService.seekTo(0)
                 }
 
                 override fun onMediaItemTransition(

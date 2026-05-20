@@ -1,0 +1,6 @@
+Opravy chyb:
+- Když byla jedna skladba ve frontě vícekrát, tak všechny byly označeny jako "právě hrající"
+- Obrazovka Detailu skladby již nepovoluje upravit "neupravitelné" skladby
+
+Přídavky:
+- Fronta může nyní být plně vymazána

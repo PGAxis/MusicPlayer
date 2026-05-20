@@ -1,0 +1,6 @@
+Bug fixes:
+- When one song was in a queue multiple times, it would show all of them as "currently playing"
+- The song detail screen no longer lets you edit detail for "uneditable" songs
+
+Additions:
+- The queue can now be fully cleared

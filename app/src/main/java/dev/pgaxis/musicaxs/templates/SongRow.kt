@@ -41,6 +41,8 @@ fun SongRow(
     song: Song,
     onSeeDetails: (uri: String) -> Unit,
     onAddTo: () -> Unit,
+    isPlayingOverride: Boolean = false,
+    isPlaying: Boolean = false,
     showsImage: Boolean = true,
     showRemoveFrom: Boolean = false,
     removeLabel: String = "Remove from queue",
@@ -52,7 +54,7 @@ fun SongRow(
     var menuExpanded by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
+    val isSongPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
     val currentUri by MusicService.currentUriState.collectAsStateWithLifecycle()
 
     var pendingDelete by remember { mutableStateOf(false) }
@@ -71,7 +73,7 @@ fun SongRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (isCurrentlyPlaying)
+                if (if (isPlayingOverride) isPlaying else isCurrentlyPlaying)
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 else Color.Transparent
             )
@@ -115,9 +117,9 @@ fun SongRow(
             )
         }
 
-        if (isCurrentlyPlaying) {
+        if (if (isPlayingOverride) isPlaying else isCurrentlyPlaying) {
             EqualizerBars(
-                isPlaying = isPlaying,
+                isPlaying = isSongPlaying,
                 modifier = Modifier.width(16.dp)
             )
         }

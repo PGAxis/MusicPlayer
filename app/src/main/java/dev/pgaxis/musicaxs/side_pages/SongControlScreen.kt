@@ -53,7 +53,7 @@ fun SongControlScreen(
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val positionMs by vm.positionMs.collectAsStateWithLifecycle()
     val durationMs by vm.durationMs.collectAsStateWithLifecycle()
-    val isPlaying by vm.isPlaying.collectAsStateWithLifecycle()
+    val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
 
     var menuExpanded  by remember { mutableStateOf(false) }
     var showAddToSheet by remember { mutableStateOf(false) }

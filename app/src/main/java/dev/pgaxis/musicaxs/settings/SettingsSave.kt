@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.settings
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -121,6 +122,10 @@ class SettingsSave private constructor(context: Context): ISettings {
         axsFile.open()
 
         try {
+            axsFile.debugDumpIndex().forEach { item ->
+                Log.d("SettingsSave", item)
+            }
+
             boundSettings = axsFile.bind(SettingsData())
 
             val s = boundSettings.get()

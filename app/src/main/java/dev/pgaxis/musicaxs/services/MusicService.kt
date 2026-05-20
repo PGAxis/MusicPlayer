@@ -546,7 +546,6 @@ class MusicService : MediaSessionService() {
                 updateNotificationButtons(mediaSession!!)
                 isPlayingState.value = isPlaying
                 if (!isPlaying) {
-                    val settings = SettingsSave.getInstance(this@MusicService)
                     settings.lastPositionMs = player.currentPosition
                     settings.lastDurationMs = player.duration.coerceAtLeast(0L)
                 }
@@ -585,12 +584,10 @@ class MusicService : MediaSessionService() {
                 val player = instance?.mediaSession?.player ?: return
                 val items = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
 
-                if (items.isEmpty()) return
-
                 queueState.value = items
                 currentIndexState.value = player.currentMediaItemIndex
 
-                val settings = SettingsSave.getInstance(this@MusicService)
+                settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
                 settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
                 settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
                 settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }

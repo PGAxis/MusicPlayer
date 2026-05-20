@@ -112,6 +112,8 @@ fun QueueScreen(
                         song = song,
                         onSeeDetails = onSeeDetail,
                         onAddTo = { selectedSong = song },
+                        isPlayingOverride = true,
+                        isPlaying = index == currentIndex,
                         showRemoveFrom = true,
                         onRemoveFrom = { vm.removeAt(index) },
                         dragHandleModifier = Modifier.draggableHandle(),

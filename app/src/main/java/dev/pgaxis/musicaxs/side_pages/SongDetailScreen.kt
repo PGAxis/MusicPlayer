@@ -86,6 +86,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.title,
             onValueChange = vm::updateTitle,
+            enabled = vm.isEditable,
             label = { Text("Title") },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
@@ -96,6 +97,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.artist,
             onValueChange = vm::updateArtist,
+            enabled = vm.isEditable,
             label = { Text("Artist") },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
@@ -106,6 +108,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.album,
             onValueChange = vm::updateAlbum,
+            enabled = vm.isEditable,
             label = { Text("Album") },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
@@ -116,6 +119,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.track,
             onValueChange = vm::updateTrack,
+            enabled = vm.isEditable,
             label = { Text("Track number") },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary

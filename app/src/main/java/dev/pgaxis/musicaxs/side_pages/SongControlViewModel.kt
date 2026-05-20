@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 sealed interface PlayType {
@@ -33,9 +34,6 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
     private val _durationMs = MutableStateFlow(0L)
     val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
 
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
-
     private val _isScrubbing = MutableStateFlow(false)
 
     private var lastScrubPositionMs: Long = 0L
@@ -47,17 +45,33 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.value = getPlayTypeByNum(settings.repeatMode)
 
         viewModelScope.launch {
-            while (true) {
-                val player = MusicService.playerInstance
-                if (player != null && !_isScrubbing.value) {
-                    val duration = player.duration.coerceAtLeast(0L)
-                    if (duration > 0L) {
-                        _positionMs.value = player.currentPosition
-                        _durationMs.value = duration
-                        _isPlaying.value  = player.isPlaying
+            MusicService.isPlayingState.collectLatest { isPlaying ->
+                if (!isPlaying) return@collectLatest
+                while (true) {
+                    val player = MusicService.playerInstance
+                    if (player != null && !_isScrubbing.value) {
+                        val duration = player.duration.coerceAtLeast(0L)
+                        if (duration > 0L) {
+                            _positionMs.value = player.currentPosition
+                            _durationMs.value = duration
+                        } else {
+                            _positionMs.value = 0L
+                            _durationMs.value = 0L
+                        }
+                    } else {
+                        _positionMs.value = 0L
+                        _durationMs.value = 0L
                     }
+                    delay(200)
                 }
-                delay(200)
+            }
+        }
+
+        viewModelScope.launch {
+            MusicService.queueState.collectLatest { queue ->
+                if (queue.isEmpty()) {
+                    _positionMs.value = 0L
+                }
             }
         }
     }

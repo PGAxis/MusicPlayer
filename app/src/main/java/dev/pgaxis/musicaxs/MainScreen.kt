@@ -310,7 +310,7 @@ fun MainScreen(
 }
 
 fun Color.contrastColor(): Color {
-    return if (luminance() > 0.3f) {
+    return if (luminance() > 0.5f) {
         TextDarkPrimary
     } else {
         TextWhitePrimary
