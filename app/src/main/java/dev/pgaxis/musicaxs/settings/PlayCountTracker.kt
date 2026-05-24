@@ -51,14 +51,14 @@ class PlayCountTracker private constructor(context: Context) {
 
     fun getLastPlayed(uri: Uri): Long = entries[uri.toString()]?.lastPlayedMs ?: 0L*/
 
-    /** Returns URIs sorted by play count descending */
+    // Returns URIs sorted by play count descending
     fun topPlayed(limit: Int = 50): List<String> =
         entries.entries
             .sortedByDescending { it.value.count }
             .take(limit)
             .map { it.key }
 
-    /** Returns URIs sorted by last played descending */
+    // Returns URIs sorted by last played descending
     fun recentlyPlayed(limit: Int = 50): List<String> =
         entries.entries
             .sortedByDescending { it.value.lastPlayedMs }

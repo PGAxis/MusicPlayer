@@ -38,6 +38,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -186,29 +187,31 @@ class MusicService : MediaSessionService() {
             instance?.mediaSession?.player?.moveMediaItem(from, to)
         }
 
-        fun removeFromQueue(index: Int) {
+        fun removeFromQueue(context: Context, index: Int) {
+            val settings = SettingsSave.getInstance(context)
             val player = instance?.mediaSession?.player ?: return
             val uri = player.getMediaItemAt(index).localConfiguration?.uri?.toString()
             if (uri != null && ShuffleSave.getInstance(instance!!).isShuffled) {
                 ShuffleSave.getInstance(instance!!).removeFromOriginal(uri)
             }
             player.removeMediaItem(index)
+            if (index < settings.lastQueueIndex) settings.lastQueueIndex--
         }
 
-        fun removeFromQueue(uri: String) {
+        fun removeFromQueue(context: Context, uri: String) {
             val player = instance?.mediaSession?.player ?: return
             val index = (0 until player.mediaItemCount)
                 .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
                 ?: return
-            removeFromQueue(index)
+            removeFromQueue(context, index)
         }
 
-        fun removeAllFromQueue(uri: String) {
+        fun removeAllFromQueue(context: Context, uri: String) {
             val player = instance?.mediaSession?.player ?: return
             (0 until player.mediaItemCount)
                 .filter { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
                 .reversed()
-                .forEach { removeFromQueue(it) }
+                .forEach { removeFromQueue(context, it) }
         }
 
         private fun applyQueueReorder(targetUris: List<String>) {
@@ -359,12 +362,14 @@ class MusicService : MediaSessionService() {
 
     private fun addToQueueInternal(song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
         val player = mediaSession?.player ?: return
-        if (applyShuffleRandomness && player.mediaItemCount > 0) {
-            val randomIndex = (0 until player.mediaItemCount).random()
-            player.addMediaItem(randomIndex, song.toMediaItem())
-        } else {
-            player.addMediaItem(song.toMediaItem())
-        }
+        val insertIndex = if (applyShuffleRandomness && player.mediaItemCount > 0)
+            (0 until player.mediaItemCount).random()
+        else
+            player.mediaItemCount
+
+        player.addMediaItem(insertIndex, song.toMediaItem())
+        if (insertIndex <= settings.lastQueueIndex) settings.lastQueueIndex++
+
         if (currentSource == QueueSource.PLAYLIST && resetPlaylist) {
             settings.lastPlaylistId = -1L
             currentSource = QueueSource.MANUAL
@@ -475,7 +480,15 @@ class MusicService : MediaSessionService() {
             }
 
             val queueUris = settings.lastQueueUris.ifEmpty { listOf(lastUri) }
-            val currentIndex = queueUris.indexOf(lastUri).coerceAtLeast(0)
+            val savedIndex = settings.lastQueueIndex.coerceIn(0, queueUris.lastIndex)
+            val currentIndex = if (queueUris[savedIndex] == lastUri) {
+                savedIndex
+            } else {
+                queueUris.indices
+                    .filter { queueUris[it] == lastUri }
+                    .minByOrNull { abs(it - savedIndex) }
+                    ?: 0
+            }
             val items = queueUris.mapIndexed { i, uri ->
                 MediaItem.Builder()
                     .setUri(uri.toUri())
@@ -561,6 +574,8 @@ class MusicService : MediaSessionService() {
                 isLiked = favourites.isFavourite(uri)
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
                 currentUriState.value = uri
+                settings.lastSongUri = uri.toString()
+                settings.lastQueueIndex = player.currentMediaItemIndex
                 updateNotificationButtons(mediaSession!!)
 
                 playCountJob?.cancel()
@@ -586,6 +601,7 @@ class MusicService : MediaSessionService() {
 
                 queueState.value = items
                 currentIndexState.value = player.currentMediaItemIndex
+                currentUriState.value = player.currentMediaItem?.localConfiguration?.uri
 
                 settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
                 settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }

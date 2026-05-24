@@ -227,7 +227,7 @@ fun MainScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = label,
+                                text = stringResource(label),
                                 fontSize = fontSize.sp,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -264,7 +264,6 @@ fun MainScreen(
             currentSong?.let { it1 ->
                 ExpandablePlayer(
                     currentSong = it1,
-                    isPlaying = vm.isPlaying,
                     bgColor = animatedBgColor,
                     txtColor = animatedTextColor,
                     onBgColorChange = { bgColor = it },
@@ -279,12 +278,12 @@ fun MainScreen(
             if (showCreateDialog) {
                 AlertDialog(
                     onDismissRequest = { showCreateDialog = false; newPlaylistName = "" },
-                    title = { Text("New Playlist") },
+                    title = { Text(stringResource(R.string.main_new_playlist)) },
                     text = {
                         OutlinedTextField(
                             value = newPlaylistName,
                             onValueChange = { newPlaylistName = it },
-                            label = { Text("Name") },
+                            label = { Text(stringResource(R.string.name)) },
                             singleLine = true
                         )
                     },
@@ -296,11 +295,11 @@ fun MainScreen(
                                 newPlaylistName = ""
                                 onChooseSongsForPlaylist(playlist.id.toString())
                             }
-                        }) { Text("Create") }
+                        }) { Text(stringResource(R.string.create)) }
                     },
                     dismissButton = {
                         TextButton(onClick = { showCreateDialog = false; newPlaylistName = "" }) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.cancel))
                         }
                     }
                 )

@@ -1,0 +1,7 @@
+Bug fixes:
+- Fixed "Current song" showing incorrect song
+- Fixed splash screen showing wrong background
+- Fixed "queue index" being set incorrectly after resuming playback from "fully off" state
+
+Additions:
+- Added translation support (currently English and Czech)

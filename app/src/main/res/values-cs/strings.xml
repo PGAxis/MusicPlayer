@@ -1,0 +1,133 @@
+<resources>
+    <string name="app_name">Music.axs</string>
+
+    <!-- General -->
+    <string name="name">Jméno</string>
+    <string name="create">Vytvořit</string>
+    <string name="see_details">Podrobnosti</string>
+    <string name="cancel">Zrušit</string>
+    <string name="rename">Přejmenovat</string>
+    <string name="delete">Odstranit</string>
+    <string name="delete_w_arg">Odstranit „%s"?</string>
+    <string name="no_coming_back">Tato akce nemůže být vrácena zpět</string>
+    <string name="queue">Fronta</string>
+    <plurals name="song_count">
+        <item quantity="one">%d skladba</item>
+        <item quantity="few">%d skladby</item>
+        <item quantity="many">%d skladeb</item>
+        <item quantity="other">%d skladeb</item>
+    </plurals>
+    <plurals name="track_count">
+        <item quantity="one">%d skladba</item>
+        <item quantity="few">%d skladby</item>
+        <item quantity="many">%d skladeb</item>
+        <item quantity="other">%d skladeb</item>
+    </plurals>
+    <plurals name="album_count">
+        <item quantity="one">%d album</item>
+        <item quantity="few">%d alba</item>
+        <item quantity="many">%d alb</item>
+        <item quantity="other">%d alb</item>
+    </plurals>
+
+    <!-- Remove from -->
+    <string name="rm_from_fav">Odstranit z oblíbených</string>
+    <string name="rm_from_queue">Odstranit z fronty</string>
+    <string name="rm_from_playlist">Odstranit z playlistu</string>
+
+    <!-- Add to -->
+    <string name="add_to">Přidat do</string>
+    <string name="add_to_fav">Přidat do oblíbených</string>
+    <string name="add_to_queue">Přidat do fronty</string>
+    <string name="add_to_playlist">Přidat do playlistu</string>
+
+    <!-- Main screen -->
+    <string name="tab_favourites">Oblíbené</string>
+    <string name="tab_playlists">Playlisty</string>
+    <string name="tab_songs">Skladby</string>
+    <string name="tab_albums">Alba</string>
+    <string name="tab_artists">Interpreti</string>
+    <string name="main_new_playlist">Nový playlist</string>
+
+    <!-- Settings screen -->
+    <string name="set_scr_title">Nastavení</string>
+    <string name="set_scr_library">Knihovna</string>
+    <string name="set_scr_hide_wa_audio">Skrýt WhatsApp audio</string>
+    <string name="set_scr_hide_wa_audio_desc">Skryje skladby z "WhatsApp Audio" alba</string>
+    <string name="set_scr_customization">Přizpůsobení</string>
+    <string name="set_scr_theme">Barevný motiv</string>
+    <string name="set_scr_app_settings">Nastavení Aplikace</string>
+    <string name="language">Jazyk</string>
+    <string name="set_scr_ytconv_add_songs">Povolit YouTube Conv.axs přidávat skladby</string>
+    <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs může přidávat skladby přímo do vašich playlistů</string>
+
+    <!-- Albums screen -->
+    <string name="alb_scr_no_found">Nenalezena žádná alba</string>
+
+    <!-- Artists screen -->
+    <string name="art_scr_no_found">Nenalezeni žádní interpreti</string>
+
+    <!-- Favourites screen -->
+    <string name="fav_scr_no_found">Nenalezeny žádné oblíbené skladby</string>
+
+    <!-- Playlists screen -->
+    <string name="pls_scr_rec_added">Nedávno Přidané</string>
+    <string name="pls_scr_rec_played">Nedávno Hrané</string>
+    <string name="pls_scr_most_played">Nejvíce Hrané</string>
+    <string name="pls_scr_my_playlists">Moje playlisty</string>
+    <string name="pls_scr_no_found">Zatím žádné playlisty</string>
+    <string name="pls_scr_import">Importovat</string>
+    <string name="pls_scr_import_desc">Importovat playlist ze souboru .m3u</string>
+    <string name="pls_scr_export">Exportovat</string>
+    <string name="pls_scr_export_desc">Exportovat do .m3u — zatím žádný playlist</string>
+    <string name="pls_scr_name_playlist">Pojmenuj svůj playlist</string>
+    <string name="pls_scr_playlist_name">Jméno playlistu</string>
+    <string name="pls_scr_rename_playlist">Přejmenovat playlist</string>
+    <string name="pls_scr_new_name">Nové jméno</string>
+    <string name="pls_scr_merge">Připojit do…</string>
+
+    <!-- Songs screen -->
+    <string name="song_scr_storage_perm">Pro zobrazení skladeb je vyžadováno oprávnění k úložišti</string>
+    <string name="song_scr_grant">Udělit oprávnění</string>
+    <string name="song_scr_no_found">Na tomto zařízení nebyly nalezeny žádné skladby</string>
+
+    <!-- Merge to sheet -->
+    <string name="mer_sh_into">Připojit „%s" do…</string>
+    <string name="mer_sh_no_found">Žádné další playlisty k připojení</string>
+
+    <!-- Song row -->
+    <string name="song_row_delete">Odstranit skladbu</string>
+    <string name="song_row_delete_desc">„%s" bude trvale odstraněna z vašeho zařízení. Tato akce nemůže být vrácena zpět.</string>
+
+    <!-- Playlist detail screen -->
+    <string name="pls_det_no_found">Tento playlist je prázdný</string>
+
+    <!-- Search screen -->
+    <string name="search_scr_search">Hledat…</string>
+    <string name="search_scr_search_long">Začněte psát pro vyhledávání…</string>
+    <string name="search_scr_songs">Skladby</string>
+    <string name="search_scr_artists">Interpreti</string>
+    <string name="search_scr_albums">Alba</string>
+
+    <!-- Song detail screen -->
+    <string name="song_det_title">Název</string>
+    <string name="song_det_artist">Interpret</string>
+    <string name="song_det_album">Album</string>
+    <string name="song_det_track">Číslo stopy</string>
+    <string name="song_det_duration">Délka</string>
+    <string name="song_det_file">Typ souboru</string>
+    <string name="song_det_size">Velikost</string>
+    <string name="song_det_path">Cesta</string>
+    <string name="song_det_detail">Detail</string>
+    <string name="song_det_save">Uložit</string>
+    <string name="song_det_saved">Uloženo</string>
+
+    <!-- Settings view model -->
+    <string name="set_vm_cyan">Azurová</string>
+    <string name="set_vm_ember">Žár</string>
+    <string name="set_vm_aether">Nebesa</string>
+    <string name="set_vm_phosphor">Fosfor</string>
+    <string name="set_vm_chalk">Křída</string>
+    <string name="set_vm_sunshine">Slunění</string>
+    <string name="set_vm_grayscale">Stupně šedi</string>
+</resources>

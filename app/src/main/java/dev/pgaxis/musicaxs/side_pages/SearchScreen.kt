@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,7 +86,7 @@ fun SearchScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = vm::onQueryChange,
-                placeholder = { Text("Search…") },
+                placeholder = { Text(stringResource(R.string.search_scr_search)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(20.dp)
@@ -105,7 +107,7 @@ fun SearchScreen(
 
         if (query.isBlank()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Start typing to search…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.search_scr_search_long), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -113,7 +115,7 @@ fun SearchScreen(
                 // Songs section
                 if (results.songs.isNotEmpty()) {
                     item {
-                        SectionHeader("Songs")
+                        SectionHeader(stringResource(R.string.search_scr_songs))
                     }
                     val songsToShow = if (isChoosing) results.songs else results.songs.take(5)
                     items(songsToShow, key = { it.id }) { song ->
@@ -155,22 +157,22 @@ fun SearchScreen(
 
                 // Artists section
                 if (!isChoosing && results.artists.isNotEmpty()) {
-                    item { SectionHeader("Artists") }
+                    item { SectionHeader(stringResource(R.string.search_scr_artists)) }
                     items(results.artists.take(5), key = { "artist_${it.name}" }) { artist ->
                         ListItem(
                             headlineContent = { Text(artist.name, fontWeight = FontWeight.Medium) },
-                            supportingContent = { Text("${artist.songs.size} songs") }
+                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, artist.songs.size, artist.songs.size)) }
                         )
                     }
                 }
 
                 // Albums section
                 if (!isChoosing && results.albums.isNotEmpty()) {
-                    item { SectionHeader("Albums") }
+                    item { SectionHeader(stringResource(R.string.search_scr_albums)) }
                     items(results.albums.take(5), key = { "album_${it.name}" }) { album ->
                         ListItem(
                             headlineContent = { Text(album.name, fontWeight = FontWeight.Medium) },
-                            supportingContent = { Text("${album.songs.size} songs") },
+                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, album.songs.size, album.songs.size)) },
                             leadingContent = {
                                 AsyncImage(
                                     model = album.artUri,

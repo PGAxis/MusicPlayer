@@ -10,9 +10,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.Player
@@ -27,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Timeline
 import dev.pgaxis.musicaxs.models.Album
 import dev.pgaxis.musicaxs.models.Artist
@@ -38,7 +34,10 @@ import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.AlbumArtPreloader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class CurrentSong(
@@ -67,7 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
 
-    val tabs = listOf("Favourites", "Playlists", "Songs", "Albums", "Artists")
+    val tabs = listOf(R.string.tab_favourites, R.string.tab_playlists, R.string.tab_songs, R.string.tab_albums, R.string.tab_artists)
 
     private val _currentPageIndex = MutableStateFlow(settings.lastTabIndex)
     val currentPageIndex: StateFlow<Int> = _currentPageIndex.asStateFlow()
@@ -75,13 +74,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
 
-    private var songHasBeenSet = false
-
-    var isPlaying by mutableStateOf(false)
-        private set
-
-    private val _currentSong = MutableStateFlow<CurrentSong?>(null)
-    val currentSong: StateFlow<CurrentSong?> = _currentSong.asStateFlow()
+    val currentSong: StateFlow<CurrentSong?> = MusicService.currentUriState
+        .map { uri ->
+            uri ?: return@map null
+            songRepo.isLoaded.first { it }
+            val song = songRepo.resolveSong(uri)
+            CurrentSong(
+                title = song?.title ?: "",
+                artist = song?.artist ?: "",
+                songUri = uri.toString()
+            )
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private fun hasPermission(): Boolean {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -114,12 +118,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setSong(song: Song) {
-        songHasBeenSet = true
-        _currentSong.value = CurrentSong(title = song.title, artist = song.artist, songUri = song.uri.toString())
-        settings.lastSongUri = song.uri.toString()
-    }
-
     init {
         val context = getApplication<Application>()
         val token = SessionToken(context, ComponentName(context, MusicService::class.java))
@@ -136,50 +134,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         controllerFuture = MediaController.Builder(context, token).buildAsync()
         controllerFuture?.addListener({
             controller = controllerFuture?.get()
-            controller?.let { isPlaying = it.isPlaying }
             controller?.addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(playing: Boolean) {
-                    isPlaying = playing
-                    if (!songHasBeenSet) {
-                        val uri = controller?.currentMediaItem?.localConfiguration?.uri ?: return
-                        val song = songRepo.resolveSong(uri) ?: return
-                        setSong(song)
-                    }
-                }
-
                 override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                     if (timeline.isEmpty) MusicService.seekTo(0)
                 }
-
-                override fun onMediaItemTransition(
-                    mediaItem: MediaItem?,
-                    reason: Int
-                ) {
-                    mediaItem ?: return
-
-                    val uri = mediaItem.localConfiguration?.uri ?: return
-                    val song = songRepo.resolveSong(uri) ?: return
-
-                    setSong(song)
-                }
             })
         }, ContextCompat.getMainExecutor(context))
-
-        val lastUri = settings.lastSongUri
-        if (lastUri.isNotEmpty()) {
-            viewModelScope.launch(Dispatchers.IO) {
-                songRepo.isLoaded.first { it }
-                val song = songRepo.resolveSong(lastUri.toUri())
-                if (song != null) {
-                    _currentSong.value = CurrentSong(
-                        title = song.title,
-                        artist = song.artist,
-                        songUri = song.uri.toString()
-                    )
-                    songHasBeenSet = true
-                }
-            }
-        }
     }
 
     fun onPrevious() {

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.palette.graphics.Palette
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -45,6 +46,7 @@ import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.PlayerBarDefaults
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.contrastColor
+import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.side_pages.QueueScreen
 import dev.pgaxis.musicaxs.side_pages.SongControlScreen
 import kotlinx.coroutines.Job
@@ -60,7 +62,6 @@ enum class QueuePanelState { Hidden, Visible }
 @Composable
 fun ExpandablePlayer(
     currentSong: CurrentSong,
-    isPlaying: Boolean,
     bgColor: Color,
     txtColor: Color,
     onBgColorChange: (Color) -> Unit,
@@ -73,6 +74,8 @@ fun ExpandablePlayer(
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     var paletteJob by remember { mutableStateOf<Job?>(null) }
+
+    val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
 
     val barHeightPx = with(density) { PlayerBarDefaults.Height.toPx() }
     val vMarginPx = with(density) { PlayerBarDefaults.VerticalMargin.toPx() }

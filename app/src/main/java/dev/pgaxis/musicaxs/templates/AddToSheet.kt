@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +47,7 @@ fun AddToSheet(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Text(
-                text = "Add to",
+                text = stringResource(R.string.add_to),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -56,7 +57,7 @@ fun AddToSheet(
             HorizontalDivider()
 
             ListItem(
-                headlineContent = { Text("Queue") },
+                headlineContent = { Text(stringResource(R.string.queue)) },
                 leadingContent = {
                     Icon(painterResource(R.drawable.queue), null, Modifier.size(15.dp))
                 },
@@ -69,7 +70,7 @@ fun AddToSheet(
             val isFav = favourites.isFavourite(song.uri)
             ListItem(
                 headlineContent = {
-                    Text(if (isFav) "Remove from Favourites" else "Add to Favourites", color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(if (isFav) R.string.rm_from_fav else R.string.add_to_fav), color = MaterialTheme.colorScheme.onSecondaryContainer)
                 },
                 leadingContent = {
                     Icon(
@@ -87,7 +88,7 @@ fun AddToSheet(
             if (playlists.isNotEmpty()) {
                 HorizontalDivider()
                 Text(
-                    text = "Add to playlist",
+                    text = stringResource(R.string.add_to_playlist),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),

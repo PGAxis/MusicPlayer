@@ -1,3 +1,127 @@
 <resources>
     <string name="app_name">Music.axs</string>
+
+    <!-- General -->
+    <string name="name">Name</string>
+    <string name="create">Create</string>
+    <string name="see_details">See details</string>
+    <string name="cancel">Cancel</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="delete_w_arg">Delete "%s"?</string>
+    <string name="no_coming_back">This can\'t be undone</string>
+    <string name="queue">Queue</string>
+    <plurals name="song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="track_count">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <plurals name="album_count">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
+
+    <!-- Remove from -->
+    <string name="rm_from_fav">Remove from favourites</string>
+    <string name="rm_from_queue">Remove from queue</string>
+    <string name="rm_from_playlist">Remove from playlist</string>
+
+    <!-- Add to -->
+    <string name="add_to">Add to</string>
+    <string name="add_to_fav">Add to favourites</string>
+    <string name="add_to_queue">Add to queue</string>
+    <string name="add_to_playlist">Add to playlist</string>
+
+    <!-- Main screen -->
+    <string name="tab_favourites">Favourites</string>
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_songs">Songs</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Interprets</string>
+    <string name="main_new_playlist">New Playlist</string>
+
+    <!-- Settings screen -->
+    <string name="set_scr_title">Settings</string>
+    <string name="set_scr_library">Library</string>
+    <string name="set_scr_hide_wa_audio">Hide WhatsApp audio</string>
+    <string name="set_scr_hide_wa_audio_desc">Hides songs from the "WhatsApp Audio" album</string>
+    <string name="set_scr_customization">Customization</string>
+    <string name="set_scr_theme">Color Theme</string>
+    <string name="set_scr_app_settings">App Settings</string>
+    <string name="language">Language</string>
+    <string name="set_scr_ytconv_add_songs">Allow YouTube Conv.axs to add songs</string>
+    <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs can add downloaded songs directly to your playlists</string>
+
+    <!-- Albums screen -->
+    <string name="alb_scr_no_found">No albums found</string>
+
+    <!-- Artists screen -->
+    <string name="art_scr_no_found">No artists found</string>
+
+    <!-- Favourites screen -->
+    <string name="fav_scr_no_found">No favourites yet</string>
+
+    <!-- Playlists screen -->
+    <string name="pls_scr_rec_added">Recently Added</string>
+    <string name="pls_scr_rec_played">Recently Played</string>
+    <string name="pls_scr_most_played">Most Played</string>
+    <string name="pls_scr_my_playlists">My playlists</string>
+    <string name="pls_scr_no_found">No playlists yet</string>
+    <string name="pls_scr_import">Import</string>
+    <string name="pls_scr_import_desc">Import playlist from .m3u</string>
+    <string name="pls_scr_export">Export</string>
+    <string name="pls_scr_export_desc">Export to .m3u — no playlists yet</string>
+    <string name="pls_scr_name_playlist">Name your playlist</string>
+    <string name="pls_scr_playlist_name">Playlist name</string>
+    <string name="pls_scr_rename_playlist">Rename playlist</string>
+    <string name="pls_scr_new_name">New name</string>
+    <string name="pls_scr_merge">Merge into…</string>
+
+    <!-- Songs screen -->
+    <string name="song_scr_storage_perm">Storage permission is required to show your songs</string>
+    <string name="song_scr_grant">Grant permission</string>
+    <string name="song_scr_no_found">No songs found on this device</string>
+
+    <!-- Merge to sheet -->
+    <string name="mer_sh_into">Merge "%s" into…</string>
+    <string name="mer_sh_no_found">No other playlists to merge into</string>
+
+    <!-- Song row -->
+    <string name="song_row_delete">Delete song</string>
+    <string name="song_row_delete_desc">"%s" will be permanently deleted from your device. This action is irreversible.</string>
+
+    <!-- Playlist detail screen -->
+    <string name="pls_det_no_found">This playlist is empty</string>
+
+    <!-- Search screen -->
+    <string name="search_scr_search">Search…</string>
+    <string name="search_scr_search_long">Start typing to search…</string>
+    <string name="search_scr_songs">Songs</string>
+    <string name="search_scr_artists">Artists</string>
+    <string name="search_scr_albums">Albums</string>
+
+    <!-- Song detail screen -->
+    <string name="song_det_title">Title</string>
+    <string name="song_det_artist">Artist</string>
+    <string name="song_det_album">Album</string>
+    <string name="song_det_track">Track number</string>
+    <string name="song_det_duration">Duration</string>
+    <string name="song_det_file">File type</string>
+    <string name="song_det_size">Size</string>
+    <string name="song_det_path">Path</string>
+    <string name="song_det_detail">Detail</string>
+    <string name="song_det_save">Save</string>
+    <string name="song_det_saved">Saved</string>
+
+    <!-- Settings view model -->
+    <string name="set_vm_cyan">Cyan</string>
+    <string name="set_vm_ember">Ember</string>
+    <string name="set_vm_aether">Aether</string>
+    <string name="set_vm_phosphor">Phosphor</string>
+    <string name="set_vm_chalk">Chalk</string>
+    <string name="set_vm_sunshine">Sunshine</string>
+    <string name="set_vm_grayscale">Grayscale</string>
 </resources>

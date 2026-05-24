@@ -1,0 +1,7 @@
+Opravy chyb:
+- Opraveno zobrazení nesprávné skladby jakožto „Aktuální skladby"
+- Opravena nesprávná barva pozadí úvodní obrazovky
+- Opraven nesprávně nastavený „index ve frontě" po obnovení přehrávání z vypnutého stavu
+
+Přídavky:
+- Přidání podpory pro překlad (v současné době ngličtina a čeština)

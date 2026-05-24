@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,7 +88,7 @@ fun SongDetailScreen(
             value = vm.title,
             onValueChange = vm::updateTitle,
             enabled = vm.isEditable,
-            label = { Text("Title") },
+            label = { Text(stringResource(R.string.song_det_title)) },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
@@ -98,7 +99,7 @@ fun SongDetailScreen(
             value = vm.artist,
             onValueChange = vm::updateArtist,
             enabled = vm.isEditable,
-            label = { Text("Artist") },
+            label = { Text(stringResource(R.string.song_det_artist)) },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
@@ -109,7 +110,7 @@ fun SongDetailScreen(
             value = vm.album,
             onValueChange = vm::updateAlbum,
             enabled = vm.isEditable,
-            label = { Text("Album") },
+            label = { Text(stringResource(R.string.song_det_album)) },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
@@ -120,7 +121,7 @@ fun SongDetailScreen(
             value = vm.track,
             onValueChange = vm::updateTrack,
             enabled = vm.isEditable,
-            label = { Text("Track number") },
+            label = { Text(stringResource(R.string.song_det_track)) },
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
             ),
@@ -131,7 +132,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.duration,
             onValueChange = { },
-            label = { Text("Duration") },
+            label = { Text(stringResource(R.string.song_det_duration)) },
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
@@ -145,7 +146,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
             onValueChange = { },
-            label = { Text("File type") },
+            label = { Text(stringResource(R.string.song_det_file)) },
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
@@ -159,7 +160,7 @@ fun SongDetailScreen(
         OutlinedTextField(
             value = vm.fileSize,
             onValueChange = { },
-            label = { Text("Size") },
+            label = { Text(stringResource(R.string.song_det_size)) },
             readOnly = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.White,
@@ -174,7 +175,7 @@ fun SongDetailScreen(
             OutlinedTextField(
                 value = it,
                 onValueChange = { },
-                label = { Text("Path") },
+                label = { Text(stringResource(R.string.song_det_path)) },
                 readOnly = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
@@ -216,7 +217,7 @@ fun SongDetailScreen(
                 Spacer(Modifier.width(5.dp))
 
                 Text(
-                    text = "Detail",
+                    text = stringResource(R.string.song_det_detail),
                     fontSize = 25.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -280,7 +281,7 @@ fun SongDetailScreen(
                 if (vm.isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp))
                 } else {
-                    Text(if (vm.isModified) "Save" else "Saved")
+                    Text(stringResource(if (vm.isModified) R.string.song_det_save else R.string.song_det_saved))
                 }
             }
         }

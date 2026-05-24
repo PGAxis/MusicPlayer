@@ -10,7 +10,7 @@ fun isAppInForeground(context: Context): Boolean {
     val packageName = context.packageName
     return appProcesses.any {
         it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-                && it.processName == packageName
+        && it.processName == packageName
     }
 }
 
@@ -22,7 +22,7 @@ enum class Theme(private val displayName: String) {
     AETHER("theme_aether"),
     PHOSPHOR("theme_phosphor"),
     CHALK("theme_chalk"),
-    SOLEIL("theme_soleil");
+    SUNSHINE("theme_sunshine");
 
     override fun toString(): String = displayName
 }

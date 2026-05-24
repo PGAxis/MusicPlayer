@@ -7,7 +7,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
-composeBom = "2026.05.00"
+composeBom = "2026.05.01"
 viewModel = "2.10.0"
 splash = "1.2.0"
 coil = "2.7.0"
@@ -20,6 +20,7 @@ reorderable = "3.1.0"
 axs = "1.0.10"
 lifecycleProcess = "2.10.0"
 material3 = "1.4.0"
+appcompat = "1.7.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,6 +50,7 @@ reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.r
 axs = { group = "dev.pgaxis", name = "axs", version.ref = "axs" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

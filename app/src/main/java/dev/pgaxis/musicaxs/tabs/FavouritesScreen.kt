@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,7 +47,7 @@ fun FavouritesScreen(
             is FavouritesUiState.Ready -> {
                 if (state.playlists.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No favourites yet.")
+                        Text(stringResource(R.string.fav_scr_no_found))
                     }
                 } else {
                     LazyVerticalGrid(
@@ -107,7 +109,7 @@ private fun PlaylistTile(playlist: Playlist, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = if (songCount != 1) "$songCount tracks" else "$songCount track",
+            text = pluralStringResource(R.plurals.track_count, songCount, songCount),
             fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

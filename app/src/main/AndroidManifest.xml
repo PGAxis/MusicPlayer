@@ -25,7 +25,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Musicaxs">
+        android:theme="@style/Theme.Musicaxs"
+        android:localeConfig="@xml/locales_config">
         <provider
             android:name=".services.MusicAxsProvider"
             android:authorities="dev.pgaxis.musicaxs.provider"
@@ -35,7 +36,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Musicaxs">
+            android:theme="@style/Theme.Musicaxs.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

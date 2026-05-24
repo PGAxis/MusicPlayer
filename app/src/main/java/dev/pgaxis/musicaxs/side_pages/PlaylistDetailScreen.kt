@@ -23,6 +23,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,9 +119,11 @@ fun PlaylistDetailScreen(
                     }
                     Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                        Text("${state.songs.size} songs",
+                        Text(
+                            pluralStringResource(R.plurals.track_count, state.songs.size, state.songs.size),
                             fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     when (playlistId) {
                         0L, 1L, 2L, 3L -> { }
@@ -150,7 +154,7 @@ fun PlaylistDetailScreen(
 
                 if (state.songs.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("This playlist is empty.")
+                        Text(stringResource(R.string.pls_det_no_found))
                     }
                 } else {
                     Column(
@@ -200,7 +204,7 @@ fun PlaylistDetailScreen(
                                         onSeeDetails = onSeeDetail,
                                         onAddTo = { selectedSong = keyed.song },
                                         showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
-                                        removeLabel = "Remove from playlist",
+                                        removeLabel = stringResource(R.string.rm_from_playlist),
                                         onRemoveFrom = {
                                             vm.removeSong(playlistId, index)
                                             PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)

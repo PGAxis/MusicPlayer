@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.res.Configuration
 import android.net.Uri
@@ -59,9 +60,15 @@ fun SongControlScreen(
     var showAddToSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    var pendingDelete by remember { mutableStateOf(false) }
     val deleteRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
-    ) { }
+    ) { result ->
+        if (pendingDelete && result.resultCode == Activity.RESULT_OK) {
+            MusicService.removeAllFromQueue(context, currentSong.songUri.toString())
+        }
+        pendingDelete = false
+    }
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -161,32 +168,58 @@ fun SongControlScreen(
 
         // -- Playback controls
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onPrevious) {
-                Icon(painterResource(R.drawable.prev), "Previous",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+            IconButton(
+                onClick = {
+                    onPrevious()
+                    vm.setTime()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.prev),
+                    contentDescription = "Previous",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { vm.seekBack10() }) {
-                Icon(painterResource(R.drawable.rewind), "-10s",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Icon(
+                    painter = painterResource(R.drawable.rewind),
+                    contentDescription = "-10s",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
                 Icon(
-                    painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                    if (isPlaying) "Pause" else "Play",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)
+                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
                 )
             }
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { vm.seekForward10() }) {
-                Icon(painterResource(R.drawable.forward), "+10s",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Icon(
+                    painter = painterResource(R.drawable.forward),
+                    contentDescription = "+10s",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp))
             }
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onNext) {
-                Icon(painterResource(R.drawable.next), "Next",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+            IconButton(
+                onClick = {
+                    onNext()
+                    vm.setTime()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.next),
+                    contentDescription = "Next",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }
@@ -291,20 +324,26 @@ fun SongControlScreen(
                             val intent = MediaStore.createDeleteRequest(
                                 context.contentResolver, listOf(currentSong.songUri!!.toUri())
                             )
+                            pendingDelete = true
                             deleteRequestLauncher.launch(
                                 IntentSenderRequest.Builder(intent.intentSender).build()
                             )
                         }
                         Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
                             try {
-                                context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                                val deleted = context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                                if (deleted > 0) MusicService.removeAllFromQueue(context, currentSong.songUri)
                             } catch (e: RecoverableSecurityException) {
+                                pendingDelete = true
                                 deleteRequestLauncher.launch(
                                     IntentSenderRequest.Builder(e.userAction.actionIntent.intentSender).build()
                                 )
                             }
                         }
-                        else -> context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                        else -> {
+                            val deleted = context.contentResolver.delete(currentSong.songUri!!.toUri(), null, null)
+                            if (deleted > 0) MusicService.removeAllFromQueue(context, currentSong.songUri)
+                        }
                     }
                 }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },

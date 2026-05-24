@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import dev.pgaxis.musicaxs.R
 
 private sealed interface SongListItem {
     data class Header(val letter: String) : SongListItem
@@ -92,10 +94,10 @@ fun SongsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Storage permission is required to show your songs.", textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.song_scr_storage_perm), textAlign = TextAlign.Center)
                     Spacer(Modifier.height(12.dp))
                     Button(onClick = { permissionLauncher.launch(readPermission) }) {
-                        Text("Grant Permission")
+                        Text(stringResource(R.string.song_scr_grant))
                     }
                 }
             }
@@ -109,7 +111,7 @@ fun SongsScreen(
             is SongsUiState.Ready -> {
                 if (state.songs.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No songs found on this device.")
+                        Text(stringResource(R.string.song_scr_no_found))
                     }
                 } else {
                     val (listItems, letterIndex) = remember(state.songs) {

@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,10 +36,10 @@ import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
 import dev.pgaxis.musicaxs.templates.MergeIntoSheet
 
 data class SmartInfo(
-    val first: String,
-    val second: Int,
-    val third: Uri?,
-    val fourth: Long
+    val name: String,
+    val size: Int,
+    val uri: Uri?,
+    val id: Long
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,9 +68,9 @@ fun PlaylistsScreen(
     var exportTargetPlaylist by remember { mutableStateOf<Playlist?>(null) }
 
     val smartPlaylists = listOf(
-        SmartInfo("Recently Added", recentlyAdded.size, recentlyAdded.firstOrNull()?.uri, 1),
-        SmartInfo("Recently Played", recentlyPlayed.size, recentlyPlayed.firstOrNull()?.uri, 2),
-        SmartInfo("Most Played", mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3)
+        SmartInfo(stringResource(R.string.pls_scr_rec_added), recentlyAdded.size, recentlyAdded.firstOrNull()?.uri, 1),
+        SmartInfo(stringResource(R.string.pls_scr_rec_played), recentlyPlayed.size, recentlyPlayed.firstOrNull()?.uri, 2),
+        SmartInfo(stringResource(R.string.pls_scr_most_played), mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3)
     )
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -128,7 +130,7 @@ fun PlaylistsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "My Playlists",
+                        text = stringResource(R.string.pls_scr_my_playlists),
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
                         modifier = Modifier.weight(1f)
@@ -150,7 +152,7 @@ fun PlaylistsScreen(
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No playlists yet.")
+                        Text(stringResource(R.string.pls_scr_no_found))
                     }
                 }
             } else {
@@ -176,12 +178,12 @@ fun PlaylistsScreen(
                 Column(Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp)) {
-                    Text("Playlists", fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                    Text(stringResource(R.string.pls_scr_import), fontWeight = FontWeight.Bold, fontSize = 16.sp,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
                     HorizontalDivider()
 
                     ListItem(
-                        headlineContent = { Text("Import playlist from .m3u") },
+                        headlineContent = { Text(stringResource(R.string.pls_scr_import_desc)) },
                         leadingContent = {
                             Icon(
                                 painter = painterResource(R.drawable.import_icon),
@@ -197,16 +199,16 @@ fun PlaylistsScreen(
 
                     // Export
                     if (playlists.isEmpty()) {
-                        ListItem(headlineContent = { Text("Export to .m3u — no playlists yet") })
+                        ListItem(headlineContent = { Text(stringResource(R.string.pls_scr_export_desc)) })
                     } else {
-                        Text("Export", fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.pls_scr_export), fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                         playlists.forEach { playlist ->
                             val songCount by playlist.songCount.collectAsStateWithLifecycle()
 
                             ListItem(
                                 headlineContent = { Text(playlist.name) },
-                                supportingContent = { Text("$songCount songs") },
+                                supportingContent = { Text(pluralStringResource(R.plurals.track_count, songCount, songCount)) },
                                 modifier = Modifier.clickable {
                                     showSheet = false
                                     exportTargetPlaylist = playlist
@@ -222,12 +224,12 @@ fun PlaylistsScreen(
         if (showNameDialog) {
             AlertDialog(
                 onDismissRequest = { showNameDialog = false },
-                title = { Text("Name your playlist") },
+                title = { Text(stringResource(R.string.pls_scr_name_playlist)) },
                 text = {
                     OutlinedTextField(
                         value = importedName,
                         onValueChange = { importedName = it },
-                        label = { Text("Playlist name") },
+                        label = { Text(stringResource(R.string.pls_scr_playlist_name)) },
                         singleLine = true
                     )
                 },
@@ -237,10 +239,10 @@ fun PlaylistsScreen(
                             vm.createFromImport(importedName, pendingImportSongIds)
                             showNameDialog = false
                         }
-                    }) { Text("Create") }
+                    }) { Text(stringResource(R.string.create)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showNameDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showNameDialog = false }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }
@@ -248,12 +250,12 @@ fun PlaylistsScreen(
         renameTarget?.let { target ->
             AlertDialog(
                 onDismissRequest = { renameTarget = null },
-                title = { Text("Rename playlist") },
+                title = { Text(stringResource(R.string.pls_scr_rename_playlist)) },
                 text = {
                     OutlinedTextField(
                         value = renameText,
                         onValueChange = { renameText = it },
-                        label = { Text("New name") },
+                        label = { Text(stringResource(R.string.pls_scr_new_name)) },
                         singleLine = true
                     )
                 },
@@ -263,10 +265,10 @@ fun PlaylistsScreen(
                             vm.rename(target.id, renameText)
                             renameTarget = null
                         }
-                    }) { Text("Rename") }
+                    }) { Text(stringResource(R.string.rename)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { renameTarget = null }) { Text("Cancel") }
+                    TextButton(onClick = { renameTarget = null }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }
@@ -274,16 +276,16 @@ fun PlaylistsScreen(
         deleteTarget?.let { target ->
             AlertDialog(
                 onDismissRequest = { deleteTarget = null },
-                title = { Text("Delete \"${target.name}\"?") },
-                text = { Text("This can't be undone.") },
+                title = { Text(stringResource(R.string.delete_w_arg, target.name)) },
+                text = { Text(stringResource(R.string.no_coming_back)) },
                 confirmButton = {
                     TextButton(onClick = {
                         vm.delete(target.id)
                         deleteTarget = null
-                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { deleteTarget = null }) { Text("Cancel") }
+                    TextButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }
@@ -340,7 +342,7 @@ private fun SmartPlaylistCard(
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = "$songCount songs",
+            text = pluralStringResource(R.plurals.track_count, songCount, songCount),
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -395,7 +397,7 @@ private fun PlaylistRow(
         )
 
         Text(
-            text = "$songCount songs",
+            text = pluralStringResource(R.plurals.track_count, songCount, songCount),
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -421,7 +423,7 @@ private fun PlaylistRow(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = if (isFavourited) "Remove from Favourites" else "Add to Favourites",
+                                text = stringResource(if (isFavourited) R.string.rm_from_fav else R.string.add_to_fav),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 fontSize = 13.sp,
                                 modifier = Modifier.weight(1f)
@@ -437,15 +439,15 @@ private fun PlaylistRow(
                     onClick = { menuExpanded = false; onToggleFavourite() }
                 )
                 DropdownMenuItem(
-                    text = { Text("Rename", color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                    text = { Text(stringResource(R.string.rename), color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onRename() }
                 )
                 DropdownMenuItem(
-                    text = { Text("Merge into…", color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                    text = { Text(stringResource(R.string.pls_scr_merge), color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onMerge() }
                 )
                 DropdownMenuItem(
-                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                    text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                     onClick = { menuExpanded = false; onDelete() }
                 )
             }

@@ -42,6 +42,6 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeAt(index: Int) {
-        MusicService.removeFromQueue(index)
+        MusicService.removeFromQueue(getApplication(), index)
     }
 }

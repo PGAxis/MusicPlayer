@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +39,7 @@ fun MergeIntoSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Merge \"${source.name}\" into…",
+                text = stringResource(R.string.mer_sh_into, source.name),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
@@ -45,13 +47,13 @@ fun MergeIntoSheet(
             HorizontalDivider()
 
             if (candidates.isEmpty()) {
-                ListItem(headlineContent = { Text("No other playlists to merge into.") })
+                ListItem(headlineContent = { Text(stringResource(R.string.mer_sh_no_found)) })
             } else {
                 candidates.forEach { target ->
                     val songCount by target.songCount.collectAsStateWithLifecycle()
                     ListItem(
                         headlineContent = { Text(target.name) },
-                        supportingContent = { Text("$songCount songs") },
+                        supportingContent = { Text(pluralStringResource(R.plurals.track_count, songCount, songCount)) },
                         leadingContent = {
                             Icon(painterResource(R.drawable.default_playlist), null, Modifier.size(15.dp))
                         },

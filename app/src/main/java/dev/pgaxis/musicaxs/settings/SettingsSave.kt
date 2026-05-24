@@ -87,6 +87,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastQueueUris by setting(emptyList(), SettingsData::lastQueueUris)
     override var lastQueueTitles by setting(emptyList(), SettingsData::lastQueueTitles)
     override var lastQueueArtists by setting(emptyList(), SettingsData::lastQueueArtists)
+    override var lastQueueIndex by intSetting(-1, SettingsData::lastQueueIndex)
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
     // settings
@@ -106,6 +107,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastQueueUris: List<String> = emptyList(),
         var lastQueueTitles: List<String> = emptyList(),
         var lastQueueArtists: List<String> = emptyList(),
+        var lastQueueIndex: Int = -1,
         var repeatMode: Int = 2,
         var queueSource: QueueSource = QueueSource.MANUAL,
         // settings
@@ -128,6 +130,11 @@ class SettingsSave private constructor(context: Context): ISettings {
 
             boundSettings = axsFile.bind(SettingsData())
 
+            Log.d("SettingsSave", "\n\n")
+            axsFile.debugDumpIndex().forEach { item ->
+                Log.d("SettingsSave", item)
+            }
+
             val s = boundSettings.get()
 
             lastTabIndex = s.lastTabIndex
@@ -138,12 +145,14 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueUris = s.lastQueueUris
             lastQueueTitles = s.lastQueueTitles
             lastQueueArtists = s.lastQueueArtists
+            lastQueueIndex = s.lastQueueIndex
             repeatMode = s.repeatMode
             queueSource = s.queueSource
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
             theme = s.theme
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.d("SettingsSaveError", e.toString())
             axsFile.close()
             File(axsPath).delete()
             axsFile.open()

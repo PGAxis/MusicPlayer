@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,6 +26,7 @@ import dev.pgaxis.musicaxs.models.AlphabetScroller
 import dev.pgaxis.musicaxs.models.Artist
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import dev.pgaxis.musicaxs.R
 
 @Composable
 fun ArtistsScreen(
@@ -47,7 +50,7 @@ fun ArtistsScreen(
             is ArtistsUiState.Ready -> {
                 if (state.interprets.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No artists found.")
+                        Text(stringResource(R.string.art_scr_no_found))
                     }
                 } else {
                     InterpretsListScreen(interprets = state.interprets, onOpenArtist = onOpenArtist)
@@ -178,7 +181,7 @@ private fun InterpretRow(interpret: Artist, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "${interpret.albumCount} ${if (interpret.albumCount == 1) "album" else "albums"} · ${interpret.songCount} ${if (interpret.songCount == 1) "song" else "songs"}",
+                text = "${pluralStringResource(R.plurals.album_count, interpret.albumCount, interpret.albumCount)} · ${pluralStringResource(R.plurals.song_count, interpret.songCount, interpret.songCount)}",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1

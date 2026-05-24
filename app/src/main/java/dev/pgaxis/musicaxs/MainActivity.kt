@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                 Theme.AETHER -> MusicAxsAetherScheme
                 Theme.PHOSPHOR -> MusicAxsPhosphorScheme
                 Theme.CHALK -> MusicAxsChalkScheme
-                Theme.SOLEIL -> MusicAxsSoleilScheme
+                Theme.SUNSHINE -> MusicAxsSoleilScheme
             }
             MusicaxsTheme(colorScheme = colorScheme) {
                 AppNavigation()

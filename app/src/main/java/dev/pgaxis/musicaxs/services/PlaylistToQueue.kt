@@ -35,9 +35,9 @@ class PlaylistToQueue(
         if (settings.lastPlaylistId != playlistId) return false
 
         if (MusicService.isShuffled) {
-            MusicService.removeFromQueue(song.uri.toString())
+            MusicService.removeFromQueue(context, song.uri.toString())
         } else {
-            MusicService.removeFromQueue(index)
+            MusicService.removeFromQueue(context, index)
         }
 
         return true

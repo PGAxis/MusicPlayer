@@ -42,27 +42,23 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
         _positionMs.value = settings.lastPositionMs
         _durationMs.value = settings.lastDurationMs
 
+        Log.d("SongCVM", "pos: ${_positionMs.value}, dur: ${_durationMs.value}")
+
         _uiState.value = getPlayTypeByNum(settings.repeatMode)
 
         viewModelScope.launch {
             MusicService.isPlayingState.collectLatest { isPlaying ->
-                if (!isPlaying) return@collectLatest
-                while (true) {
-                    val player = MusicService.playerInstance
-                    if (player != null && !_isScrubbing.value) {
-                        val duration = player.duration.coerceAtLeast(0L)
-                        if (duration > 0L) {
-                            _positionMs.value = player.currentPosition
-                            _durationMs.value = duration
-                        } else {
-                            _positionMs.value = 0L
-                            _durationMs.value = 0L
-                        }
-                    } else {
-                        _positionMs.value = 0L
-                        _durationMs.value = 0L
+                Log.d("SongCVM", "playing: $isPlaying")
+                if (!isPlaying) {
+                    while (true) {
+                        performCheck()
+                        delay(1000)
                     }
-                    delay(200)
+                } else {
+                    while (true) {
+                        performCheck()
+                        delay(200)
+                    }
                 }
             }
         }
@@ -95,6 +91,13 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
 
     fun onLike() {
         MusicService.like(favourites)
+
+    }
+
+    fun setTime() {
+        val player = MusicService.playerInstance ?: return
+        _durationMs.value = player.duration.coerceAtLeast(0L)
+        _positionMs.value = player.currentPosition
     }
 
     fun seekBack10() = MusicService.seekBy(-10_000L)
@@ -123,5 +126,22 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
         1 -> PlayType.RepeatOnce
         2 -> PlayType.Repeat
         else -> PlayType.Continue
+    }
+
+    private fun performCheck() {
+        val player = MusicService.playerInstance
+        if (player != null && !_isScrubbing.value) {
+            val duration = player.duration.coerceAtLeast(0L)
+            if (duration > 0L) {
+                _positionMs.value = player.currentPosition
+                _durationMs.value = duration
+            } else {
+                _positionMs.value = 0L
+                _durationMs.value = 0L
+            }
+        } else {
+            _positionMs.value = 0L
+            _durationMs.value = 0L
+        }
     }
 }

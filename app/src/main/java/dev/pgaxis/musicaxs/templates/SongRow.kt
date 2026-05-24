@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,7 @@ fun SongRow(
     isPlaying: Boolean = false,
     showsImage: Boolean = true,
     showRemoveFrom: Boolean = false,
-    removeLabel: String = "Remove from queue",
+    removeLabel: String = stringResource(R.string.rm_from_queue),
     onRemoveFrom: () -> Unit = {},
     dragHandleModifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
@@ -64,7 +65,7 @@ fun SongRow(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (pendingDelete && result.resultCode == Activity.RESULT_OK) {
-            MusicService.removeAllFromQueue(song.uri.toString())
+            MusicService.removeAllFromQueue(context, song.uri.toString())
         }
         pendingDelete = false
     }
@@ -150,14 +151,14 @@ fun SongRow(
                 modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 DropdownMenuItem(
-                    text = { Text("See details", color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                    text = { Text(stringResource(R.string.see_details), color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = {
                         menuExpanded = false
                         onSeeDetails(Uri.encode(song.uri.toString()))
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Add to", color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                    text = { Text(stringResource(R.string.add_to), color = MaterialTheme.colorScheme.onSecondaryContainer) },
                     onClick = { menuExpanded = false; onAddTo() }
                 )
                 if (showRemoveFrom) {
@@ -167,7 +168,7 @@ fun SongRow(
                     )
                 }
                 DropdownMenuItem(
-                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                    text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                     onClick = { menuExpanded = false; showDeleteDialog = true }
                 )
             }
@@ -176,8 +177,8 @@ fun SongRow(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Delete song", color = MaterialTheme.colorScheme.onPrimary) },
-                text = { Text("\"${song.title}\" will be permanently deleted from your device. This action is irreversible.") },
+                title = { Text(stringResource(R.string.song_row_delete), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                text = { Text(stringResource(R.string.song_row_delete_desc, song.title)) },
                 confirmButton = {
                     TextButton(onClick = {
                         showDeleteDialog = false
@@ -194,7 +195,7 @@ fun SongRow(
                             Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
                                 try {
                                     val deleted = context.contentResolver.delete(song.uri, null, null)
-                                    if (deleted > 0) MusicService.removeAllFromQueue(song.uri.toString())
+                                    if (deleted > 0) MusicService.removeAllFromQueue(context, song.uri.toString())
                                 } catch (e: RecoverableSecurityException) {
                                     pendingDelete = true
                                     deleteRequestLauncher.launch(
@@ -204,13 +205,13 @@ fun SongRow(
                             }
                             else -> {
                                 val deleted = context.contentResolver.delete(song.uri, null, null)
-                                if (deleted > 0) MusicService.removeAllFromQueue(song.uri.toString())
+                                if (deleted > 0) MusicService.removeAllFromQueue(context, song.uri.toString())
                             }
                         }
-                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }

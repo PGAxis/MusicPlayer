@@ -19,8 +19,8 @@ android {
         applicationId = "dev.pgaxis.musicaxs"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.5.2"
+        versionCode = 16
+        versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.axs)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

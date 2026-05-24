@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -79,7 +80,12 @@ fun SettingsScreen(
             IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
                 Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
             }
-            Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                text = stringResource(R.string.set_scr_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
 
         HorizontalDivider()
@@ -92,18 +98,21 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SettingsGroup(title = "Library", initiallyExpanded = false) {
+            SettingsGroup(title = stringResource(R.string.set_scr_library), initiallyExpanded = false) {
                 SettingsToggleRow(
-                    label = "Hide WhatsApp Audio",
-                    description = "Hides songs from the \"WhatsApp Audio\" album",
+                    label = stringResource(R.string.set_scr_hide_wa_audio),
+                    description = stringResource(R.string.set_scr_hide_wa_audio_desc),
                     checked = vm.settings.hideWhatsAppAudio,
-                    onCheckedChange = { value -> vm.onHideWhatsAppChanged(value, onScan) }
+                    onCheckedChange = { value ->
+                        vm.onHideWhatsAppChanged(value)
+                        onScan()
+                    }
                 )
             }
 
-            SettingsGroup(title = "Customization", initiallyExpanded = false) {
+            SettingsGroup(title = stringResource(R.string.set_scr_customization), initiallyExpanded = false) {
                 SettingsDropdownRow(
-                    label = "Color theme",
+                    label = stringResource(R.string.set_scr_theme),
                     options = vm.themeOptions,
                     selected = vm.selectedTheme,
                     onSelectChange = { vm.onThemeChanged(it as Theme) }
@@ -111,10 +120,17 @@ fun SettingsScreen(
             }
 
             if (ytcnvReady) {
-                SettingsGroup(title = "Integration", initiallyExpanded = false) {
+                SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
+                    SettingsDropdownRow(
+                        label = stringResource(R.string.language),
+                        options = vm.langOptions,
+                        selected = vm.selectedLang,
+                        onSelectChange = { vm.onLanguageChange(it as String) }
+                    )
+
                     SettingsToggleRow(
-                        label = "Allow YouTube Conv.axs to add songs",
-                        description = "YouTube Conv.axs can add downloaded songs directly to your playlists",
+                        label = stringResource(R.string.set_scr_ytconv_add_songs),
+                        description = stringResource(R.string.set_scr_ytconv_add_songs_desc),
                         checked = vm.settings.allowYTCnv,
                         onCheckedChange = vm::onAllowYTCnvChanged
                     )

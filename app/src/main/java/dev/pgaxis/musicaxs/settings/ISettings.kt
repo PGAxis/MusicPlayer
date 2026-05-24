@@ -13,6 +13,7 @@ interface ISettings {
     var lastQueueUris: List<String>
     var lastQueueTitles: List<String>
     var lastQueueArtists: List<String>
+    var lastQueueIndex: Int
     var repeatMode: Int
     var queueSource: QueueSource
 
