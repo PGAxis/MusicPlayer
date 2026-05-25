@@ -1,0 +1,4 @@
+Opravy chyb:
+- Přepínání jazyka funguje
+- Kontrastní text na liště „Právě se přehrává“ funguje u skladeb bez obalu alba
+- Zkladní album art je nyní čtverec, aby nebyly vidět rohy, když se zobrazí v dynamických playlistech

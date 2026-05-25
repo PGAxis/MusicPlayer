@@ -52,7 +52,7 @@ class SongControlViewModel(application: Application) : AndroidViewModel(applicat
                 if (!isPlaying) {
                     while (true) {
                         performCheck()
-                        delay(1000)
+                        delay(500)
                     }
                 } else {
                     while (true) {

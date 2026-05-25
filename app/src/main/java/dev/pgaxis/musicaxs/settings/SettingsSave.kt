@@ -30,6 +30,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     }
 
     private val axsPath = context.filesDir.resolve("settings.axs").path
+    private var isInitializing = true
 
     // --- AXS setup ---
     private val axsFile = AxsFile(axsPath)
@@ -45,8 +46,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         override fun getValue(thisRef: Any?, property: KProperty<*>): V = state
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
+            val caller = Thread.currentThread().stackTrace
+                .drop(2)
+                .take(5)
+                .joinToString("\n  ") { "${it.className}.${it.methodName}(${it.fileName}:${it.lineNumber})" }
+            Log.d("SettingsSave", "setValue ${property.name} = $value\n  $caller")
             state = value
-            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+            if (::boundSettings.isInitialized && !isInitializing) boundSettings.setValue(prop, value)
         }
     }
 
@@ -59,8 +65,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         override fun getValue(thisRef: Any?, property: KProperty<*>): Int = state
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+            val caller = Thread.currentThread().stackTrace
+                .drop(2)
+                .take(5)
+                .joinToString("\n  ") { "${it.className}.${it.methodName}(${it.fileName}:${it.lineNumber})" }
+            Log.d("SettingsSave", "setValue ${property.name} = $value\n  $caller")
             state = value
-            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+            if (::boundSettings.isInitialized && !isInitializing) boundSettings.setValue(prop, value)
         }
     }
 
@@ -73,8 +84,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         override fun getValue(thisRef: Any?, property: KProperty<*>): Long = state
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: Long) {
+            val caller = Thread.currentThread().stackTrace
+                .drop(2)
+                .take(5)
+                .joinToString("\n  ") { "${it.className}.${it.methodName}(${it.fileName}:${it.lineNumber})" }
+            Log.d("SettingsSave", "setValue ${property.name} = $value\n  $caller")
             state = value
-            if (::boundSettings.isInitialized) boundSettings.setValue(prop, value)
+            if (::boundSettings.isInitialized && !isInitializing) boundSettings.setValue(prop, value)
         }
     }
 
@@ -124,16 +140,16 @@ class SettingsSave private constructor(context: Context): ISettings {
         axsFile.open()
 
         try {
-            axsFile.debugDumpIndex().forEach { item ->
-                Log.d("SettingsSave", item)
-            }
-
             boundSettings = axsFile.bind(SettingsData())
 
-            Log.d("SettingsSave", "\n\n")
+            /*Log.d("SettingsSave", "\n\n")
             axsFile.debugDumpIndex().forEach { item ->
                 Log.d("SettingsSave", item)
             }
+
+            val raw = axsFile.get($$"SettingsSave$SettingsData.lastSongUri")
+            Log.d("SettingsSave", "raw lastSongUri from file: $raw")
+            Log.d("SettingsSave", "bound lastSongUri: ${boundSettings.getValue(SettingsData::lastSongUri)}")*/
 
             val s = boundSettings.get()
 
@@ -151,6 +167,8 @@ class SettingsSave private constructor(context: Context): ISettings {
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
             theme = s.theme
+
+            isInitializing = false
         } catch (e: Exception) {
             Log.d("SettingsSaveError", e.toString())
             axsFile.close()

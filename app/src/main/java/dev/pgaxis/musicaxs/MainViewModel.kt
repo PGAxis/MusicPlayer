@@ -104,6 +104,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPageChanged(index: Int) {
+        if (index == _currentPageIndex.value) return
         _currentPageIndex.value = index
         settings.lastTabIndex = index
     }

@@ -322,7 +322,10 @@ fun ExpandablePlayer(
                                 }
                         }
                     },
-                    onError = { onBgColorChange(Color.DarkGray) }
+                    onError = {
+                        onBgColorChange(Color.DarkGray)
+                        onTxtColorChange(Color.DarkGray.contrastColor())
+                    }
                 )
 
                 // -- Queue panel

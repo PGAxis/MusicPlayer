@@ -1,0 +1,4 @@
+Bug fixes:
+- The language switching now works
+- Contrast text on the "Now playing" bar works for songs without album art
+- The default album art is now fully square, so the corners are not showing when it appears on dynamic playlists

@@ -6,7 +6,7 @@
         <item name="postSplashScreenTheme">@style/Theme.Musicaxs</item>
     </style>
 
-    <style name="Theme.Musicaxs" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Musicaxs" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">#0D1117</item>
         <item name="android:statusBarColor">#0D1117</item>
         <item name="android:navigationBarColor">#0D1117</item>
