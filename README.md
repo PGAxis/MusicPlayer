@@ -5,7 +5,7 @@ Music player that mimics default Samsung Music app... except with fixed/added th
 <div align=center>
 
 <p align=center>
-  <a href="https://apt.izzysoft.de/packages/dev.pgaxis.musicaxs"><img src="https://izzyondroid.org/assets/static/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid"/></a>
+  <a href="https://apt.izzysoft.de/packages/dev.pgaxis.musicaxs"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid"></a>
 </p>
 
 <p align=center>
