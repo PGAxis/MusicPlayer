@@ -1,0 +1,5 @@
+Bug fixes:
+- Sometimes saving the settings would result in the file being corrupted
+
+Additions:
+- Playlists now also have "Play shuffled" button to play the whole playlist with shuffle mode automatically on

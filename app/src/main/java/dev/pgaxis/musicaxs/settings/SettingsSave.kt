@@ -99,7 +99,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastSongUri by setting("", SettingsData::lastSongUri)
     override var lastPositionMs by longSetting(0L, SettingsData::lastPositionMs)
     override var lastDurationMs by longSetting(0L, SettingsData::lastDurationMs)
-    override var lastPlaylistId by longSetting(6L, SettingsData::lastPlaylistId) // TODO replace with null once I add null support to AXS
+    override var lastPlaylistId by longSetting(-1L, SettingsData::lastPlaylistId) // TODO replace with null once I add null support to AXS
     override var lastQueueUris by setting(emptyList(), SettingsData::lastQueueUris)
     override var lastQueueTitles by setting(emptyList(), SettingsData::lastQueueTitles)
     override var lastQueueArtists by setting(emptyList(), SettingsData::lastQueueArtists)
@@ -119,7 +119,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastSongUri: String = "",
         var lastPositionMs: Long = 0L,
         var lastDurationMs: Long = 0L,
-        var lastPlaylistId: Long = 6L,
+        var lastPlaylistId: Long = -1L,
         var lastQueueUris: List<String> = emptyList(),
         var lastQueueTitles: List<String> = emptyList(),
         var lastQueueArtists: List<String> = emptyList(),
@@ -152,25 +152,41 @@ class SettingsSave private constructor(context: Context): ISettings {
             Log.d("SettingsSave", "bound lastSongUri: ${boundSettings.getValue(SettingsData::lastSongUri)}")*/
 
             val s = boundSettings.get()
+            //Log.d("SettingsSaveDebug", "$s")
 
             lastTabIndex = s.lastTabIndex
+            //Log.d("SettingsSaveDebug", "Has lastTabIndex")
             lastSongUri = s.lastSongUri
+            //Log.d("SettingsSaveDebug", "Has lastSongUri")
             lastPositionMs = s.lastPositionMs
+            //Log.d("SettingsSaveDebug", "Has lastPositionMs")
             lastDurationMs = s.lastDurationMs
+            //Log.d("SettingsSaveDebug", "Has lastDurationMs")
             lastPlaylistId = s.lastPlaylistId
+            //Log.d("SettingsSaveDebug", "Has lastPlaylistId")
             lastQueueUris = s.lastQueueUris
+            //Log.d("SettingsSaveDebug", "Has lastQueueUris")
             lastQueueTitles = s.lastQueueTitles
+            //Log.d("SettingsSaveDebug", "Has lastQueueTitles")
             lastQueueArtists = s.lastQueueArtists
+            //Log.d("SettingsSaveDebug", "Has lastQueueArtists")
             lastQueueIndex = s.lastQueueIndex
+            //Log.d("SettingsSaveDebug", "Has lastQueueIndex")
             repeatMode = s.repeatMode
+            //Log.d("SettingsSaveDebug", "Has repeatMode")
             queueSource = s.queueSource
+            //Log.d("SettingsSaveDebug", "Has queueSource")
             hideWhatsAppAudio = s.hideWhatsAppAudio
+            //Log.d("SettingsSaveDebug", "Has hideWhatsAppAudio")
             allowYTCnv = s.allowYTCnv
+            //Log.d("SettingsSaveDebug", "Has allowYTCnv")
             theme = s.theme
+            //Log.d("SettingsSaveDebug", "Has theme")
 
             isInitializing = false
         } catch (e: Exception) {
             Log.d("SettingsSaveError", e.toString())
+            Log.d("SettingsSaveError", e.stackTraceToString())
             axsFile.close()
             File(axsPath).delete()
             axsFile.open()

@@ -75,7 +75,7 @@ fun SongRow(
             .fillMaxWidth()
             .background(
                 if (if (isPlayingOverride) isPlaying else isCurrentlyPlaying)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
                 else Color.Transparent
             )
             .clickable { onClick?.invoke() ?: MusicService.playSingular(context, song) }

@@ -3,6 +3,7 @@ package dev.pgaxis.musicaxs.side_pages
 import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -118,7 +119,7 @@ fun PlaylistDetailScreen(
                         Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
                     }
                     Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.basicMarquee())
                         Text(
                             pluralStringResource(R.plurals.track_count, state.songs.size, state.songs.size),
                             fontSize = 13.sp,
@@ -140,6 +141,13 @@ fun PlaylistDetailScreen(
                                 )
                             }
                         }
+                    }
+                    // Play shuffle button
+                    IconButton(onClick = {
+                        if (state.songs.isNotEmpty()) MusicService.playShuffled(context, state.songs, playlistId)
+                    }, shape = RoundedCornerShape(0.dp)) {
+                        Icon(painterResource(R.drawable.shuffle), "Play shuffled",
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                     }
                     // Play all button
                     IconButton(onClick = {

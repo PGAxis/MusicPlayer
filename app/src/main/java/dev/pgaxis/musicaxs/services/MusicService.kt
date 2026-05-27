@@ -145,6 +145,19 @@ class MusicService : MediaSessionService() {
             }
         }
 
+        fun playShuffled(context: Context, songs: List<Song>, playlistId: Long = -1L) {
+            if (songs.isEmpty()) return
+            instance?.playShuffledInternal(songs, playlistId) ?: run {
+                val intent = Intent(context, MusicService::class.java).apply {
+                    putStringArrayListExtra(EXTRA_QUEUE_URIS, ArrayList(songs.map { it.uri.toString() }))
+                    putStringArrayListExtra(EXTRA_QUEUE_TITLES, ArrayList(songs.map { it.title }))
+                    putStringArrayListExtra(EXTRA_QUEUE_ARTISTS, ArrayList(songs.map { it.artist }))
+                    putExtra(EXTRA_SHUFFLED, true)
+                }
+                context.startForegroundService(intent)
+            }
+        }
+
         fun addToQueue(context: Context, song: Song, applyShuffleRandomness: Boolean = false, resetPlaylist: Boolean = true) {
             val save = ShuffleSave.getInstance(context)
             if (save.isShuffled) save.addToOriginal(song.uri.toString())
@@ -306,6 +319,7 @@ class MusicService : MediaSessionService() {
         private const val EXTRA_QUEUE_TITLES  = "extra_queue_titles"
         private const val EXTRA_QUEUE_ARTISTS = "extra_queue_artists"
         private const val EXTRA_INIT_ONLY = "extra_init_only"
+        private const val EXTRA_SHUFFLED = "extra_shuffled"
     }
 
     // -- Internal queue operations
@@ -358,6 +372,27 @@ class MusicService : MediaSessionService() {
         player.setMediaItems(songs.map { it.toMediaItem() })
         player.prepare()
         player.play()
+    }
+
+    private fun playShuffledInternal(songs: List<Song>, playlistId: Long = -1L) {
+        val player = mediaSession?.player ?: return
+        currentSource = QueueSource.PLAYLIST
+        settings.queueSource = QueueSource.PLAYLIST
+        settings.lastPlaylistId = playlistId
+
+        val save = ShuffleSave.getInstance(this)
+        val shuffled = songs.shuffled()
+
+        save.setOriginalQueue(songs.map { it.uri.toString() })
+        save.updateShuffled(true)
+        isShuffleOn = true
+
+        player.setMediaItems(shuffled.map { it.toMediaItem() })
+        player.seekTo(0, 0)
+        player.prepare()
+        player.play()
+
+        mediaSession?.let { updateNotificationButtons(it) }
     }
 
     private fun addToQueueInternal(song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
@@ -660,7 +695,24 @@ class MusicService : MediaSessionService() {
             if (queueUris != null) {
                 val titles = it.getStringArrayListExtra(EXTRA_QUEUE_TITLES)  ?: arrayListOf()
                 val artists = it.getStringArrayListExtra(EXTRA_QUEUE_ARTISTS) ?: arrayListOf()
-                replaceQueueFromExtras(queueUris, titles, artists)
+                val shuffled = it.getBooleanExtra(EXTRA_SHUFFLED, false)
+                if (shuffled) {
+                    val songs = queueUris.mapIndexed { i, uri ->
+                        Song(
+                            id = uri.hashCode().toLong(),
+                            title = titles.getOrElse(i) { "Unknown" },
+                            artist = artists.getOrElse(i) { "Unknown" },
+                            album = "", albumId = 0,
+                            uri = uri.toUri(),
+                            durationMs = 0L,
+                            albumArtUri = Uri.EMPTY,
+                            track = 0
+                        )
+                    }
+                    playShuffledInternal(songs)
+                } else {
+                    replaceQueueFromExtras(queueUris, titles, artists)
+                }
                 return START_NOT_STICKY
             }
 

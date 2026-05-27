@@ -1,0 +1,5 @@
+Opravy chyb:
+- Uložení nastavení někdy vedlo k poškození souboru
+
+Přídavky:
+- Playlisty mají nyní také tlačítko "Přehrát v náhodném pořadí" pro přehrání celého playlistu s automaticky zapnutým režimem náhodného přehrávání
