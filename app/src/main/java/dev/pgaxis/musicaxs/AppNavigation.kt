@@ -64,7 +64,9 @@ fun AppNavigation() {
         composable("search") {
             SearchScreen(
                 onBack = { popBack() },
-                onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
+                onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") },
+                onOpenAlbum = { albumId -> navController.navigate("album/$albumId") },
+                onOpenArtist = { name -> navController.navigate("artist/$name") }
             )
         }
         composable("search/choose/{playlistId}") { backStackEntry ->
@@ -76,7 +78,9 @@ fun AppNavigation() {
                     }
                 },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") },
-                choosingForPlaylistId = playlistId
+                choosingForPlaylistId = playlistId,
+                onOpenAlbum = { albumId -> navController.navigate("album/$albumId") },
+                onOpenArtist = { name -> navController.navigate("artist/$name") }
             )
         }
         composable("settings") {

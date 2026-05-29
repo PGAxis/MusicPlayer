@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -134,13 +134,22 @@ fun AlbumDetailScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(top = 8.dp, bottom = LocalPlayerBarTotalHeight.current)
                 ) {
-                    items(songs, key = { it.id }) { song ->
-                        SongRow(
-                            song = song,
-                            onSeeDetails = onSeeDetail,
-                            onAddTo = { selectedSong = song },
-                            showsImage = false
-                        )
+                    itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                        Column {
+                            SongRow(
+                                song = song,
+                                onSeeDetails = onSeeDetail,
+                                onAddTo = { selectedSong = song },
+                                showsImage = false
+                            )
+
+                            if (index < songs.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                        }
                     }
                 }
                 selectedSong?.let { song ->

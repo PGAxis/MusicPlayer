@@ -1,0 +1,6 @@
+Bug fixes:
+- The queue now really saves even after quickly stopping it
+- The interprets and album results in Search screen are now openable
+
+Additions:
+- Divider bars between row items (songs, interprets,...)

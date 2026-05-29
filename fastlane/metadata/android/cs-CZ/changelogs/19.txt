@@ -1,0 +1,6 @@
+Opravy chyb:
+- Fronta se nyní opravdu ukládá i při rychlém vypnutí
+- Výsledky zahrnující interprety a alba na obrazovce Vyhledávání se nyní dají otevřít
+
+Přídavky:
+- Dělicí pruhy mezi položkami v řádku (písně, interpreti,...)

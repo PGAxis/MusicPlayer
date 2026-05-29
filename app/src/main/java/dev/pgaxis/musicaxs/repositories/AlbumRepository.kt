@@ -23,4 +23,7 @@ class AlbumRepository private constructor() {
     fun update(albums: List<Album>) {
         _albums.value = albums
     }
+
+    fun resolveAlbum(name: String, artist: String): Album? =
+        albums.value.find { it.name == name && it.artist == artist }
 }

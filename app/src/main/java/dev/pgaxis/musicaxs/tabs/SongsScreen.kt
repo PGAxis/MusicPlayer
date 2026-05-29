@@ -7,7 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -132,19 +132,32 @@ fun SongsScreen(
                                 .padding(end = 20.dp),
                             contentPadding = PaddingValues(bottom = LocalPlayerBarTotalHeight.current)
                         ) {
-                            items(listItems, key = { item ->
+                            itemsIndexed(listItems, key = { _, item ->
                                 when (item) {
                                     is SongListItem.Header -> "header_${item.letter}"
                                     is SongListItem.Item -> item.song.id
                                 }
-                            }) { item ->
+                            }) { index, item ->
                                 when (item) {
                                     is SongListItem.Header -> SectionHeader(item.letter)
-                                    is SongListItem.Item -> SongRow(
-                                        song = item.song,
-                                        onSeeDetails = goToDetail,
-                                        onAddTo = { selectedSong = item.song }
-                                    )
+                                    is SongListItem.Item -> {
+                                        Column {
+                                            SongRow(
+                                                song = item.song,
+                                                onSeeDetails = goToDetail,
+                                                onAddTo = { selectedSong = item.song }
+                                            )
+
+                                            val nextItem = listItems.getOrNull(index + 1)
+
+                                            if (nextItem !is SongListItem.Header && nextItem != null) {
+                                                HorizontalDivider(
+                                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                                    color = MaterialTheme.colorScheme.outlineVariant
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

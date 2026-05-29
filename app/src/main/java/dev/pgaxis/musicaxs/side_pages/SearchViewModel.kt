@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pgaxis.musicaxs.models.Song
+import dev.pgaxis.musicaxs.repositories.AlbumRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +21,7 @@ import kotlinx.coroutines.withContext
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
     private val songRepo = SongRepository.getInstance()
+    private val albumRepo = AlbumRepository.getInstance()
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
@@ -38,16 +40,15 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     private fun search(query: String): SearchResults {
         val q = query.trim().lowercase()
         val allSongs = songRepo.songs.value
+        val allAlbums = albumRepo.albums.value
 
         val matchingSongs = allSongs.filter { it.title.lowercase().contains(q) }
         val matchingArtists = allSongs
             .filter { it.artist.lowercase().contains(q) }
             .groupBy { it.artist }
             .map { (artist, songs) -> ArtistResult(artist, songs) }
-        val matchingAlbums = allSongs
-            .filter { it.album.lowercase().contains(q) }
-            .groupBy { it.album }
-            .map { (album, songs) -> AlbumResult(album, songs.first().albumArtUri, songs) }
+        val matchingAlbums = allAlbums.filter { it.name.lowercase().contains(q) }
+            .map { AlbumResult(it.name, it.albumArtUri, it.songCount, it.id) }
 
         return SearchResults(
             songs = matchingSongs,
@@ -64,4 +65,4 @@ data class SearchResults(
 )
 
 data class ArtistResult(val name: String, val songs: List<Song>)
-data class AlbumResult(val name: String, val artUri: Uri?, val songs: List<Song>)
+data class AlbumResult(val name: String, val artUri: Uri?, val size: Int, val id: Long)

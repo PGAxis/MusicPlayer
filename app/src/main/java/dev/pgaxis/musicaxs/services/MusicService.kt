@@ -51,6 +51,7 @@ class MusicService : MediaSessionService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var playCountJob: Job? = null
+    private var timelineSaveJob: Job? = null
     private var playStartTime: Long = 0L
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
@@ -92,8 +93,7 @@ class MusicService : MediaSessionService() {
 
                 isShuffleOn = true
 
-                val shuffled = currentUris.shuffled()
-                applyQueueReorder(shuffled)
+                applyQueueReorder()
             } else {
                 // turning off — restore original
                 save.updateShuffled(false)
@@ -227,30 +227,36 @@ class MusicService : MediaSessionService() {
                 .forEach { removeFromQueue(context, it) }
         }
 
-        private fun applyQueueReorder(targetUris: List<String>) {
+        private fun applyQueueReorder(targetUris: List<String>? = null) {
             val player = instance?.mediaSession?.player ?: return
+            val currentItem = player.currentMediaItem ?: return
+            val currentUri = currentItem.localConfiguration?.uri?.toString() ?: return
+            val currentIndex = player.currentMediaItemIndex
 
-            // Mirror of the current player queue
-            val current = (0 until player.mediaItemCount)
-                .map { player.getMediaItemAt(it).localConfiguration?.uri?.toString() ?: "" }
-                .toMutableList()
+            player.moveMediaItem(currentIndex, 0)
+            val count = player.mediaItemCount
 
-            for (targetIndex in targetUris.indices) {
-                val targetUri = targetUris[targetIndex]
+            if (targetUris == null) {
+                // Shuffle in place
+                val rest = (1 until count).map { player.getMediaItemAt(it) }.shuffled()
 
-                // Find first occurrence at or after targetIndex
-                var currentIndex = -1
-                for (i in targetIndex until current.size) {
-                    if (current[i] == targetUri) {
-                        currentIndex = i
-                        break
-                    }
+                player.removeMediaItems(1, count)
+                player.addMediaItems(rest)
+
+                val randomIndex = (1 until player.mediaItemCount).random()
+                player.moveMediaItem(0, randomIndex)
+            } else {
+                // Reorder to match targetUris
+                val itemsByUri = (1 until count).associate {
+                    player.getMediaItemAt(it).localConfiguration?.uri?.toString() to player.getMediaItemAt(it)
                 }
+                val rest = targetUris.filter { it != currentUri }.mapNotNull { itemsByUri[it] }
 
-                if (currentIndex == -1 || currentIndex == targetIndex) continue
+                player.removeMediaItems(1, count)
+                player.addMediaItems(rest)
 
-                player.moveMediaItem(currentIndex, targetIndex)
-                current.add(targetIndex, current.removeAt(currentIndex))
+                val targetIndex = targetUris.indexOf(currentUri).takeIf { it >= 0 } ?: 0
+                player.moveMediaItem(0, targetIndex)
             }
         }
 
@@ -638,10 +644,14 @@ class MusicService : MediaSessionService() {
                 currentIndexState.value = player.currentMediaItemIndex
                 currentUriState.value = player.currentMediaItem?.localConfiguration?.uri
 
-                settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
-                settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
-                settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
-                settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }
+                timelineSaveJob?.cancel()
+                timelineSaveJob = serviceScope.launch {
+                    delay(if (items.isEmpty()) 200L else 100L)
+                    settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
+                    settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
+                    settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
+                    settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }
+                }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -731,10 +741,10 @@ class MusicService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession?.player?.let { player ->
-            val settings = SettingsSave.getInstance(this)
             settings.lastPositionMs = player.currentPosition
             settings.lastDurationMs = player.duration.coerceAtLeast(0L)
         }
+        settings.flush()
         instance = null
         mediaSession?.run {
             player.release()
@@ -745,6 +755,11 @@ class MusicService : MediaSessionService() {
         super.onDestroy()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        settings.flush()
+        super.onTaskRemoved(rootIntent)
+        stopSelf()
+    }
     // -- Helpers
 
     private fun setAndPlay(uri: String, title: String, artist: String, startPositionMs: Long = 0L) {

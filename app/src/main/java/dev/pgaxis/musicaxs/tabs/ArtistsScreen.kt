@@ -5,7 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -104,22 +104,37 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
                 .padding(end = 20.dp),
             contentPadding = PaddingValues(bottom = LocalPlayerBarTotalHeight.current)
         ) {
-            items(flatItems, key = { "${it.letter}_${it.interpret.name}" }) { item ->
-                if (item.letter != null) {
-                    Text(
-                        text = item.letter,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
+            itemsIndexed(
+                flatItems,
+                key = { _, item -> "${item.letter}_${item.interpret.name}" }
+            ) { index, item ->
+                Column {
+                    if (item.letter != null) {
+                        Text(
+                            text = item.letter,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    InterpretRow(
+                        interpret = item.interpret,
+                        onClick = { onOpenArtist(Uri.encode(item.interpret.name)) }
                     )
+
+                    val nextItem = flatItems.getOrNull(index + 1)
+
+                    if (nextItem != null && nextItem.letter == null) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
                 }
-                InterpretRow(
-                    interpret = item.interpret,
-                    onClick = { onOpenArtist(Uri.encode(item.interpret.name)) }
-                )
             }
         }
 

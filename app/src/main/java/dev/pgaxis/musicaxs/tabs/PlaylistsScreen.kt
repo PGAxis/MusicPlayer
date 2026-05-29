@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -156,19 +157,28 @@ fun PlaylistsScreen(
                     }
                 }
             } else {
-                items(playlists, key = { it.id }) { playlist ->
-                    PlaylistRow(
-                        playlist = playlist,
-                        isFavourited = favPlaylists.isFavourited(playlist.id),
-                        onClick = { onOpenPlaylist(playlist.id.toString()) },
-                        onRename = {
-                            renameTarget = playlist
-                            renameText = playlist.name
-                        },
-                        onDelete = { deleteTarget = playlist },
-                        onMerge  = { mergeSource = playlist },
-                        onToggleFavourite = { favPlaylists.toggle(playlist.id) }
-                    )
+                itemsIndexed(playlists, key = { _, playlist -> playlist.id }) { index, playlist ->
+                    Column {
+                        PlaylistRow(
+                            playlist = playlist,
+                            isFavourited = favPlaylists.isFavourited(playlist.id),
+                            onClick = { onOpenPlaylist(playlist.id.toString()) },
+                            onRename = {
+                                renameTarget = playlist
+                                renameText = playlist.name
+                            },
+                            onDelete = { deleteTarget = playlist },
+                            onMerge  = { mergeSource = playlist },
+                            onToggleFavourite = { favPlaylists.toggle(playlist.id) }
+                        )
+
+                        if (index < playlists.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -55,7 +55,6 @@ fun QueueScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-
         // Header
         Row(
             modifier = Modifier
@@ -109,22 +108,31 @@ fun QueueScreen(
                 }
 
                 ReorderableItem(reorderableState, key = key) { _ ->
-                    SongRow(
-                        song = song,
-                        onSeeDetails = onSeeDetail,
-                        onAddTo = { selectedSong = song },
-                        isPlayingOverride = true,
-                        isPlaying = index == currentIndex,
-                        showRemoveFrom = true,
-                        onRemoveFrom = { vm.removeAt(index) },
-                        dragHandleModifier = Modifier.draggableHandle(),
-                        onClick = {
-                            MusicService.playerInstance?.let {
-                                it.seekTo(index, 0)
-                                it.play()
+                    Column {
+                        SongRow(
+                            song = song,
+                            onSeeDetails = onSeeDetail,
+                            onAddTo = { selectedSong = song },
+                            isPlayingOverride = true,
+                            isPlaying = index == currentIndex,
+                            showRemoveFrom = true,
+                            onRemoveFrom = { vm.removeAt(index) },
+                            dragHandleModifier = Modifier.draggableHandle(),
+                            onClick = {
+                                MusicService.playerInstance?.let {
+                                    it.seekTo(index, 0)
+                                    it.play()
+                                }
                             }
+                        )
+
+                        if (index < vm.queue.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
                         }
-                    )
+                    }
                 }
             }
         }

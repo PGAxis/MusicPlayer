@@ -100,12 +100,12 @@
     <string name="search_scr_search">Search…</string>
     <string name="search_scr_search_long">Start typing to search…</string>
     <string name="search_scr_songs">Songs</string>
-    <string name="search_scr_artists">Artists</string>
+    <string name="search_scr_artists">Interprets</string>
     <string name="search_scr_albums">Albums</string>
 
     <!-- Song detail screen -->
     <string name="song_det_title">Title</string>
-    <string name="song_det_artist">Artist</string>
+    <string name="song_det_artist">Interpret</string>
     <string name="song_det_album">Album</string>
     <string name="song_det_track">Track number</string>
     <string name="song_det_duration">Duration</string>

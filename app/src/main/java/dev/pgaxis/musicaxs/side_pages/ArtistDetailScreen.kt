@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -118,12 +118,12 @@ fun ArtistDetailScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(top = 8.dp, bottom = LocalPlayerBarTotalHeight.current)
                 ) {
-                    items(items, key = { item ->
+                    itemsIndexed(items, key = { _, item ->
                         when (item) {
                             is ArtistDetailItem.AlbumHeader -> "header_${item.albumName}"
                             is ArtistDetailItem.SongItem -> item.song.id
                         }
-                    }) { item ->
+                    }) { index, item ->
                         when (item) {
                             is ArtistDetailItem.AlbumHeader -> Text(
                                 text = item.albumName,
@@ -134,11 +134,24 @@ fun ArtistDetailScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 6.dp)
                             )
-                            is ArtistDetailItem.SongItem -> SongRow(
-                                song = item.song,
-                                onSeeDetails = onSeeDetail,
-                                onAddTo = { selectedSong = item.song }
-                            )
+                            is ArtistDetailItem.SongItem -> {
+                                Column {
+                                    SongRow(
+                                        song = item.song,
+                                        onSeeDetails = onSeeDetail,
+                                        onAddTo = { selectedSong = item.song }
+                                    )
+
+                                    val nextItem = items.getOrNull(index + 1)
+
+                                    if (nextItem !is ArtistDetailItem.AlbumHeader && nextItem != null) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 12.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

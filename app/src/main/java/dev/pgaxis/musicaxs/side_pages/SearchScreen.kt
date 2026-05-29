@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
@@ -55,6 +57,8 @@ import dev.pgaxis.musicaxs.templates.SongRow
 fun SearchScreen(
     onBack: () -> Unit,
     onSeeDetail: (uri: String) -> Unit,
+    onOpenArtist: (name: String) -> Unit,
+    onOpenAlbum: (albumId: String) -> Unit,
     choosingForPlaylistId: Long? = null,
     vm: SearchViewModel = viewModel()
 ) {
@@ -111,46 +115,62 @@ fun SearchScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-
                 // Songs section
                 if (results.songs.isNotEmpty()) {
                     item {
                         SectionHeader(stringResource(R.string.search_scr_songs))
                     }
                     val songsToShow = if (isChoosing) results.songs else results.songs.take(5)
-                    items(songsToShow, key = { it.id }) { song ->
-                        if (isChoosing) {
-                            val isSelected = selectedSongs.any { it.id == song.id }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        if (isSelected) selectedSongs.removeAll { it.id == song.id }
-                                        else selectedSongs.add(song)
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = isSelected,
-                                    onCheckedChange = {
-                                        if (isSelected) selectedSongs.removeAll { it.id == song.id }
-                                        else selectedSongs.add(song)
-                                    }
-                                )
-                                Spacer(Modifier.width(8.dp))
+                    itemsIndexed(songsToShow, key = { _, it -> it.id }) { index, song ->
+                        Column {
+                            if (isChoosing) {
+                                val isSelected = selectedSongs.any { it.id == song.id }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            if (isSelected) {
+                                                selectedSongs.removeAll { it.id == song.id }
+                                            } else {
+                                                selectedSongs.add(song)
+                                            }
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = {
+                                            if (isSelected) {
+                                                selectedSongs.removeAll { it.id == song.id }
+                                            } else {
+                                                selectedSongs.add(song)
+                                            }
+                                        }
+                                    )
+
+                                    Spacer(Modifier.width(8.dp))
+
+                                    SongRow(
+                                        song = song,
+                                        onSeeDetails = onSeeDetail,
+                                        onAddTo = { selectedSong = song }
+                                    )
+                                }
+                            } else {
                                 SongRow(
                                     song = song,
                                     onSeeDetails = onSeeDetail,
                                     onAddTo = { selectedSong = song }
                                 )
                             }
-                        } else {
-                            SongRow(
-                                song = song,
-                                onSeeDetails = onSeeDetail,
-                                onAddTo = { selectedSong = song }
-                            )
+
+                            if (index < songsToShow.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -161,7 +181,8 @@ fun SearchScreen(
                     items(results.artists.take(5), key = { "artist_${it.name}" }) { artist ->
                         ListItem(
                             headlineContent = { Text(artist.name, fontWeight = FontWeight.Medium) },
-                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, artist.songs.size, artist.songs.size)) }
+                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, artist.songs.size, artist.songs.size)) },
+                            modifier = Modifier.clickable { onOpenArtist(Uri.encode(artist.name)) }
                         )
                     }
                 }
@@ -172,7 +193,7 @@ fun SearchScreen(
                     items(results.albums.take(5), key = { "album_${it.name}" }) { album ->
                         ListItem(
                             headlineContent = { Text(album.name, fontWeight = FontWeight.Medium) },
-                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, album.songs.size, album.songs.size)) },
+                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, album.size, album.size)) },
                             leadingContent = {
                                 AsyncImage(
                                     model = album.artUri,
@@ -182,7 +203,8 @@ fun SearchScreen(
                                     modifier = Modifier.size(40.dp).clip(RoundedCornerShape(6.dp)),
                                     contentScale = ContentScale.Crop
                                 )
-                            }
+                            },
+                            modifier = Modifier.clickable { onOpenAlbum(album.id.toString()) }
                         )
                     }
                 }

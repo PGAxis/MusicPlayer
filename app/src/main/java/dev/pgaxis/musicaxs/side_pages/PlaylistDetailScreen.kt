@@ -207,18 +207,27 @@ fun PlaylistDetailScreen(
                         ) {
                             itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
                                 ReorderableItem(reorderState, key = keyed.key) { _ ->
-                                    SongRow(
-                                        song = keyed.song,
-                                        onSeeDetails = onSeeDetail,
-                                        onAddTo = { selectedSong = keyed.song },
-                                        showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
-                                        removeLabel = stringResource(R.string.rm_from_playlist),
-                                        onRemoveFrom = {
-                                            vm.removeSong(playlistId, index)
-                                            PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
-                                        },
-                                        dragHandleModifier = Modifier.draggableHandle()
-                                    )
+                                    Column {
+                                        SongRow(
+                                            song = keyed.song,
+                                            onSeeDetails = onSeeDetail,
+                                            onAddTo = { selectedSong = keyed.song },
+                                            showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
+                                            removeLabel = stringResource(R.string.rm_from_playlist),
+                                            onRemoveFrom = {
+                                                vm.removeSong(playlistId, index)
+                                                PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
+                                            },
+                                            dragHandleModifier = Modifier.draggableHandle()
+                                        )
+
+                                        if (index < songs.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 12.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
