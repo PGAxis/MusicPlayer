@@ -29,8 +29,10 @@ import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
+import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.settings.ShuffleSave
+import dev.pgaxis.musicaxs.settings.SettingsSave.QueueEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -56,6 +58,7 @@ class MusicService : MediaSessionService() {
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
+    private val songRepo = SongRepository.getInstance()
 
     companion object {
         private var instance: MusicService? = null
@@ -171,24 +174,16 @@ class MusicService : MediaSessionService() {
 
         private fun addToSettingsQueue(context: Context, song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
             val settings = SettingsSave.getInstance(context)
-            val uris = settings.lastQueueUris.toMutableList()
-            val titles = settings.lastQueueTitles.toMutableList()
-            val artists = settings.lastQueueArtists.toMutableList()
+            val queue = settings.lastQueue.toMutableList()
 
-            if (applyShuffleRandomness && uris.isNotEmpty()) {
-                val randomIndex = (0 until uris.size).random()
-                uris.add(randomIndex, song.uri.toString())
-                titles.add(randomIndex, song.title)
-                artists.add(randomIndex, song.artist)
+            if (applyShuffleRandomness && queue.isNotEmpty()) {
+                val randomIndex = (0 until queue.size).random()
+                queue.add(randomIndex, QueueEntry(song.uri.toString(), song.title, song.artist))
             } else {
-                uris.add(song.uri.toString())
-                titles.add(song.title)
-                artists.add(song.artist)
+                queue.add(QueueEntry(song.uri.toString(), song.title, song.artist))
             }
 
-            settings.lastQueueUris = uris
-            settings.lastQueueTitles = titles
-            settings.lastQueueArtists = artists
+            settings.lastQueue = queue
 
             if (resetPlaylist) {
                 settings.lastPlaylistId = -1L
@@ -266,14 +261,14 @@ class MusicService : MediaSessionService() {
 
         fun initFromSettings(context: Context) {
             val settings = SettingsSave.getInstance(context)
-            if (settings.lastQueueUris.isNotEmpty()) {
-                queueState.value = settings.lastQueueUris.mapIndexed { i, uri ->
+            if (settings.lastQueue.isNotEmpty()) {
+                queueState.value = settings.lastQueue.map { entry ->
                     MediaItem.Builder()
-                        .setUri(uri.toUri())
+                        .setUri(entry.uri.toUri())
                         .setMediaMetadata(
                             MediaMetadata.Builder()
-                                .setTitle(settings.lastQueueTitles.getOrElse(i) { "" })
-                                .setArtist(settings.lastQueueArtists.getOrElse(i) { "" })
+                                .setTitle(entry.title)
+                                .setArtist(entry.artist)
                                 .build()
                         )
                         .build()
@@ -520,23 +515,26 @@ class MusicService : MediaSessionService() {
                 )
             }
 
-            val queueUris = settings.lastQueueUris.ifEmpty { listOf(lastUri) }
-            val savedIndex = settings.lastQueueIndex.coerceIn(0, queueUris.lastIndex)
-            val currentIndex = if (queueUris[savedIndex] == lastUri) {
+            val queue = settings.lastQueue.ifEmpty {
+                val song = songRepo.resolveSong(lastUri.toUri()) ?: songRepo.resolveSong(this@MusicService, lastUri.toUri())
+                listOf(QueueEntry(uri = lastUri, title = song?.title ?: "", artist = song?.artist ?: ""))
+            }
+            val savedIndex = settings.lastQueueIndex.coerceIn(0, queue.lastIndex)
+            val currentIndex = if (queue[savedIndex].uri == lastUri) {
                 savedIndex
             } else {
-                queueUris.indices
-                    .filter { queueUris[it] == lastUri }
+                queue.indices
+                    .filter { queue[it].uri == lastUri }
                     .minByOrNull { abs(it - savedIndex) }
                     ?: 0
             }
-            val items = queueUris.mapIndexed { i, uri ->
+            val items = queue.map { entry ->
                 MediaItem.Builder()
-                    .setUri(uri.toUri())
+                    .setUri(entry.uri.toUri())
                     .setMediaMetadata(
                         MediaMetadata.Builder()
-                            .setTitle(settings.lastQueueTitles.getOrElse(i) { "" })
-                            .setArtist(settings.lastQueueArtists.getOrElse(i) { "" })
+                            .setTitle(entry.title)
+                            .setArtist(entry.artist)
                             .build()
                     )
                     .build()
@@ -648,9 +646,7 @@ class MusicService : MediaSessionService() {
                 timelineSaveJob = serviceScope.launch {
                     delay(if (items.isEmpty()) 200L else 100L)
                     settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
-                    settings.lastQueueUris = items.mapNotNull { it.localConfiguration?.uri?.toString() }
-                    settings.lastQueueTitles = items.map { it.mediaMetadata.title?.toString() ?: "" }
-                    settings.lastQueueArtists = items.map { it.mediaMetadata.artist?.toString() ?: "" }
+                    settings.lastQueue = items.mapNotNull { QueueEntry(it.localConfiguration?.uri?.toString() ?: return@mapNotNull null, it.mediaMetadata.title?.toString() ?: "", it.mediaMetadata.artist?.toString() ?: "") }
                 }
             }
 
@@ -677,16 +673,17 @@ class MusicService : MediaSessionService() {
         intent?.let {
             if (it.getBooleanExtra(EXTRA_INIT_ONLY, false)) {
                 val settings = SettingsSave.getInstance(this)
-                val uris = settings.lastQueueUris
+                val uris = settings.lastQueue
                 if (uris.isNotEmpty()) {
-                    val currentIndex = uris.indexOf(settings.lastSongUri).coerceAtLeast(0)
-                    val items = uris.mapIndexed { i, uri ->
+                    val currentIndex = uris.indexOfFirst { entry -> entry.uri == settings.lastSongUri }.coerceAtLeast(0)
+                    val items = uris.map { entry ->
+                        val song by lazy { songRepo.resolveSong(entry.uri.toUri()) ?: songRepo.resolveSong(this, entry.uri.toUri()) }
                         MediaItem.Builder()
-                            .setUri(uri.toUri())
+                            .setUri(entry.uri.toUri())
                             .setMediaMetadata(
                                 MediaMetadata.Builder()
-                                    .setTitle(settings.lastQueueTitles.getOrElse(i) { "Unknown" })
-                                    .setArtist(settings.lastQueueArtists.getOrElse(i) { "Unknown" })
+                                    .setTitle(entry.title.ifBlank { song?.title ?: "Unknown" })
+                                    .setArtist(entry.artist.ifBlank { song?.artist ?: "Unknown" })
                                     .build()
                             )
                             .build()
@@ -703,20 +700,22 @@ class MusicService : MediaSessionService() {
             // Queue replacement via intent (service was not running)
             val queueUris = it.getStringArrayListExtra(EXTRA_QUEUE_URIS)
             if (queueUris != null) {
-                val titles = it.getStringArrayListExtra(EXTRA_QUEUE_TITLES)  ?: arrayListOf()
+                val titles = it.getStringArrayListExtra(EXTRA_QUEUE_TITLES) ?: arrayListOf()
                 val artists = it.getStringArrayListExtra(EXTRA_QUEUE_ARTISTS) ?: arrayListOf()
                 val shuffled = it.getBooleanExtra(EXTRA_SHUFFLED, false)
                 if (shuffled) {
                     val songs = queueUris.mapIndexed { i, uri ->
+                        val song by lazy { songRepo.resolveSong(uri.toUri()) ?: songRepo.resolveSong(this, uri.toUri()) }
                         Song(
                             id = uri.hashCode().toLong(),
-                            title = titles.getOrElse(i) { "Unknown" },
-                            artist = artists.getOrElse(i) { "Unknown" },
-                            album = "", albumId = 0,
+                            title = titles.getOrElse(i) { "" }.ifBlank { song?.title ?: "Unknown" },
+                            artist = artists.getOrElse(i) { "" }.ifBlank { song?.artist ?: "Unknown" },
+                            album = song?.album ?: "",
+                            albumId = song?.albumId ?: 0,
                             uri = uri.toUri(),
-                            durationMs = 0L,
-                            albumArtUri = Uri.EMPTY,
-                            track = 0
+                            durationMs = song?.durationMs ?: 0L,
+                            albumArtUri = song?.albumArtUri ?: Uri.EMPTY,
+                            track = song?.track ?: 0
                         )
                     }
                     playShuffledInternal(songs)
@@ -728,8 +727,9 @@ class MusicService : MediaSessionService() {
 
             // Single song (playSingular / cold start)
             val uri = it.getStringExtra(EXTRA_URI) ?: return@let
-            val title = it.getStringExtra(EXTRA_TITLE) ?: "Unknown"
-            val artist = it.getStringExtra(EXTRA_ARTIST) ?: "Unknown"
+            val song by lazy { songRepo.resolveSong(uri.toUri()) ?: songRepo.resolveSong(this, uri.toUri()) }
+            val title = it.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { song?.title ?: "Unknown" }
+            val artist = it.getStringExtra(EXTRA_ARTIST).orEmpty().ifBlank { song?.artist ?: "Unknown" }
             val position = it.getLongExtra(EXTRA_POSITION_MS, 0L)
             setAndPlay(uri, title, artist, position)
         }

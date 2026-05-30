@@ -1,0 +1,2 @@
+Opravy chyb:
+- ronta nyní nezobrazuje „Unknown“ pro pole názvu/interpreta, která nebyla uložena.

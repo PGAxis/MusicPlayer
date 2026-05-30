@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.pgaxis.axs.AxsBoundObject
 import dev.pgaxis.axs.AxsFile
-import dev.pgaxis.axs.AxsValue
 import dev.pgaxis.musicaxs.services.QueueSource
 import dev.pgaxis.musicaxs.services.Theme
 import java.io.File
@@ -95,28 +94,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         }
     }
 
-    fun getBoundSettingsTitles(): List<String> {
-        return if (::boundSettings.isInitialized && !isInitializing) boundSettings.getValue(SettingsData::lastQueueTitles)
-        else emptyList()
-    }
-
-    fun isInitializing(): Boolean {
-        return isInitializing
-    }
-
-    fun getRaw(key: String): AxsValue? {
-        return axsFile.get(key)
-    }
-
     // media playback persistency
     override var lastTabIndex by intSetting(2, SettingsData::lastTabIndex)
     override var lastSongUri by setting("", SettingsData::lastSongUri)
     override var lastPositionMs by longSetting(0L, SettingsData::lastPositionMs)
     override var lastDurationMs by longSetting(0L, SettingsData::lastDurationMs)
     override var lastPlaylistId by longSetting(-1L, SettingsData::lastPlaylistId) // TODO replace with null once I add null support to AXS
-    override var lastQueueUris by setting(emptyList(), SettingsData::lastQueueUris)
-    override var lastQueueTitles by setting(emptyList(), SettingsData::lastQueueTitles)
-    override var lastQueueArtists by setting(emptyList(), SettingsData::lastQueueArtists)
+    override var lastQueue by setting(emptyList(), SettingsData::lastQueue)
     override var lastQueueIndex by intSetting(-1, SettingsData::lastQueueIndex)
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
@@ -134,9 +118,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastPositionMs: Long = 0L,
         var lastDurationMs: Long = 0L,
         var lastPlaylistId: Long = -1L,
-        var lastQueueUris: List<String> = emptyList(),
-        var lastQueueTitles: List<String> = emptyList(),
-        var lastQueueArtists: List<String> = emptyList(),
+        var lastQueue: List<QueueEntry> = emptyList(),
         var lastQueueIndex: Int = -1,
         var repeatMode: Int = 2,
         var queueSource: QueueSource = QueueSource.MANUAL,
@@ -144,6 +126,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         var hideWhatsAppAudio: Boolean = false,
         var allowYTCnv: Boolean = false,
         var theme: Theme = Theme.CYAN
+    )
+
+    @Keep
+    data class QueueEntry(
+        val uri: String = "",
+        val title: String = "",
+        val artist: String = ""
     )
 
     fun flush() {
@@ -181,12 +170,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             //Log.d("SettingsSaveDebug", "Has lastDurationMs")
             lastPlaylistId = s.lastPlaylistId
             //Log.d("SettingsSaveDebug", "Has lastPlaylistId")
-            lastQueueUris = s.lastQueueUris
-            //Log.d("SettingsSaveDebug", "Has lastQueueUris")
-            lastQueueTitles = s.lastQueueTitles
-            //Log.d("SettingsSaveDebug", "Has lastQueueTitles")
-            lastQueueArtists = s.lastQueueArtists
-            //Log.d("SettingsSaveDebug", "Has lastQueueArtists")
+            lastQueue = s.lastQueue
             lastQueueIndex = s.lastQueueIndex
             //Log.d("SettingsSaveDebug", "Has lastQueueIndex")
             repeatMode = s.repeatMode

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.SettingsSave
+import dev.pgaxis.musicaxs.settings.SettingsSave.QueueEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +39,7 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         queue.add(to, queue.removeAt(from))
         MusicService.moveQueueItem(from, to)
 
-        settings.lastQueueUris = queue.mapNotNull { it.localConfiguration?.uri?.toString() }
+        settings.lastQueue = queue.mapNotNull { QueueEntry(it.localConfiguration?.uri?.toString() ?: return@mapNotNull null, it.mediaMetadata.title?.toString() ?: "", it.mediaMetadata.artist?.toString() ?: "") }
     }
 
     fun removeAt(index: Int) {

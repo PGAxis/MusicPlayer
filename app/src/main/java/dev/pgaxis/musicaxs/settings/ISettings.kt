@@ -10,9 +10,7 @@ interface ISettings {
     var lastPositionMs: Long
     var lastDurationMs: Long
     var lastPlaylistId: Long
-    var lastQueueUris: List<String>
-    var lastQueueTitles: List<String>
-    var lastQueueArtists: List<String>
+    var lastQueue: List<SettingsSave.QueueEntry>
     var lastQueueIndex: Int
     var repeatMode: Int
     var queueSource: QueueSource
