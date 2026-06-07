@@ -50,7 +50,17 @@ class PlaylistToQueue(
         if (MusicService.isShuffled) {
             shuffle.setOriginalQueue(songs.map { it.uri.toString() })
         } else {
-            MusicService.replaceQueue(context, songs, playlistId)
+            val player = MusicService.playerInstance ?: return false
+            val targetUris = songs.map { it.uri.toString() }
+
+            targetUris.forEachIndexed { targetIndex, uri ->
+                val currentIndex = (0 until player.mediaItemCount)
+                    .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
+                    ?: return@forEachIndexed
+                if (currentIndex != targetIndex) {
+                    MusicService.reorderQueue(currentIndex, targetIndex)
+                }
+            }
         }
 
         return true

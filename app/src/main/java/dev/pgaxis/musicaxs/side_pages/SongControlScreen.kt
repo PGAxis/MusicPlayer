@@ -11,13 +11,11 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -25,15 +23,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
-import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,18 +37,8 @@ fun SongControlScreen(
     artSizeDp: Dp,
     onSeeDetail: (uri: String) -> Unit,
     onCollapse: () -> Unit,
-    onOpenQueue: () -> Unit,
-    onPrevious: () -> Unit,
-    onPlayPause: () -> Unit,
-    onNext: () -> Unit,
-    vm: SongControlViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val favourites = remember { FavouritesSave.getInstance(context) }
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val positionMs by vm.positionMs.collectAsStateWithLifecycle()
-    val durationMs by vm.durationMs.collectAsStateWithLifecycle()
-    val isPlaying by MusicService.isPlayingState.collectAsStateWithLifecycle()
 
     var menuExpanded  by remember { mutableStateOf(false) }
     var showAddToSheet by remember { mutableStateOf(false) }
@@ -85,143 +69,6 @@ fun SongControlScreen(
         Text(currentSong.title, textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Text(currentSong.artist, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.primary)
-    }
-
-    val controls = @Composable fun (modifier: Modifier) {
-        // -- Secondary controls
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onOpenQueue, shape = RoundedCornerShape(0.dp)) {
-                Icon(painterResource(R.drawable.queue), "Queue",
-                    tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp))
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            val isFav = favourites.isFavourite(currentSong.songUri!!.toUri())
-            IconButton(onClick = { vm.onLike() }, shape = RoundedCornerShape(0.dp)) {
-                Icon(
-                    painterResource(if (isFav) R.drawable.heart_filled else R.drawable.heart_outline),
-                    "Like", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            val isShuffled by remember { derivedStateOf { MusicService.isShuffled } }
-            IconButton(onClick = { MusicService.toggleShuffle(context) }, shape = RoundedCornerShape(0.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.shuffle),
-                    contentDescription = "Shuffle",
-                    tint = if (isShuffled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                    modifier = Modifier.size(25.dp)
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            IconButton(onClick = { vm.changePlayType() }, shape = RoundedCornerShape(0.dp)) {
-                Icon(
-                    painterResource(when (uiState) {
-                        PlayType.Repeat -> R.drawable.repeat
-                        PlayType.RepeatOnce -> R.drawable.repeat_once
-                        PlayType.Continue -> R.drawable.continue_play
-                    }),
-                    "RepeatType", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(25.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = modifier)
-
-        // -- Progress bar
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = if (durationMs > 0) positionMs.toTimestamp() else "-:--",
-                fontSize = 12.sp, color = MaterialTheme.colorScheme.primary
-            )
-            Slider(
-                value = if (durationMs > 0) positionMs / durationMs.toFloat() else 0f,
-                onValueChange = { vm.onScrub((it * durationMs).toLong()) },
-                onValueChangeFinished = { vm.onScrubStop() },
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-                thumb = {
-                    Box(Modifier.size(14.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
-                },
-                track = { sliderState ->
-                    SliderDefaults.Track(
-                        sliderState = sliderState,
-                        modifier = Modifier.height(3.dp),
-                        colors = SliderDefaults.colors(
-                            activeTrackColor   = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
-                    )
-                }
-            )
-            Text(
-                text = if (durationMs > 0) durationMs.toTimestamp() else "-:--",
-                fontSize = 12.sp, color = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        Spacer(modifier = modifier)
-
-        // -- Playback controls
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = {
-                    onPrevious()
-                    vm.setTime()
-                }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.prev),
-                    contentDescription = "Previous",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = { vm.seekBack10() }) {
-                Icon(
-                    painter = painterResource(R.drawable.rewind),
-                    contentDescription = "-10s",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
-                Icon(
-                    painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = { vm.seekForward10() }) {
-                Icon(
-                    painter = painterResource(R.drawable.forward),
-                    contentDescription = "+10s",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp))
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(
-                onClick = {
-                    onNext()
-                    vm.setTime()
-                }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.next),
-                    contentDescription = "Next",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        }
     }
 
     Column(
@@ -288,18 +135,15 @@ fun SongControlScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    controls(Modifier.weight(1f))
+                    Spacer(Modifier.weight(1f))
                 }
             }
         } else {
             Column(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 artAndMeta()
-                Spacer(Modifier.weight(1f))
-                controls(Modifier.height(15.dp))
             }
         }
     }

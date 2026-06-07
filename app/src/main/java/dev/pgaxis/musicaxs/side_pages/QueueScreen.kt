@@ -23,6 +23,7 @@ import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.ShuffleSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -36,6 +37,7 @@ fun QueueScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val currentIndex by vm.currentIndex.collectAsStateWithLifecycle()
+    val shuffleSave = remember { ShuffleSave.getInstance(context) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
@@ -81,58 +83,61 @@ fun QueueScreen(
 
         HorizontalDivider()
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            itemsIndexed(vm.queue, key = { _, item ->
-                System.identityHashCode(item)
-            }) { index, mediaItem ->
-                val uri = mediaItem.localConfiguration?.uri ?: return@itemsIndexed
-                val key = System.identityHashCode(mediaItem)
+        key(shuffleSave.isShuffled) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                itemsIndexed(vm.queue, key = { _, item ->
+                    System.identityHashCode(item)
+                }) { index, mediaItem ->
+                    val uri = mediaItem.localConfiguration?.uri ?: return@itemsIndexed
+                    val key = System.identityHashCode(mediaItem)
 
-                // Resolve a Song from the MediaItem for SongRow
-                val song = remember(uri) {
-                    SongRepository.getInstance().songs.value.find { it.uri == uri }
-                        ?: Song(
-                            id = uri.toString().hashCode().toLong(),
-                            title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
-                            artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
-                            album = "",
-                            albumId = 0,
-                            uri = uri,
-                            durationMs = 0L,
-                            albumArtUri = Uri.EMPTY,
-                            track = 0
-                        )
-                }
-
-                ReorderableItem(reorderableState, key = key) { _ ->
-                    Column {
-                        SongRow(
-                            song = song,
-                            onSeeDetails = onSeeDetail,
-                            onAddTo = { selectedSong = song },
-                            isPlayingOverride = true,
-                            isPlaying = index == currentIndex,
-                            showRemoveFrom = true,
-                            onRemoveFrom = { vm.removeAt(index) },
-                            dragHandleModifier = Modifier.draggableHandle(),
-                            onClick = {
-                                MusicService.playerInstance?.let {
-                                    it.seekTo(index, 0)
-                                    it.play()
-                                }
-                            }
-                        )
-
-                        if (index < vm.queue.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant
+                    // Resolve a Song from the MediaItem for SongRow
+                    val song = remember(uri) {
+                        SongRepository.getInstance().songs.value.find { it.uri == uri }
+                            ?: Song(
+                                id = uri.toString().hashCode().toLong(),
+                                title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                                artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
+                                album = "",
+                                albumId = 0,
+                                uri = uri,
+                                durationMs = 0L,
+                                albumArtUri = Uri.EMPTY,
+                                track = 0
                             )
+                    }
+
+                    ReorderableItem(reorderableState, key = key) { _ ->
+                        Column {
+                            SongRow(
+                                song = song,
+                                onSeeDetails = onSeeDetail,
+                                onAddTo = { selectedSong = song },
+                                isPlayingOverride = true,
+                                isPlaying = index == currentIndex,
+                                showRemoveFrom = true,
+                                onRemoveFrom = { vm.removeAt(index) },
+                                dragHandleModifier = Modifier.draggableHandle(),
+                                onClick = {
+                                    MusicService.playerInstance?.let {
+                                        it.seekTo(index, 0)
+                                        it.play()
+                                    }
+                                }
+                            )
+
+                            if (index < vm.queue.lastIndex) {
+                                ListDivider()
+                            }
                         }
                     }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

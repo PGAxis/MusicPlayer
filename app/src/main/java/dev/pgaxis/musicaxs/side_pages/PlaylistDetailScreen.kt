@@ -39,6 +39,7 @@ import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -222,10 +223,7 @@ fun PlaylistDetailScreen(
                                         )
 
                                         if (index < songs.lastIndex) {
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = 12.dp),
-                                                color = MaterialTheme.colorScheme.outlineVariant
-                                            )
+                                            ListDivider()
                                         }
                                     }
                                 }

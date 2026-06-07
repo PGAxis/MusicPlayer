@@ -30,6 +30,8 @@ import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SectionHeader
 
 private sealed interface SongListItem {
     data class Header(val letter: String) : SongListItem
@@ -151,10 +153,7 @@ fun SongsScreen(
                                             val nextItem = listItems.getOrNull(index + 1)
 
                                             if (nextItem !is SongListItem.Header && nextItem != null) {
-                                                HorizontalDivider(
-                                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                                    color = MaterialTheme.colorScheme.outlineVariant
-                                                )
+                                                ListDivider()
                                             }
                                         }
                                     }
@@ -213,17 +212,4 @@ fun SongsScreen(
             }
         }
     }
-}
-
-@Composable
-private fun SectionHeader(letter: String) {
-    Text(
-        text = letter,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-    )
 }

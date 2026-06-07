@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.pgaxis.musicaxs.models.TabType
+import dev.pgaxis.musicaxs.models.labelRes
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.tabs.AlbumsScreen
 import dev.pgaxis.musicaxs.tabs.FavouritesScreen
@@ -63,7 +65,18 @@ fun MainScreen(
     val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
 
-    val pagerState = rememberPagerState(initialPage = initialPage) { vm.tabs.size }
+    val visibleTabs = vm.visibleTabs
+    val tabContent = remember {
+        mapOf<TabType, @Composable () -> Unit>(
+            TabType.FAVOURITES to { FavouritesScreen(goToPlaylist) },
+            TabType.PLAYLISTS to { PlaylistsScreen(goToPlaylist) },
+            TabType.SONGS to { SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll) },
+            TabType.ALBUMS to { AlbumsScreen(onOpenAlbum = onOpenAlbum) },
+            TabType.ARTISTS to { ArtistsScreen(onOpenArtist = onOpenArtist) }
+        )
+    }
+
+    val pagerState = rememberPagerState(initialPage = initialPage) { visibleTabs.size }
     val tabScrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -117,7 +130,7 @@ fun MainScreen(
                     if (isDraggingTab) {
                         val closestIndex = (tabScrollState.value / tabWidthPx)
                             .roundToInt()
-                            .coerceIn(0, vm.tabs.size - 1)
+                            .coerceIn(0, visibleTabs.size - 1)
                         scope.launch { tabScrollState.animateScrollTo((closestIndex * tabWidthPx).toInt()) }
                         scope.launch { pagerState.animateScrollToPage(closestIndex) }
                         isDraggingTab = false
@@ -155,7 +168,7 @@ fun MainScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    val onPlaylists = pagerState.settledPage == 1
+                    val onPlaylists = visibleTabs.getOrNull(pagerState.settledPage)?.tab == TabType.PLAYLISTS.name
                     IconButton(
                         onClick = { showCreateDialog = true },
                         enabled = onPlaylists,
@@ -212,7 +225,8 @@ fun MainScreen(
                 ) {
                     Spacer(Modifier.width(padDp))
 
-                    vm.tabs.forEachIndexed { index, label ->
+                    visibleTabs.forEachIndexed { index, titleVis ->
+                        val tabType = TabType.valueOf(titleVis.tab)
                         val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
                         val distance = abs(index - continuousPage).coerceIn(0f, 1f)
                         val fontSize = lerp(20f, 15f, distance)
@@ -227,7 +241,7 @@ fun MainScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = stringResource(label),
+                                text = stringResource(tabType.labelRes()),
                                 fontSize = fontSize.sp,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -241,21 +255,14 @@ fun MainScreen(
                 // -- Content pager
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
+                    modifier = Modifier.fillMaxWidth().weight(1f)
                 ) { page ->
+                    val tabType = TabType.valueOf(visibleTabs[page].tab)
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        when (page) {
-                            0 -> FavouritesScreen(goToPlaylist )
-                            1 -> PlaylistsScreen(goToPlaylist)
-                            2 -> SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll )
-                            3 -> AlbumsScreen(onOpenAlbum = onOpenAlbum )
-                            4 -> ArtistsScreen(onOpenArtist = onOpenArtist )
-                        }
+                        tabContent[tabType]?.invoke()
                     }
                 }
             }

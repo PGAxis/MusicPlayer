@@ -43,6 +43,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.tabs.ArtistDetailItem
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 
@@ -145,10 +146,7 @@ fun ArtistDetailScreen(
                                     val nextItem = items.getOrNull(index + 1)
 
                                     if (nextItem !is ArtistDetailItem.AlbumHeader && nextItem != null) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 12.dp),
-                                            color = MaterialTheme.colorScheme.outlineVariant
-                                        )
+                                        ListDivider()
                                     }
                                 }
                             }

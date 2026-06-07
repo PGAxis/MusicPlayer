@@ -46,6 +46,7 @@ import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 
@@ -144,10 +145,7 @@ fun AlbumDetailScreen(
                             )
 
                             if (index < songs.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
+                                ListDivider(hasArt = false)
                             }
                         }
                     }

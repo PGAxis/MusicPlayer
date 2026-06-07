@@ -10,17 +10,17 @@ kotlin {
 android {
     namespace = "dev.pgaxis.musicaxs"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
+        version = release(37) {
+            minorApiLevel = 0
         }
     }
 
     defaultConfig {
         applicationId = "dev.pgaxis.musicaxs"
         minSdk = 26
-        targetSdk = 36
-        versionCode = 20
-        versionName = "1.7.2"
+        targetSdk = 37
+        versionCode = 21
+        versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

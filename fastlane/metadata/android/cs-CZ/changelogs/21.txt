@@ -1,0 +1,8 @@
+Opravy chyb:
+- Při změně pořadí skladby v playlistu, který fronta zrcadlí, se spustilo přehrávání první skladby
+- Fronta se nyní ukládá rychleji -> v případě, že se aplikace po změně náhle zastaví, uloží se více prvků
+- Když bylo zapnuté náhodné přehrávání a nějaký playlist byl přehrán pomocí tlačítka „Přehrát vše“, tlačítko náhodného přehrávání v oznámení zůstalo zapnuté.
+
+Přídavky:
+- Karty lze nyní měnit pořadí nebo skrýt (kromě skladeb, alb a interpretů, ty jsou vždy viditelné)
+- Ovládací prvky skladeb jsou nyní viditelné i na obrazovce fronty

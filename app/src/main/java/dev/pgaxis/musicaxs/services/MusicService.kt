@@ -255,9 +255,9 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        /*fun reorderQueue(from: Int, to: Int) {
+        fun reorderQueue(from: Int, to: Int) {
             instance?.mediaSession?.player?.moveMediaItem(from, to)
-        }*/
+        }
 
         fun initFromSettings(context: Context) {
             val settings = SettingsSave.getInstance(context)
@@ -368,6 +368,7 @@ class MusicService : MediaSessionService() {
 
         val save = ShuffleSave.getInstance(this)
         save.updateShuffled(false)
+        isShuffleOn = false
         save.setOriginalQueue(songs.map { it.uri.toString() })
 
         player.setMediaItems(songs.map { it.toMediaItem() })

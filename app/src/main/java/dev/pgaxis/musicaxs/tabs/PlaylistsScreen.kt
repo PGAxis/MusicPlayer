@@ -34,6 +34,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Playlist
 import dev.pgaxis.musicaxs.services.M3uHandler
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.MergeIntoSheet
 
 data class SmartInfo(
@@ -143,6 +144,7 @@ fun PlaylistsScreen(
                     }
                 }
                 HorizontalDivider()
+                Spacer(modifier = Modifier.height(10.dp))
             }
 
             if (playlists.isEmpty()) {
@@ -173,10 +175,7 @@ fun PlaylistsScreen(
                         )
 
                         if (index < playlists.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
+                            ListDivider()
                         }
                     }
                 }
@@ -377,7 +376,7 @@ private fun PlaylistRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -392,7 +391,7 @@ private fun PlaylistRow(
             placeholder = painterResource(R.drawable.default_cover),
             fallback = painterResource(R.drawable.default_cover),
             modifier = Modifier
-                .size(48.dp)
+                .size(44.dp)
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )

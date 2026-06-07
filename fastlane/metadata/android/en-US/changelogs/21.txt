@@ -1,0 +1,8 @@
+Bug fixes:
+- When reordering a song in a playlist that the queue is mirroring, it would start playing the first song
+- Queue is now saved faster -> in case the app suddenly stops after it changes, more of it gets saved
+- When shuffle was on and a playlist was played using the "Play all" button, the shuffle button on the notification would stay on
+
+Additions:
+- The tabs can now be reordered or hidden (apart from Songs, Albums and Interprets, those are always visible)
+- The song control elements are now visible even on the Queue screen

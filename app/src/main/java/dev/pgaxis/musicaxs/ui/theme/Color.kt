@@ -18,7 +18,7 @@ val SurfaceCyanDark = Color(0xFF161B22)
 val SurfaceVariantCyanDark = Color(0xFF1E2A35)
 val CardCyanDark = Color(0xFF1A2332)
 
-//Blues / Cyans / Aquas
+// Blues / Cyans / Aquas
 val CyanPrimary = Color(0xFF00BCD4)
 val BlueSecondary = Color(0xFF1565C0)
 val BlueTertiary = Color(0xFF0288D1)

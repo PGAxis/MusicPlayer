@@ -1,6 +1,9 @@
 package dev.pgaxis.musicaxs.side_pages
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -54,7 +59,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.models.TabType
+import dev.pgaxis.musicaxs.models.TitleVis
+import dev.pgaxis.musicaxs.models.isMandatory
+import dev.pgaxis.musicaxs.models.labelRes
 import dev.pgaxis.musicaxs.services.Theme
+import dev.pgaxis.musicaxs.templates.ListDivider
+import sh.calvin.reorderable.ReorderableColumn
 
 @Composable
 fun SettingsScreen(
@@ -108,6 +119,14 @@ fun SettingsScreen(
                         onScan()
                     }
                 )
+
+                ListDivider(hasArt = false)
+
+                SettingsListRow(
+                    title = "Set tab order", //stringResource(R.string.set_scr_tab_order),
+                    items = vm.settings.tabs,
+                    onItemsChanged = { vm.settings.tabs = it }
+                )
             }
 
             SettingsGroup(title = stringResource(R.string.set_scr_customization), initiallyExpanded = false) {
@@ -127,6 +146,8 @@ fun SettingsScreen(
                         selected = vm.selectedLang,
                         onSelectChange = { vm.onLanguageChange(it as String) }
                     )
+
+                    ListDivider(hasArt = false)
 
                     SettingsToggleRow(
                         label = stringResource(R.string.set_scr_ytconv_add_songs),
@@ -166,7 +187,7 @@ fun SettingsGroup(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column {
@@ -192,9 +213,13 @@ fun SettingsGroup(
                 )
             }
 
-            if (expanded) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
                 Column(
-                    modifier = Modifier.padding(bottom = 8.dp),
+                    modifier = Modifier.padding(4.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     content()
@@ -320,6 +345,93 @@ fun SettingsDropdownRow(
                             expanded = false
                         }
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsListRow(
+    title: String,
+    items: List<TitleVis>,
+    onItemsChanged: (List<TitleVis>) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(11.dp)),
+        shape = RoundedCornerShape(11.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column {
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            )
+
+            HorizontalDivider()
+
+            ReorderableColumn(
+                list = items,
+                onSettle = { from, to ->
+                    val newList = items.toMutableList().apply { add(to, removeAt(from)) }
+                    onItemsChanged(newList)
+                },
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant),
+            ) { index, item, _ ->
+                val tabType = TabType.valueOf(item.tab)
+                ReorderableItem {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = item.visible,
+                                onCheckedChange = { checked ->
+                                    val newList = items.toMutableList().apply {
+                                        this[index] = item.copy(visible = checked)
+                                    }
+                                    onItemsChanged(newList)
+                                },
+                                enabled = !tabType.isMandatory(),
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.primary,
+                                    disabledCheckedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                            )
+
+                            Text(
+                                text = stringResource(tabType.labelRes()),
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Icon(
+                                painter = painterResource(R.drawable.drag_handle),
+                                contentDescription = "Reorder",
+                                modifier = Modifier
+                                    .draggableHandle()
+                                    .size(24.dp)
+                                    .padding(4.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        if (index < items.lastIndex) {
+                            ListDivider(hasArt = false)
+                        }
+                    }
                 }
             }
         }

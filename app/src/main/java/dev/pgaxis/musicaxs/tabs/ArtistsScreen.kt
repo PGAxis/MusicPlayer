@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
@@ -27,6 +28,36 @@ import dev.pgaxis.musicaxs.models.Artist
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SectionHeader
+
+private sealed interface ArtistListItem {
+    data class Header(val letter: String) : ArtistListItem
+    data class Item(val artist: Artist) : ArtistListItem
+}
+
+private fun groupArtists(artists: List<Artist>): Pair<List<ArtistListItem>, Map<String, Int>> {
+    val items = mutableListOf<ArtistListItem>()
+    val letterIndex = mutableMapOf<String, Int>()
+
+    artists
+        .groupBy { artist ->
+            val first = artist.name.firstOrNull()?.uppercaseChar()
+            when {
+                first == null -> "#"
+                first.isLetter() -> first.toString()
+                else -> "#"
+            }
+        }
+        .toSortedMap(compareBy { if (it == "#") "\u0000" else it })
+        .forEach { (letter, group) ->
+            letterIndex[letter] = items.size
+            items.add(ArtistListItem.Header(letter))
+            group.forEach { items.add(ArtistListItem.Item(it)) }
+        }
+
+    return items to letterIndex
+}
 
 @Composable
 fun ArtistsScreen(
@@ -62,35 +93,7 @@ fun ArtistsScreen(
 
 @Composable
 private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: String) -> Unit) {
-    data class ListItem(val letter: String?, val interpret: Artist)
-
-    val flatItems = remember(interprets) {
-        val result = mutableListOf<ListItem>()
-        interprets
-            .groupBy { i ->
-                val f = i.name.firstOrNull()?.uppercaseChar()
-                when {
-                    f == null -> "#"
-                    f.isLetter() -> f.toString()
-                    else -> "#"
-                }
-            }
-            .toSortedMap(compareBy { if (it == "#") "\u0000" else it })
-            .forEach { (letter, group) ->
-                result.add(ListItem(letter, group.first()))
-                group.drop(1).forEach { result.add(ListItem(null, it)) }
-            }
-        result
-    }
-
-    val letterIndex = remember(flatItems) {
-        val map = mutableMapOf<String, Int>()
-        flatItems.forEachIndexed { index, item ->
-            if (item.letter != null) map[item.letter] = index
-        }
-        map
-    }
-
+    val (listItems, letterIndex) = remember(interprets) { groupArtists(interprets) }
     val letters = remember(letterIndex) { letterIndex.keys.toList() }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -104,35 +107,25 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
                 .padding(end = 20.dp),
             contentPadding = PaddingValues(bottom = LocalPlayerBarTotalHeight.current)
         ) {
-            itemsIndexed(
-                flatItems,
-                key = { _, item -> "${item.letter}_${item.interpret.name}" }
-            ) { index, item ->
-                Column {
-                    if (item.letter != null) {
-                        Text(
-                            text = item.letter,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    InterpretRow(
-                        interpret = item.interpret,
-                        onClick = { onOpenArtist(Uri.encode(item.interpret.name)) }
-                    )
-
-                    val nextItem = flatItems.getOrNull(index + 1)
-
-                    if (nextItem != null && nextItem.letter == null) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
+            itemsIndexed(listItems, key = { _, item ->
+                when (item) {
+                    is ArtistListItem.Header -> "header_${item.letter}"
+                    is ArtistListItem.Item -> item.artist.name
+                }
+            }) { index, item ->
+                when (item) {
+                    is ArtistListItem.Header -> SectionHeader(item.letter)
+                    is ArtistListItem.Item -> {
+                        Column {
+                            InterpretRow(
+                                interpret = item.artist,
+                                onClick = { onOpenArtist(Uri.encode(item.artist.name)) }
+                            )
+                            val nextItem = listItems.getOrNull(index + 1)
+                            if (nextItem !is ArtistListItem.Header && nextItem != null) {
+                                ListDivider(hasArt = false)
+                            }
+                        }
                     }
                 }
             }
@@ -161,10 +154,8 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(90.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
-                    ),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -184,7 +175,7 @@ private fun InterpretRow(interpret: Artist, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {

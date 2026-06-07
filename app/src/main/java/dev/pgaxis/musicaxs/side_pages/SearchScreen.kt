@@ -51,6 +51,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 
 @Composable
@@ -166,10 +167,7 @@ fun SearchScreen(
                             }
 
                             if (index < songsToShow.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
+                                ListDivider()
                             }
                         }
                     }

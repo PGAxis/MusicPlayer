@@ -61,8 +61,8 @@ val MusicAxsGrayscaleScheme = darkColorScheme(
     surfaceVariant = Gray900,
     onSurfaceVariant = TextCyanSecondary,
 
-    outline = Gray200,
-    outlineVariant = Gray600,
+    outline = Gray600,
+    outlineVariant = Gray200,
 
     error = PopupError,
     onError = TextWhitePrimary,

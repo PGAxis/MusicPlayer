@@ -79,7 +79,7 @@ fun SongRow(
                 else Color.Transparent
             )
             .clickable { onClick?.invoke() ?: MusicService.playSingular(context, song) }
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {

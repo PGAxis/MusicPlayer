@@ -66,9 +66,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
 
-    val tabs = listOf(R.string.tab_favourites, R.string.tab_playlists, R.string.tab_songs, R.string.tab_albums, R.string.tab_artists)
+    val visibleTabs get() = settings.tabs.filter { it.visible }
 
-    private val _currentPageIndex = MutableStateFlow(settings.lastTabIndex)
+    private val _currentPageIndex = MutableStateFlow(
+        settings.lastTabIndex.coerceIn(0, (settings.tabs.count { it.visible } - 1).coerceAtLeast(0))
+    )
     val currentPageIndex: StateFlow<Int> = _currentPageIndex.asStateFlow()
 
     private var controllerFuture: ListenableFuture<MediaController>? = null

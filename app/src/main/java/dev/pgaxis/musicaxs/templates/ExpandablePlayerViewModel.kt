@@ -1,4 +1,4 @@
-package dev.pgaxis.musicaxs.side_pages
+package dev.pgaxis.musicaxs.templates
 
 import android.app.Application
 import android.util.Log
@@ -21,7 +21,7 @@ sealed interface PlayType {
     data object Continue : PlayType
 }
 
-class SongControlViewModel(application: Application) : AndroidViewModel(application) {
+class ExpandablePlayerViewModel(application: Application) : AndroidViewModel(application) {
     private val settings = SettingsSave.getInstance(application)
     private val favourites = FavouritesSave.getInstance(application)
 
