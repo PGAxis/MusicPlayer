@@ -1,0 +1,6 @@
+Bug fixes:
+- Notification is now clickable and opens the app
+
+Additions:
+- Added artist separators — splits the artist field into individual artists when a song has multiple
+- Groundwork for future RSS/podcast and Orbit support (collaborative listening over Wi-Fi)

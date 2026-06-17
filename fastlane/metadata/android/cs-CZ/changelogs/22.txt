@@ -1,0 +1,6 @@
+Opravy chyb:
+- Notifikace je nyní klikatelná a otevře aplikaci
+
+Přídavky:
+- Přidány oddělovače umělců — rozdělují pole umělce na jednotlivé umělce, pokud má skladba více autorů
+- Základy pro budoucí podporu RSS/podcastů a funkce Orbit (společný poslech přes Wi-Fi)

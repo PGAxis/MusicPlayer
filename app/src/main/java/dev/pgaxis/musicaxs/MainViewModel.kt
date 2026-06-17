@@ -26,8 +26,8 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Timeline
 import dev.pgaxis.musicaxs.models.Album
-import dev.pgaxis.musicaxs.models.Artist
 import dev.pgaxis.musicaxs.models.Playlist
+import dev.pgaxis.musicaxs.models.deriveArtists
 import dev.pgaxis.musicaxs.repositories.AlbumRepository
 import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
@@ -52,7 +52,7 @@ private val SUPPORTED_MIME_TYPES = setOf(
     "audio/x-wav",      // wav (alternate)
     "audio/flac",       // flac
     "audio/x-flac",     // flac (alternate)
-    "audio/ogg",        // ogg vorbis
+    "audio/ogg",        // Ogg Vorbis
     "audio/mp4",        // m4a / aac
     "audio/m4a",        // m4a (alternate)
 )
@@ -160,7 +160,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val songs = querySongs()
                 val albums = queryAlbums()
-                val artists = queryArtists()
+                val artists = deriveArtists(songs, albums, settings.artistSeparatorRegex)
                 songRepo.update(songs)
                 albumRepo.update(albums)
                 artistRepo.update(artists)
@@ -288,43 +288,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         return albums
-    }
-
-    private fun queryArtists(): List<Artist> {
-        val context = getApplication<Application>()
-
-        val projection = arrayOf(
-            MediaStore.Audio.Artists._ID,
-            MediaStore.Audio.Artists.ARTIST,
-            MediaStore.Audio.Artists.NUMBER_OF_TRACKS,
-            MediaStore.Audio.Artists.NUMBER_OF_ALBUMS,
-        )
-
-        val interprets = mutableListOf<Artist>()
-
-        context.contentResolver.query(
-            MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            "${MediaStore.Audio.Artists.ARTIST} ASC"
-        )?.use { cursor ->
-            val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.ARTIST)
-            val songCountCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.NUMBER_OF_TRACKS)
-            val albumCountCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Artists.NUMBER_OF_ALBUMS)
-
-            while (cursor.moveToNext()) {
-                interprets.add(
-                    Artist(
-                        name = cursor.getString(nameCol) ?: "Unknown",
-                        songCount = cursor.getInt(songCountCol),
-                        albumCount = cursor.getInt(albumCountCol)
-                    )
-                )
-            }
-        }
-
-        return interprets
     }
 
     override fun onCleared() {

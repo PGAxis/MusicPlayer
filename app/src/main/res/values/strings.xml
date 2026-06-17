@@ -48,8 +48,12 @@
     <string name="set_scr_library">Library</string>
     <string name="set_scr_hide_wa_audio">Hide WhatsApp audio</string>
     <string name="set_scr_hide_wa_audio_desc">Hides songs from the "WhatsApp Audio" album</string>
+    <string name="set_scr_tab_order">Set tab order</string>
     <string name="set_scr_customization">Customization</string>
     <string name="set_scr_theme">Color Theme</string>
+    <string name="set_scr_artist_separators">Artist separators</string>
+    <string name="set_scr_artist_separators_desc">Characters or words used to split artists when a song has multiple</string>
+    <string name="set_scr_artist_separators_placeholder">Add separator…</string>
     <string name="set_scr_app_settings">App Settings</string>
     <string name="language">Language</string>
     <string name="set_scr_ytconv_add_songs">Allow YouTube Conv.axs to add songs</string>

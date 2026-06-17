@@ -15,10 +15,12 @@ interface ISettings {
     var lastQueueIndex: Int
     var repeatMode: Int
     var queueSource: QueueSource
+    var podcastFeedUrls: List<String>
 
     // settings
     var hideWhatsAppAudio: Boolean
     var allowYTCnv: Boolean
     var theme: Theme
     var tabs: List<TitleVis>
+    var artistSeparator: List<String>
 }

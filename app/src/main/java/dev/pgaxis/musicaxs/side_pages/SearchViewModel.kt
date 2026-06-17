@@ -6,7 +6,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.AlbumRepository
+import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
+import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -18,17 +20,20 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
+    private val settings = SettingsSave.getInstance(getApplication())
     private val songRepo = SongRepository.getInstance()
     private val albumRepo = AlbumRepository.getInstance()
+    private val artistRepo = ArtistRepository.getInstance()
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searched = _query
-        .debounce(300)
+        .debounce(300.milliseconds)
         .mapLatest { q ->
             if (q.isBlank()) SearchResults()
             else withContext(Dispatchers.IO) { search(q) }
@@ -41,12 +46,14 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         val q = query.trim().lowercase()
         val allSongs = songRepo.songs.value
         val allAlbums = albumRepo.albums.value
+        val allArtists = artistRepo.artists.value
 
         val matchingSongs = allSongs.filter { it.title.lowercase().contains(q) }
-        val matchingArtists = allSongs
-            .filter { it.artist.lowercase().contains(q) }
-            .groupBy { it.artist }
-            .map { (artist, songs) -> ArtistResult(artist, songs) }
+
+        val matchingArtists = allArtists
+            .filter { it.name.lowercase().contains(q) }
+            .map { ArtistResult(it.name, it.songCount) }
+
         val matchingAlbums = allAlbums.filter { it.name.lowercase().contains(q) }
             .map { AlbumResult(it.name, it.albumArtUri, it.songCount, it.id) }
 
@@ -64,5 +71,5 @@ data class SearchResults(
     val albums: List<AlbumResult> = emptyList()
 )
 
-data class ArtistResult(val name: String, val songs: List<Song>)
+data class ArtistResult(val name: String, val songCount: Int)
 data class AlbumResult(val name: String, val artUri: Uri?, val size: Int, val id: Long)

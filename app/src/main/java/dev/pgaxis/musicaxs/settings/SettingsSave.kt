@@ -91,11 +91,13 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastQueueIndex by intSetting(-1, SettingsData::lastQueueIndex)
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
+    override var podcastFeedUrls by setting(emptyList(), SettingsData::podcastFeedUrls)
     // settings
     override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
     override var theme by setting(Theme.CYAN, SettingsData::theme)
     override var tabs by setting(DEFAULT_TABS, SettingsData::tabs)
+    override var artistSeparator by setting(arrayOf(",").toList(), SettingsData::artistSeparator)
 
     // -- Data class
     @Keep
@@ -110,11 +112,13 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastQueueIndex: Int = -1,
         var repeatMode: Int = 2,
         var queueSource: QueueSource = QueueSource.MANUAL,
+        var podcastFeedUrls: List<String> = emptyList(),
         // settings
         var hideWhatsAppAudio: Boolean = false,
         var allowYTCnv: Boolean = false,
         var theme: Theme = Theme.CYAN,
-        var tabs: List<TitleVis> = DEFAULT_TABS
+        var tabs: List<TitleVis> = DEFAULT_TABS,
+        var artistSeparator: List<String> = arrayOf(",").toList(),
     )
 
     @Keep
@@ -126,6 +130,11 @@ class SettingsSave private constructor(context: Context): ISettings {
 
     fun flush() {
         if (::boundSettings.isInitialized) boundSettings.flush()
+    }
+
+    val artistSeparatorRegex: Regex? get() {
+        val seps = artistSeparator
+        return if (seps.isEmpty()) null else seps.joinToString("|") { Regex.escape(it) }.toRegex()
     }
 
     init {
@@ -149,10 +158,12 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueIndex = s.lastQueueIndex
             repeatMode = s.repeatMode
             queueSource = s.queueSource
+            podcastFeedUrls = s.podcastFeedUrls
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
             theme = s.theme
             tabs = s.tabs
+            artistSeparator = s.artistSeparator
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }

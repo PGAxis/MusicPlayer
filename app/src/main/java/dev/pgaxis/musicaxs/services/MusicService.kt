@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.services
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -29,6 +30,8 @@ import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
+import dev.pgaxis.musicaxs.MainActivity
+import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.settings.ShuffleSave
@@ -41,6 +44,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -177,7 +181,7 @@ class MusicService : MediaSessionService() {
             val queue = settings.lastQueue.toMutableList()
 
             if (applyShuffleRandomness && queue.isNotEmpty()) {
-                val randomIndex = (0 until queue.size).random()
+                val randomIndex = queue.indices.random()
                 queue.add(randomIndex, QueueEntry(song.uri.toString(), song.title, song.artist))
             } else {
                 queue.add(QueueEntry(song.uri.toString(), song.title, song.artist))
@@ -324,16 +328,6 @@ class MusicService : MediaSessionService() {
     }
 
     // -- Internal queue operations
-
-    private fun Song.toMediaItem() = MediaItem.Builder()
-        .setUri(uri)
-        .setMediaMetadata(
-            MediaMetadata.Builder()
-                .setTitle(title)
-                .setArtist(artist)
-                .build()
-        )
-        .build()
 
     private fun setRepeatInternal(repeatMode: Int) {
         settings.repeatMode = repeatMode
@@ -592,6 +586,16 @@ class MusicService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(MusicSessionCallback())
+            .setSessionActivity(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    Intent(this, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
             .build()
 
         player.addListener(object : Player.Listener {
@@ -622,7 +626,7 @@ class MusicService : MediaSessionService() {
                 playStartTime = 0L
                 playCountJob = serviceScope.launch {
                     while (true) {
-                        delay(500)
+                        delay(500.milliseconds)
                         val player = instance?.mediaSession?.player ?: return@launch
                         if (player.isPlaying) {
                             playStartTime += 500
@@ -645,7 +649,7 @@ class MusicService : MediaSessionService() {
 
                 timelineSaveJob?.cancel()
                 timelineSaveJob = serviceScope.launch {
-                    delay(if (items.isEmpty()) 200L else 100L)
+                    delay((if (items.isEmpty()) 200L else 100L).milliseconds)
                     settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
                     settings.lastQueue = items.mapNotNull { QueueEntry(it.localConfiguration?.uri?.toString() ?: return@mapNotNull null, it.mediaMetadata.title?.toString() ?: "", it.mediaMetadata.artist?.toString() ?: "") }
                 }

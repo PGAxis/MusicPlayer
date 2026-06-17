@@ -46,6 +46,7 @@ import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ArtistDetailScreen(
@@ -62,7 +63,7 @@ fun ArtistDetailScreen(
 
     LaunchedEffect(items.isEmpty()) {
         if (items.isEmpty()) {
-            delay(3000)
+            delay(3000.milliseconds)
             if (items.isEmpty()) onBack()
         }
     }

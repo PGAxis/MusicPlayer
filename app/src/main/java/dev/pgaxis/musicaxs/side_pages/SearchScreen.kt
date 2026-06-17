@@ -179,7 +179,7 @@ fun SearchScreen(
                     items(results.artists.take(5), key = { "artist_${it.name}" }) { artist ->
                         ListItem(
                             headlineContent = { Text(artist.name, fontWeight = FontWeight.Medium) },
-                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, artist.songs.size, artist.songs.size)) },
+                            supportingContent = { Text(pluralStringResource(R.plurals.song_count, artist.songCount, artist.songCount)) },
                             modifier = Modifier.clickable { onOpenArtist(Uri.encode(artist.name)) }
                         )
                     }

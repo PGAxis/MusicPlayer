@@ -54,8 +54,12 @@
     <string name="set_scr_library">Knihovna</string>
     <string name="set_scr_hide_wa_audio">Skrýt WhatsApp audio</string>
     <string name="set_scr_hide_wa_audio_desc">Skryje skladby z "WhatsApp Audio" alba</string>
+    <string name="set_scr_tab_order">Nastavit pořadí stránek</string>
     <string name="set_scr_customization">Přizpůsobení</string>
     <string name="set_scr_theme">Barevný motiv</string>
+    <string name="set_scr_artist_separators">Oddělovače umělců</string>
+    <string name="set_scr_artist_separators_desc">Znaky nebo slova použitá k rozdělení jmen umělců, pokud má skladba více autorů</string>
+    <string name="set_scr_artist_separators_placeholder">Přidat oddělovač…</string>
     <string name="set_scr_app_settings">Nastavení Aplikace</string>
     <string name="language">Jazyk</string>
     <string name="set_scr_ytconv_add_songs">Povolit YouTube Conv.axs přidávat skladby</string>

@@ -41,6 +41,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -123,7 +126,7 @@ fun SettingsScreen(
                 ListDivider(hasArt = false)
 
                 SettingsListRow(
-                    title = "Set tab order", //stringResource(R.string.set_scr_tab_order),
+                    title = stringResource(R.string.set_scr_tab_order),
                     items = vm.settings.tabs,
                     onItemsChanged = { vm.settings.tabs = it }
                 )
@@ -135,6 +138,17 @@ fun SettingsScreen(
                     options = vm.themeOptions,
                     selected = vm.selectedTheme,
                     onSelectChange = { vm.onThemeChanged(it as Theme) }
+                )
+
+                ListDivider(hasArt = false)
+
+                SettingsArtistSeparatorsRow(
+                    predefinedSeparators = vm.predefinedSeparators,
+                    activeSeparators = vm.settings.artistSeparator,
+                    customSeparators = vm.customSeparators,
+                    onToggle = vm::onArtistSeparatorToggled,
+                    onAdd = vm::onCustomSeparatorAdded,
+                    onRemove = vm::onCustomSeparatorRemoved
                 )
             }
 
@@ -432,6 +446,150 @@ fun SettingsListRow(
                             ListDivider(hasArt = false)
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsArtistSeparatorsRow(
+    predefinedSeparators: List<String>,
+    activeSeparators: List<String>,
+    customSeparators: List<String>,
+    onToggle: (String, Boolean) -> Unit,
+    onAdd: (String) -> Unit,
+    onRemove: (String) -> Unit
+) {
+    var customInput by remember { mutableStateOf("") }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(11.dp)),
+        shape = RoundedCornerShape(11.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.set_scr_artist_separators),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            )
+            Text(
+                text = stringResource(R.string.set_scr_artist_separators_desc),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 8.dp)
+            )
+
+            HorizontalDivider()
+
+            predefinedSeparators.forEachIndexed { index, sep ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onToggle(sep, sep !in activeSeparators) }
+                        .padding(horizontal = 20.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = sep in activeSeparators,
+                        onCheckedChange = { checked -> onToggle(sep, checked) },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Text(
+                        text = sep,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (index < predefinedSeparators.lastIndex) {
+                    ListDivider(hasArt = false)
+                }
+            }
+
+            HorizontalDivider()
+
+            AnimatedVisibility(
+                visible = customSeparators.isNotEmpty(),
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column {
+                    customSeparators.forEachIndexed { index, sep ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = sep,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { onRemove(sep) }) {
+                                Icon(
+                                    painterResource(R.drawable.cross),
+                                    contentDescription = "Remove",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        if (index < customSeparators.lastIndex) {
+                            ListDivider(hasArt = false)
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextField(
+                    value = customInput,
+                    onValueChange = { customInput = it },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.set_scr_artist_separators_placeholder),
+                            fontSize = 14.sp
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+                IconButton(
+                    onClick = {
+                        onAdd(customInput)
+                        customInput = ""
+                    },
+                    enabled = customInput.isNotBlank()
+                ) {
+                    Icon(
+                        painterResource(R.drawable.plus),
+                        contentDescription = "Add",
+                        tint = if (customInput.isNotBlank()) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
