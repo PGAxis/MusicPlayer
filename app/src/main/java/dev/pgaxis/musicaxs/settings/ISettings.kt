@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.settings
 
+import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.TitleVis
 import dev.pgaxis.musicaxs.services.QueueSource
 import dev.pgaxis.musicaxs.services.Theme
@@ -15,7 +16,7 @@ interface ISettings {
     var lastQueueIndex: Int
     var repeatMode: Int
     var queueSource: QueueSource
-    var podcastFeedUrls: List<String>
+    var podcastFeeds: List<PodcastFeed>
 
     // settings
     var hideWhatsAppAudio: Boolean

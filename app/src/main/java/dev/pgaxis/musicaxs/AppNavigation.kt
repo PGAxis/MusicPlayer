@@ -2,7 +2,6 @@ package dev.pgaxis.musicaxs
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,6 +11,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.side_pages.AlbumDetailScreen
 import dev.pgaxis.musicaxs.side_pages.ArtistDetailScreen
 import dev.pgaxis.musicaxs.side_pages.PlaylistDetailScreen
+import dev.pgaxis.musicaxs.side_pages.PodcastDetailScreen
 import dev.pgaxis.musicaxs.side_pages.SearchScreen
 import dev.pgaxis.musicaxs.side_pages.SettingsScreen
 
@@ -20,11 +20,8 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
 
-    var lastNavTime = remember { 0L }
     fun popBack() {
-        val now = System.currentTimeMillis()
-        if (now - lastNavTime > 500) {
-            lastNavTime = now
+        if (navController.previousBackStackEntry != null) {
             navController.popBackStack()
         }
     }
@@ -39,6 +36,7 @@ fun AppNavigation() {
                 onChooseSongsForPlaylist = { playlistId -> navController.navigate("search/choose/$playlistId") },
                 onOpenAlbum = { albumId -> navController.navigate("album/$albumId") },
                 onOpenArtist = { name -> navController.navigate("artist/$name") },
+                onOpenPodcast = { feedUrl -> navController.navigate("podcast/${Uri.encode(feedUrl)}") },
                 vm = mainViewModel
             )
         }
@@ -94,13 +92,19 @@ fun AppNavigation() {
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
             )
         }
-
         composable("artist/{artistName}") { backStackEntry ->
             val artistName = Uri.decode(backStackEntry.arguments?.getString("artistName")!!)
             ArtistDetailScreen(
                 artistName = artistName,
                 onBack = { popBack() },
                 onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") }
+            )
+        }
+        composable("podcast/{feedUrl}") { backStackEntry ->
+            val feedUrl = Uri.decode(backStackEntry.arguments?.getString("feedUrl")!!)
+            PodcastDetailScreen(
+                feedUrl = feedUrl,
+                onBack = { popBack() }
             )
         }
     }

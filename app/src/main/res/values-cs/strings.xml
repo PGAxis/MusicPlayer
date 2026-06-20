@@ -11,6 +11,10 @@
     <string name="delete_w_arg">Odstranit „%s"?</string>
     <string name="no_coming_back">Tato akce nemůže být vrácena zpět</string>
     <string name="queue">Fronta</string>
+    <string name="ok">OK</string>
+    <string name="download">Stáhnout</string>
+    <string name="delete_download">Smazat stažení</string>
+
     <plurals name="song_count">
         <item quantity="one">%d skladba</item>
         <item quantity="few">%d skladby</item>
@@ -28,6 +32,12 @@
         <item quantity="few">%d alba</item>
         <item quantity="many">%d alb</item>
         <item quantity="other">%d alb</item>
+    </plurals>
+    <plurals name="episode_count">
+        <item quantity="one">%d epizoda</item>
+        <item quantity="few">%d epizody</item>
+        <item quantity="many">%d epizod</item>
+        <item quantity="other">%d epizod</item>
     </plurals>
 
     <!-- Remove from -->
@@ -47,6 +57,7 @@
     <string name="tab_songs">Skladby</string>
     <string name="tab_albums">Alba</string>
     <string name="tab_artists">Interpreti</string>
+    <string name="tab_podcasts">Podcasty</string>
     <string name="main_new_playlist">Nový playlist</string>
 
     <!-- Settings screen -->
@@ -134,4 +145,12 @@
     <string name="set_vm_chalk">Křída</string>
     <string name="set_vm_sunshine">Slunění</string>
     <string name="set_vm_grayscale">Stupně šedi</string>
+
+    <!-- Podcasts screen -->
+    <string name="podcasts_empty">Zatím nebyly přidány žádné podcasty</string>
+    <string name="podcasts_add_feed">Přidat zdroj</string>
+    <string name="podcasts_rss_url">URL RSS zdroje</string>
+
+    <!-- Podcasts downloader -->
+    <string name="download_complete">Stahování dokončeno</string>
 </resources>

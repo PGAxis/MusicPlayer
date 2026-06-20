@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SectionHeader
+import kotlin.time.Duration.Companion.milliseconds
 
 private sealed interface SongListItem {
     data class Header(val letter: String) : SongListItem
@@ -175,7 +176,7 @@ fun SongsScreen(
                             },
                             onScrubEnd = {
                                 scope.launch {
-                                    delay(600)
+                                    delay(600.milliseconds)
                                     activeLetter = null
                                 }
                             }

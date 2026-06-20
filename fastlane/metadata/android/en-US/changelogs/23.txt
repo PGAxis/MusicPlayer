@@ -1,0 +1,11 @@
+Bug fixes:
+- Song controls were hiding song options in the control screen
+
+Additions:
+- Added Podcasts tab
+- Added support for RSS feed (visible inside the Podcasts tab)
+- Changed queue to take QueueItem rather than Song
+- Podcasts can be in the same queue as normal songs
+- Podcasts can be downloaded
+- Deleting a downloaded version of playing podcast changes the source to the online source
+- When trying to play a podcast, that is only available online, without a Wi-Fi connection, it gets skipped

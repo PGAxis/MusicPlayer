@@ -11,6 +11,8 @@ import androidx.compose.runtime.setValue
 import dev.pgaxis.axs.AxsBoundObject
 import dev.pgaxis.axs.AxsFile
 import dev.pgaxis.musicaxs.models.DEFAULT_TABS
+import dev.pgaxis.musicaxs.models.PodcastFeed
+import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.models.TitleVis
 import dev.pgaxis.musicaxs.services.QueueSource
 import dev.pgaxis.musicaxs.services.Theme
@@ -49,7 +51,14 @@ class SettingsSave private constructor(context: Context): ISettings {
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
             state = value
-            if (::boundSettings.isInitialized && !isInitializing) boundSettings.setValue(prop, value)
+            if (::boundSettings.isInitialized && !isInitializing) {
+                try {
+                    boundSettings.setValue(prop, value)
+                } catch (e: Exception) {
+                    Log.e("SettingsSaveError", "Failed to write ${property.name}: $e")
+                    Log.e("SettingsSaveError", e.stackTraceToString())
+                }
+            }
         }
     }
 
@@ -91,7 +100,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastQueueIndex by intSetting(-1, SettingsData::lastQueueIndex)
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
-    override var podcastFeedUrls by setting(emptyList(), SettingsData::podcastFeedUrls)
+    override var podcastFeeds by setting(emptyList(), SettingsData::podcastFeeds)
     // settings
     override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
@@ -112,7 +121,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastQueueIndex: Int = -1,
         var repeatMode: Int = 2,
         var queueSource: QueueSource = QueueSource.MANUAL,
-        var podcastFeedUrls: List<String> = emptyList(),
+        var podcastFeeds: List<PodcastFeed> = emptyList(),
         // settings
         var hideWhatsAppAudio: Boolean = false,
         var allowYTCnv: Boolean = false,
@@ -125,7 +134,11 @@ class SettingsSave private constructor(context: Context): ISettings {
     data class QueueEntry(
         val uri: String = "",
         val title: String = "",
-        val artist: String = ""
+        val artist: String = "",
+        val albumArtUri: String? = null,
+        val durationMs: Long = 0L,
+        val source: QueueItemSource = QueueItemSource.LOCAL,
+        val deviceId: String? = null
     )
 
     fun flush() {
@@ -158,7 +171,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastQueueIndex = s.lastQueueIndex
             repeatMode = s.repeatMode
             queueSource = s.queueSource
-            podcastFeedUrls = s.podcastFeedUrls
+            podcastFeeds = s.podcastFeeds
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
             theme = s.theme

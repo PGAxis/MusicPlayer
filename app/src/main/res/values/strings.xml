@@ -11,6 +11,10 @@
     <string name="delete_w_arg">Delete "%s"?</string>
     <string name="no_coming_back">This can\'t be undone</string>
     <string name="queue">Queue</string>
+    <string name="ok">OK</string>
+    <string name="download">Download</string>
+    <string name="delete_download">Delete download</string>
+
     <plurals name="song_count">
         <item quantity="one">%d song</item>
         <item quantity="other">%d songs</item>
@@ -22,6 +26,10 @@
     <plurals name="album_count">
         <item quantity="one">%d album</item>
         <item quantity="other">%d albums</item>
+    </plurals>
+    <plurals name="episode_count">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
     </plurals>
 
     <!-- Remove from -->
@@ -41,6 +49,7 @@
     <string name="tab_songs">Songs</string>
     <string name="tab_albums">Albums</string>
     <string name="tab_artists">Interprets</string>
+    <string name="tab_podcasts">Podcasts</string>
     <string name="main_new_playlist">New Playlist</string>
 
     <!-- Settings screen -->
@@ -128,4 +137,12 @@
     <string name="set_vm_chalk">Chalk</string>
     <string name="set_vm_sunshine">Sunshine</string>
     <string name="set_vm_grayscale">Grayscale</string>
+    
+    <!-- Podcasts screen -->
+    <string name="podcasts_empty">No podcasts added yet</string>
+    <string name="podcasts_add_feed">Add a feed</string>
+    <string name="podcasts_rss_url">RSS feed URL</string>
+
+    <!-- Podcasts downloader -->
+    <string name="download_complete">Download complete</string>
 </resources>

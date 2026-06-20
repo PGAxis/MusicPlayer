@@ -3,11 +3,14 @@ package dev.pgaxis.musicaxs.services
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.annotation.OptIn
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -30,8 +33,13 @@ import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
+import androidx.media3.common.PlaybackException
+import androidx.media3.session.MediaNotification
 import dev.pgaxis.musicaxs.MainActivity
 import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
+import dev.pgaxis.musicaxs.models.PodcastEpisode
+import dev.pgaxis.musicaxs.models.PodcastFeed
+import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.settings.ShuffleSave
@@ -176,6 +184,26 @@ class MusicService : MediaSessionService() {
                 }
         }
 
+        fun playSingularPodcast(episode: PodcastEpisode, feed: PodcastFeed) {
+            instance?.playSingularPodcastInternal(episode, feed) ?: run {
+
+            }
+        }
+
+        fun replaceQueuePodcast(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
+            if (episodes.isEmpty()) return
+            instance?.replaceQueuePodcastInternal(episodes, feed)
+        }
+
+        fun playShuffledPodcast(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
+            if (episodes.isEmpty()) return
+            instance?.playShuffledPodcastInternal(episodes, feed)
+        }
+
+        fun addToQueuePodcast(episode: PodcastEpisode, feed: PodcastFeed) {
+            instance?.addToQueuePodcastInternal(episode, feed)
+        }
+
         private fun addToSettingsQueue(context: Context, song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
             val settings = SettingsSave.getInstance(context)
             val queue = settings.lastQueue.toMutableList()
@@ -291,8 +319,16 @@ class MusicService : MediaSessionService() {
         fun like(favourites: FavouritesSave, updateNotification: Boolean = true) {
             val inst = instance ?: return
             val player = instance?.mediaSession?.player
+            val currentItem = player?.currentMediaItem ?: return
 
-            player?.currentMediaItem?.localConfiguration?.uri?.let {
+            val source = currentItem.mediaMetadata.extras
+                ?.getString("source")
+                ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
+                ?: QueueItemSource.LOCAL
+
+            if (source != QueueItemSource.LOCAL) return
+
+            currentItem.localConfiguration?.uri?.let {
                 isLiked = !isLiked
                 favourites.toggle(it, isLiked)
                 if (updateNotification) inst.mediaSession?.let { session -> inst.updateNotificationButtons(session) }
@@ -408,6 +444,72 @@ class MusicService : MediaSessionService() {
         }
     }
 
+    private fun playSingularPodcastInternal(episode: PodcastEpisode, feed: PodcastFeed) {
+        val player = mediaSession?.player ?: return
+        when (currentSource) {
+            QueueSource.PLAYLIST -> {
+                currentSource = QueueSource.MANUAL
+                settings.queueSource = QueueSource.MANUAL
+                player.setMediaItem(episode.toMediaItem(feed))
+            }
+            QueueSource.MANUAL -> {
+                player.addMediaItem(0, episode.toMediaItem(feed))
+                player.seekTo(0, 0)
+            }
+        }
+        settings.lastPlaylistId = -1L
+        player.prepare()
+        player.play()
+    }
+
+    private fun replaceQueuePodcastInternal(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
+        val player = mediaSession?.player ?: return
+        currentSource = QueueSource.PLAYLIST
+        settings.queueSource = QueueSource.PLAYLIST
+        settings.lastPlaylistId = -1L
+
+        val save = ShuffleSave.getInstance(this)
+        save.updateShuffled(false)
+        isShuffleOn = false
+        save.setOriginalQueue(episodes.map { it.audioUrl })
+
+        player.setMediaItems(episodes.map { it.toMediaItem(feed) })
+        player.prepare()
+        player.play()
+    }
+
+    private fun playShuffledPodcastInternal(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
+        val player = mediaSession?.player ?: return
+        currentSource = QueueSource.PLAYLIST
+        settings.queueSource = QueueSource.PLAYLIST
+        settings.lastPlaylistId = -1L
+
+        val save = ShuffleSave.getInstance(this)
+        val shuffled = episodes.shuffled()
+
+        save.setOriginalQueue(episodes.map { it.audioUrl })
+        save.updateShuffled(true)
+        isShuffleOn = true
+
+        player.setMediaItems(shuffled.map { it.toMediaItem(feed) })
+        player.seekTo(0, 0)
+        player.prepare()
+        player.play()
+
+        mediaSession?.let { updateNotificationButtons(it) }
+    }
+
+    private fun addToQueuePodcastInternal(episode: PodcastEpisode, feed: PodcastFeed) {
+        val player = mediaSession?.player ?: return
+        player.addMediaItem(player.mediaItemCount, episode.toMediaItem(feed))
+
+        if (currentSource == QueueSource.PLAYLIST) {
+            settings.lastPlaylistId = -1L
+            currentSource = QueueSource.MANUAL
+            settings.queueSource = QueueSource.MANUAL
+        }
+    }
+
     private fun replaceQueueFromExtras(
         uris: List<String>,
         titles: List<String>,
@@ -415,12 +517,17 @@ class MusicService : MediaSessionService() {
     ) {
         val player = mediaSession?.player ?: return
         val items = uris.mapIndexed { i, uri ->
+            val song by lazy { songRepo.resolveSong(uri.toUri()) ?: songRepo.resolveSong(this, uri.toUri()) }
             MediaItem.Builder()
                 .setUri(uri)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(titles.getOrElse(i) { "Unknown" })
                         .setArtist(artists.getOrElse(i) { "Unknown" })
+                        .setArtworkUri(song?.albumArtUri)
+                        .setExtras(Bundle().apply {
+                            putString("source", QueueItemSource.LOCAL.name)
+                        })
                         .build()
                 )
                 .build()
@@ -530,6 +637,11 @@ class MusicService : MediaSessionService() {
                         MediaMetadata.Builder()
                             .setTitle(entry.title)
                             .setArtist(entry.artist)
+                            .setArtworkUri(entry.albumArtUri?.toUri())
+                            .setExtras(Bundle().apply {
+                                putString("source", entry.source.name)
+                                entry.deviceId?.let { putString("deviceId", it) }
+                            })
                             .build()
                     )
                     .build()
@@ -548,7 +660,7 @@ class MusicService : MediaSessionService() {
     // -- Notification
 
     @OptIn(UnstableApi::class)
-    private class CustomNotificationProvider(context: Context)
+    private class CustomNotificationProvider(private val context: Context)
         : DefaultMediaNotificationProvider(context) {
 
         private var cachedButtons: ImmutableList<CommandButton> = ImmutableList.of()
@@ -561,6 +673,35 @@ class MusicService : MediaSessionService() {
         ): ImmutableList<CommandButton> {
             if (customLayout.isNotEmpty()) cachedButtons = customLayout
             return cachedButtons
+        }
+
+        override fun addNotificationActions(
+            mediaSession: MediaSession,
+            mediaButtons: ImmutableList<CommandButton>,
+            builder: NotificationCompat.Builder,
+            actionFactory: MediaNotification.ActionFactory
+        ): IntArray {
+            val songUri = mediaSession.player.currentMediaItem?.localConfiguration?.uri
+            if (songUri != null) {
+                try {
+                    val bitmap = MediaMetadataRetriever().let { mmr ->
+                        mmr.setDataSource(context, songUri)
+                        val art = mmr.embeddedPicture
+                        mmr.release()
+                        art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+                    } ?: run {
+                        val artworkUri = mediaSession.player.currentMediaItem?.mediaMetadata?.artworkUri
+                        artworkUri?.let { uri ->
+                            context.contentResolver.openInputStream(uri)?.use {
+                                BitmapFactory.decodeStream(it)
+                            }
+                        }
+                    }
+                    if (bitmap != null) builder.setLargeIcon(bitmap)
+                } catch (_: Exception) { }
+            }
+
+            return super.addNotificationActions(mediaSession, mediaButtons, builder, actionFactory)
         }
     }
 
@@ -614,28 +755,56 @@ class MusicService : MediaSessionService() {
                     return
                 }
                 val uri = mediaItem.localConfiguration?.uri ?: return
+                val source = mediaItem.mediaMetadata.extras?.getString("source")?.let {
+                    runCatching {
+                        QueueItemSource.valueOf(it)
+                    }.getOrNull()
+                } ?: QueueItemSource.LOCAL
 
-                isLiked = favourites.isFavourite(uri)
+                val isLocal = source == QueueItemSource.LOCAL
+
+                isLiked = if (isLocal) {
+                    favourites.isFavourite(uri)
+                } else {
+                    false
+                }
+
                 currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
                 currentUriState.value = uri
                 settings.lastSongUri = uri.toString()
                 settings.lastQueueIndex = player.currentMediaItemIndex
                 updateNotificationButtons(mediaSession!!)
 
-                playCountJob?.cancel()
-                playStartTime = 0L
-                playCountJob = serviceScope.launch {
-                    while (true) {
-                        delay(500.milliseconds)
-                        val player = instance?.mediaSession?.player ?: return@launch
-                        if (player.isPlaying) {
-                            playStartTime += 500
-                            if (playStartTime >= 5000) {
-                                PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
-                                break
+                if (isLocal) {
+                    playCountJob?.cancel()
+                    playStartTime = 0L
+                    playCountJob = serviceScope.launch {
+                        while (true) {
+                            delay(500.milliseconds)
+                            val player = instance?.mediaSession?.player ?: return@launch
+                            if (player.isPlaying) {
+                                playStartTime += 500
+                                if (playStartTime >= 5000) {
+                                    PlayCountTracker.getInstance(applicationContext).recordPlay(uri)
+                                    break
+                                }
                             }
                         }
                     }
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                val current = player.currentMediaItem
+                val source = current?.mediaMetadata?.extras?.getString("source")?.let {
+                    runCatching { QueueItemSource.valueOf(it) }.getOrNull()
+                } ?: QueueItemSource.LOCAL
+
+                if (source == QueueItemSource.PODCAST) {
+                    // Stream failed (network unavailable, blocked, etc.)
+                    player.seekToNextMediaItem()
+                    player.play()
+                    return
                 }
             }
 
@@ -651,7 +820,21 @@ class MusicService : MediaSessionService() {
                 timelineSaveJob = serviceScope.launch {
                     delay((if (items.isEmpty()) 200L else 100L).milliseconds)
                     settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
-                    settings.lastQueue = items.mapNotNull { QueueEntry(it.localConfiguration?.uri?.toString() ?: return@mapNotNull null, it.mediaMetadata.title?.toString() ?: "", it.mediaMetadata.artist?.toString() ?: "") }
+                    settings.lastQueue = items.mapNotNull { item ->
+                        val uri = item.localConfiguration?.uri?.toString() ?: return@mapNotNull null
+                        val extras = item.mediaMetadata.extras
+                        QueueEntry(
+                            uri = uri,
+                            title = item.mediaMetadata.title?.toString() ?: "",
+                            artist = item.mediaMetadata.artist?.toString() ?: "",
+                            albumArtUri = item.mediaMetadata.artworkUri?.toString(),
+                            durationMs = 0L,
+                            source = extras?.getString("source")
+                                ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
+                                ?: QueueItemSource.LOCAL,
+                            deviceId = extras?.getString("deviceId")
+                        )
+                    }
                 }
             }
 
@@ -682,13 +865,17 @@ class MusicService : MediaSessionService() {
                 if (uris.isNotEmpty()) {
                     val currentIndex = uris.indexOfFirst { entry -> entry.uri == settings.lastSongUri }.coerceAtLeast(0)
                     val items = uris.map { entry ->
-                        val song by lazy { songRepo.resolveSong(entry.uri.toUri()) ?: songRepo.resolveSong(this, entry.uri.toUri()) }
                         MediaItem.Builder()
                             .setUri(entry.uri.toUri())
                             .setMediaMetadata(
                                 MediaMetadata.Builder()
-                                    .setTitle(entry.title.ifBlank { song?.title ?: "Unknown" })
-                                    .setArtist(entry.artist.ifBlank { song?.artist ?: "Unknown" })
+                                    .setTitle(entry.title)
+                                    .setArtist(entry.artist)
+                                    .setArtworkUri(entry.albumArtUri?.toUri())
+                                    .setExtras(Bundle().apply {
+                                        putString("source", entry.source.name)
+                                        entry.deviceId?.let { id -> putString("deviceId", id) }
+                                    })
                                     .build()
                             )
                             .build()

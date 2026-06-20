@@ -214,7 +214,6 @@ fun PlaylistDetailScreen(
                                             onSeeDetails = onSeeDetail,
                                             onAddTo = { selectedSong = keyed.song },
                                             showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
-                                            removeLabel = stringResource(R.string.rm_from_playlist),
                                             onRemoveFrom = {
                                                 vm.removeSong(playlistId, index)
                                                 PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)

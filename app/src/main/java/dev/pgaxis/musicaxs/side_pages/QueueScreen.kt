@@ -1,6 +1,5 @@
 package dev.pgaxis.musicaxs.side_pages
 
-import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,7 +23,7 @@ import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.ShuffleSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
-import dev.pgaxis.musicaxs.templates.SongRow
+import dev.pgaxis.musicaxs.templates.QueueItemRow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -88,37 +87,20 @@ fun QueueScreen(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                itemsIndexed(vm.queue, key = { _, item ->
+                itemsIndexed(vm.queueItems, key = { _, item ->
                     System.identityHashCode(item)
-                }) { index, mediaItem ->
-                    val uri = mediaItem.localConfiguration?.uri ?: return@itemsIndexed
-                    val key = System.identityHashCode(mediaItem)
-
-                    // Resolve a Song from the MediaItem for SongRow
-                    val song = remember(uri) {
-                        SongRepository.getInstance().songs.value.find { it.uri == uri }
-                            ?: Song(
-                                id = uri.toString().hashCode().toLong(),
-                                title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
-                                artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
-                                album = "",
-                                albumId = 0,
-                                uri = uri,
-                                durationMs = 0L,
-                                albumArtUri = Uri.EMPTY,
-                                track = 0
-                            )
-                    }
-
-                    ReorderableItem(reorderableState, key = key) { _ ->
+                }) { index, item ->
+                    ReorderableItem(reorderableState, key = "${item.uri}_${item.source}") { _ ->
                         Column {
-                            SongRow(
-                                song = song,
+                            QueueItemRow(
+                                item = item,
                                 onSeeDetails = onSeeDetail,
-                                onAddTo = { selectedSong = song },
-                                isPlayingOverride = true,
+                                onAddTo = {
+                                    val song = SongRepository.getInstance().songs.value
+                                        .find { it.uri.toString() == item.uri }
+                                    song?.let { selectedSong = it }
+                                },
                                 isPlaying = index == currentIndex,
-                                showRemoveFrom = true,
                                 onRemoveFrom = { vm.removeAt(index) },
                                 dragHandleModifier = Modifier.draggableHandle(),
                                 onClick = {

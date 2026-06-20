@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -39,6 +42,7 @@ import dev.pgaxis.musicaxs.tabs.AlbumsScreen
 import dev.pgaxis.musicaxs.tabs.FavouritesScreen
 import dev.pgaxis.musicaxs.tabs.ArtistsScreen
 import dev.pgaxis.musicaxs.tabs.PlaylistsScreen
+import dev.pgaxis.musicaxs.tabs.PodcastsScreen
 import dev.pgaxis.musicaxs.tabs.SongsScreen
 import dev.pgaxis.musicaxs.templates.ExpandablePlayer
 import dev.pgaxis.musicaxs.ui.theme.TextDarkPrimary
@@ -59,11 +63,16 @@ fun MainScreen(
     onChooseSongsForPlaylist: (playlistId: String) -> Unit,
     onOpenAlbum: (albumId: String) -> Unit,
     onOpenArtist: (name: String) -> Unit,
+    onOpenPodcast: (feedUrl: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
+
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var newPlaylistName  by remember { mutableStateOf("") }
+    var showAddFeedDialog by remember { mutableStateOf(false) }
 
     val visibleTabs = vm.visibleTabs
     val tabContent = remember {
@@ -72,7 +81,8 @@ fun MainScreen(
             TabType.PLAYLISTS to { PlaylistsScreen(goToPlaylist) },
             TabType.SONGS to { SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll) },
             TabType.ALBUMS to { AlbumsScreen(onOpenAlbum = onOpenAlbum) },
-            TabType.ARTISTS to { ArtistsScreen(onOpenArtist = onOpenArtist) }
+            TabType.ARTISTS to { ArtistsScreen(onOpenArtist = onOpenArtist) },
+            TabType.PODCASTS to { PodcastsScreen(showAddDialog = showAddFeedDialog, onAddDialogDismiss = { showAddFeedDialog = false }, onOpenPodcast = onOpenPodcast) }
         )
     }
 
@@ -80,9 +90,6 @@ fun MainScreen(
     val tabScrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var newPlaylistName  by remember { mutableStateOf("") }
 
     var bgColor by remember { mutableStateOf(Color.DarkGray) }
     val animatedBgColor by animateColorAsState(
@@ -111,7 +118,8 @@ fun MainScreen(
         .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         val screenWidthDp = maxWidth
-        val tabWidthDp = screenWidthDp * 0.275f
+        val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val tabWidthDp = screenWidthDp * if (isLandscape) 0.15f else 0.275f
         val padDp = (screenWidthDp - tabWidthDp) / 2f
         val tabWidthPx = with(density) { tabWidthDp.toPx() }
 
@@ -169,15 +177,21 @@ fun MainScreen(
                     )
 
                     val onPlaylists = visibleTabs.getOrNull(pagerState.settledPage)?.tab == TabType.PLAYLISTS.name
+                    val onPodcasts = visibleTabs.getOrNull(pagerState.settledPage)?.tab == TabType.PODCASTS.name
+                    val showPlusButton = onPlaylists || onPodcasts
+
                     IconButton(
-                        onClick = { showCreateDialog = true },
-                        enabled = onPlaylists,
+                        onClick = {
+                            if (onPlaylists) showCreateDialog = true
+                            else if (onPodcasts) showAddFeedDialog = true
+                        },
+                        enabled = showPlusButton,
                         modifier = Modifier.size(35.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.plus),
                             contentDescription = "Add playlist",
-                            modifier = Modifier.alpha(if (onPlaylists) 1f else 0f),
+                            modifier = Modifier.alpha(if (showPlusButton) 1f else 0f),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -229,8 +243,10 @@ fun MainScreen(
                         val tabType = TabType.valueOf(titleVis.tab)
                         val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
                         val distance = abs(index - continuousPage).coerceIn(0f, 1f)
-                        val fontSize = lerp(20f, 15f, distance)
                         val isCurrent = pagerState.settledPage == index
+                        val label = stringResource(tabType.labelRes())
+                        var fittingActiveFontSize by remember(label) { mutableFloatStateOf(20f) }
+                        val actualFontSize = lerp(fittingActiveFontSize, fittingActiveFontSize * (15f / 20f), distance)
 
                         Box(
                             modifier = Modifier
@@ -240,11 +256,31 @@ fun MainScreen(
                                 .clickable { scope.launch { pagerState.animateScrollToPage(index) } },
                             contentAlignment = Alignment.Center
                         ) {
+                            // Hidden measuring text at max size
                             Text(
-                                text = stringResource(tabType.labelRes()),
-                                fontSize = fontSize.sp,
+                                text = label,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                modifier = Modifier.alpha(0f),
+                                autoSize = TextAutoSize.StepBased(
+                                    minFontSize = 8.sp,
+                                    maxFontSize = 20.sp,
+                                    stepSize = 0.5.sp
+                                ),
+                                onTextLayout = { result ->
+                                    fittingActiveFontSize = result.layoutInput.style.fontSize.value
+                                }
+                            )
+
+                            // Visible text using the captured size
+                            Text(
+                                text = label,
+                                fontSize = actualFontSize.sp,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
                     }

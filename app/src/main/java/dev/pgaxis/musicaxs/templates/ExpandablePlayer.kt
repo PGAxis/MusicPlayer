@@ -51,6 +51,7 @@ import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.PlayerBarDefaults
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.contrastColor
+import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.side_pages.QueueScreen
@@ -59,6 +60,7 @@ import dev.pgaxis.musicaxs.side_pages.toTimestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class PlayerState { Collapsed, Expanded }
 enum class QueuePanelState { Hidden, Visible }
@@ -146,7 +148,7 @@ fun ExpandablePlayer(
         var queueMounted by remember { mutableStateOf(false) }
         LaunchedEffect(progress >= 1f) {
             if (progress >= 1f) {
-                delay(500)
+                delay(500.milliseconds)
                 queueMounted = true
             } else {
                 queueMounted = false
@@ -297,7 +299,7 @@ fun ExpandablePlayer(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(currentSong.songUri)
                         .size(imageExpandedSizePx.roundToInt())
-                        .crossfade(true)
+                        .crossfade(false)
                         .build(),
                     contentDescription = "Album art",
                     error = painterResource(R.drawable.default_cover),
@@ -380,8 +382,9 @@ fun ExpandablePlayer(
                         modifier = Modifier
                             .then(
                                 if (isLandscape) Modifier
-                                    .align(Alignment.CenterEnd)
+                                    .align(Alignment.BottomEnd)
                                     .fillMaxHeight()
+                                    .padding(top = 50.dp) //header spacing
                                     .width(with(density) { (fullWidthPx / 2f).toDp() })
                                 else Modifier
                                     .align(Alignment.BottomCenter)
@@ -407,10 +410,14 @@ fun ExpandablePlayer(
 
                             Spacer(Modifier.weight(1f))
 
-                            val isFav = favourites.isFavourite(currentSong.songUri!!.toUri())
-                            IconButton(onClick = { vm.onLike() }, shape = RoundedCornerShape(0.dp)) {
+                            val isFav = if (currentSong.source == QueueItemSource.LOCAL) favourites.isFavourite(currentSong.songUri!!.toUri()) else null
+                            IconButton(
+                                onClick = { vm.onLike() },
+                                shape = RoundedCornerShape(0.dp),
+                                enabled = isFav != null
+                            ) {
                                 Icon(
-                                    painterResource(if (isFav) R.drawable.heart_filled else R.drawable.heart_outline),
+                                    painterResource(if (isFav == true) R.drawable.heart_filled else R.drawable.heart_outline),
                                     "Like", tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(25.dp)
                                 )

@@ -27,6 +27,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Timeline
 import dev.pgaxis.musicaxs.models.Album
 import dev.pgaxis.musicaxs.models.Playlist
+import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.models.deriveArtists
 import dev.pgaxis.musicaxs.repositories.AlbumRepository
 import dev.pgaxis.musicaxs.repositories.ArtistRepository
@@ -43,7 +44,8 @@ import kotlinx.coroutines.launch
 data class CurrentSong(
     val title: String = "Song Title",
     val artist: String = "Artist",
-    val songUri: String? = null
+    val songUri: String? = null,
+    val source: QueueItemSource = QueueItemSource.LOCAL
 )
 
 private val SUPPORTED_MIME_TYPES = setOf(
@@ -79,13 +81,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val currentSong: StateFlow<CurrentSong?> = MusicService.currentUriState
         .map { uri ->
             uri ?: return@map null
-            songRepo.isLoaded.first { it }
-            val song = songRepo.resolveSong(uri)
-            CurrentSong(
-                title = song?.title ?: "",
-                artist = song?.artist ?: "",
-                songUri = uri.toString()
-            )
+            val mediaItem = MusicService.queueState.value
+                .find { it.localConfiguration?.uri == uri }
+            val source = mediaItem?.mediaMetadata?.extras
+                ?.getString("source")
+                ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
+                ?: QueueItemSource.LOCAL
+
+            if (source == QueueItemSource.LOCAL) {
+                songRepo.isLoaded.first { it }
+                val song = songRepo.resolveSong(uri)
+                CurrentSong(
+                    title = song?.title ?: mediaItem?.mediaMetadata?.title?.toString() ?: "",
+                    artist = song?.artist ?: mediaItem?.mediaMetadata?.artist?.toString() ?: "",
+                    songUri = uri.toString(),
+                    source = source
+                )
+            } else {
+                CurrentSong(
+                    title = mediaItem?.mediaMetadata?.title?.toString() ?: "",
+                    artist = mediaItem?.mediaMetadata?.artist?.toString() ?: "",
+                    songUri = uri.toString(),
+                    source = source
+                )
+            }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -291,7 +310,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        super.onCleared()
         getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver)
     }
 }

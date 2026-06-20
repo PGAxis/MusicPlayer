@@ -1,0 +1,11 @@
+Opravy chyb:
+- Ovládací prvky skladby zakrývaly možnosti skladby na obrazovce ovládání
+
+Co je nového:
+- Přidána záložka Podcasty
+- Přidána podpora RSS feedu (dostupná v záložce Podcasty)
+- Fronta nyní přijímá QueueItem místo Song
+- Podcasty mohou být ve frontě spolu s běžnými skladbami
+- Podcasty lze stahovat
+- Smazání stažené verze přehrávaného podcastu přepne zdroj na online verzi
+- Při pokusu o přehrání podcastu dostupného pouze online bez připojení k Wi-Fi je podcast přeskočen

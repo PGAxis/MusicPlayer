@@ -42,14 +42,10 @@ fun SongRow(
     song: Song,
     onSeeDetails: (uri: String) -> Unit,
     onAddTo: () -> Unit,
-    isPlayingOverride: Boolean = false,
-    isPlaying: Boolean = false,
     showsImage: Boolean = true,
     showRemoveFrom: Boolean = false,
-    removeLabel: String = stringResource(R.string.rm_from_queue),
     onRemoveFrom: () -> Unit = {},
-    dragHandleModifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    dragHandleModifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var menuExpanded by remember { mutableStateOf(false) }
@@ -74,11 +70,11 @@ fun SongRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (if (isPlayingOverride) isPlaying else isCurrentlyPlaying)
+                if (isCurrentlyPlaying)
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
                 else Color.Transparent
             )
-            .clickable { onClick?.invoke() ?: MusicService.playSingular(context, song) }
+            .clickable { MusicService.playSingular(context, song) }
             .padding(horizontal = 12.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -118,7 +114,7 @@ fun SongRow(
             )
         }
 
-        if (if (isPlayingOverride) isPlaying else isCurrentlyPlaying) {
+        if (isCurrentlyPlaying) {
             EqualizerBars(
                 isPlaying = isSongPlaying,
                 modifier = Modifier.width(16.dp)
@@ -163,7 +159,7 @@ fun SongRow(
                 )
                 if (showRemoveFrom) {
                     DropdownMenuItem(
-                        text = { Text(removeLabel, color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                        text = { Text(stringResource(R.string.rm_from_playlist), color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         onClick = { menuExpanded = false; onRemoveFrom() }
                     )
                 }
