@@ -1,13 +1,18 @@
 package dev.pgaxis.musicaxs.services
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
@@ -34,7 +39,6 @@ import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.core.net.toUri
 import androidx.media3.common.PlaybackException
-import androidx.media3.session.MediaNotification
 import dev.pgaxis.musicaxs.MainActivity
 import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
 import dev.pgaxis.musicaxs.models.PodcastEpisode
@@ -53,6 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.graphics.scale
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -67,6 +72,7 @@ class MusicService : MediaSessionService() {
     private var playCountJob: Job? = null
     private var timelineSaveJob: Job? = null
     private var playStartTime: Long = 0L
+    private var wasPlayingBeforeTransition = false
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
@@ -132,7 +138,12 @@ class MusicService : MediaSessionService() {
 
         fun seekBy(offsetMs: Long) {
             instance?.mediaSession?.player?.let {
-                it.seekTo((it.currentPosition + offsetMs).coerceAtLeast(0L))
+                val newPosition = it.currentPosition + offsetMs
+                when {
+                    newPosition < 0L -> it.seekTo(0L)
+                    newPosition >= it.duration -> it.seekToNextMediaItem()
+                    else -> it.seekTo(newPosition)
+                }
             }
         }
 
@@ -367,6 +378,25 @@ class MusicService : MediaSessionService() {
 
     private fun setRepeatInternal(repeatMode: Int) {
         settings.repeatMode = repeatMode
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val cm = getSystemService(ConnectivityManager::class.java)
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+    }
+
+    private fun centerCrop(bitmap: Bitmap, size: Int = 512): Bitmap {
+        val scale = maxOf(size.toFloat() / bitmap.width, size.toFloat() / bitmap.height)
+        val scaledWidth = (bitmap.width * scale).toInt()
+        val scaledHeight = (bitmap.height * scale).toInt()
+        val scaled = bitmap.scale(scaledWidth, scaledHeight)
+        val x = (scaledWidth - size) / 2
+        val y = (scaledHeight - size) / 2
+        return Bitmap.createBitmap(scaled, x, y, size, size)
     }
 
     private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
@@ -660,7 +690,7 @@ class MusicService : MediaSessionService() {
     // -- Notification
 
     @OptIn(UnstableApi::class)
-    private class CustomNotificationProvider(private val context: Context)
+    private class CustomNotificationProvider(context: Context)
         : DefaultMediaNotificationProvider(context) {
 
         private var cachedButtons: ImmutableList<CommandButton> = ImmutableList.of()
@@ -673,35 +703,6 @@ class MusicService : MediaSessionService() {
         ): ImmutableList<CommandButton> {
             if (customLayout.isNotEmpty()) cachedButtons = customLayout
             return cachedButtons
-        }
-
-        override fun addNotificationActions(
-            mediaSession: MediaSession,
-            mediaButtons: ImmutableList<CommandButton>,
-            builder: NotificationCompat.Builder,
-            actionFactory: MediaNotification.ActionFactory
-        ): IntArray {
-            val songUri = mediaSession.player.currentMediaItem?.localConfiguration?.uri
-            if (songUri != null) {
-                try {
-                    val bitmap = MediaMetadataRetriever().let { mmr ->
-                        mmr.setDataSource(context, songUri)
-                        val art = mmr.embeddedPicture
-                        mmr.release()
-                        art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-                    } ?: run {
-                        val artworkUri = mediaSession.player.currentMediaItem?.mediaMetadata?.artworkUri
-                        artworkUri?.let { uri ->
-                            context.contentResolver.openInputStream(uri)?.use {
-                                BitmapFactory.decodeStream(it)
-                            }
-                        }
-                    }
-                    if (bitmap != null) builder.setLargeIcon(bitmap)
-                } catch (_: Exception) { }
-            }
-
-            return super.addNotificationActions(mediaSession, mediaButtons, builder, actionFactory)
         }
     }
 
@@ -749,6 +750,14 @@ class MusicService : MediaSessionService() {
                 }
             }
 
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                Log.d("MusicService", "onPlayWhenReadyChanged: playWhenReady=$playWhenReady reason=$reason")
+                if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+                    wasPlayingBeforeTransition = playWhenReady
+                    Log.d("MusicService", "wasPlayingBeforeTransition updated to $playWhenReady")
+                }
+            }
+
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 if (mediaItem == null) {
                     currentUriState.value = null
@@ -761,15 +770,27 @@ class MusicService : MediaSessionService() {
                     }.getOrNull()
                 } ?: QueueItemSource.LOCAL
 
-                val isLocal = source == QueueItemSource.LOCAL
-
-                isLiked = if (isLocal) {
-                    favourites.isFavourite(uri)
-                } else {
-                    false
+                if (source == QueueItemSource.PODCAST) {
+                    val isLocalFile = uri.scheme == "file"
+                    if (!isLocalFile && !isNetworkAvailable()) {
+                        player.seekToNextMediaItem()
+                        if (wasPlayingBeforeTransition) {
+                            serviceScope.launch(Dispatchers.Main) {
+                                delay(100.milliseconds)
+                                if (player.playbackState == Player.STATE_IDLE) player.prepare()
+                                player.play()
+                            }
+                        }
+                        return
+                    }
                 }
 
-                currentIndexState.value = instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
+                val isLocal = source == QueueItemSource.LOCAL
+
+                isLiked = if (isLocal) favourites.isFavourite(uri) else false
+
+                currentIndexState.value =
+                    instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
                 currentUriState.value = uri
                 settings.lastSongUri = uri.toString()
                 settings.lastQueueIndex = player.currentMediaItemIndex
@@ -790,6 +811,41 @@ class MusicService : MediaSessionService() {
                                 }
                             }
                         }
+                    }
+                }
+
+                serviceScope.launch {
+                    delay(300.milliseconds)
+                    val uri = mediaItem.localConfiguration?.uri ?: return@launch
+                    try {
+                        val bitmap = MediaMetadataRetriever().let { mmr ->
+                            mmr.setDataSource(this@MusicService, uri)
+                            val art = mmr.embeddedPicture
+                            mmr.release()
+                            art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+                        } ?: run {
+                            val artworkUri = mediaItem.mediaMetadata.artworkUri
+                            artworkUri?.let { artUri ->
+                                contentResolver.openInputStream(artUri)?.use {
+                                    BitmapFactory.decodeStream(it)
+                                }
+                            }
+                        }
+                        if (bitmap != null) {
+                            val scaled = if (bitmap.width > 512 || bitmap.height > 512)
+                                centerCrop(bitmap)
+                            else bitmap
+                            val nm = getSystemService(NotificationManager::class.java)
+                            val existing = nm.activeNotifications
+                                .firstOrNull { it.packageName == packageName }
+                                ?: return@launch
+                            val updated =
+                                NotificationCompat.Builder(this@MusicService, existing.notification)
+                                    .setLargeIcon(scaled)
+                                    .build()
+                            nm.notify(existing.id, updated)
+                        }
+                    } catch (_: Exception) {
                     }
                 }
             }

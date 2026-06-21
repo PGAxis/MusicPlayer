@@ -1,0 +1,3 @@
+Opravy chyb:
+- Album art v oznámení má nyní vysoké rozlišení
+- Přeskakování online položek když je zařízení offline je nyní okamžité a nepozastavuje přehrávání

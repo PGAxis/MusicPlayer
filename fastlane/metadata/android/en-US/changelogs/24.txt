@@ -1,0 +1,3 @@
+Bug fixes:
+- Album art inside notification is now high resolution
+- Skipping online items while offline is now instant and does not pause playback

@@ -42,6 +42,7 @@ class PodcastDownloadService : Service() {
     private val activeJobs = mutableMapOf<String, Job>()
     private val client = OkHttpClient()
     private lateinit var notificationManager: NotificationManager
+    private var lastProgressUpdate = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -89,11 +90,15 @@ class PodcastDownloadService : Service() {
                             out.write(buffer, 0, read)
                             downloadedBytes += read
                             if (totalBytes > 0) {
-                                val progress = ((downloadedBytes * 100) / totalBytes).toInt()
-                                notificationManager.notify(
-                                    notifId,
-                                    buildNotification(title, progress, url, notifId)
-                                )
+                                val now = System.currentTimeMillis()
+                                if (now - lastProgressUpdate >= 500L) {
+                                    val progress = ((downloadedBytes * 100) / totalBytes).toInt()
+                                    notificationManager.notify(
+                                        notifId,
+                                        buildNotification(title, progress, url, notifId)
+                                    )
+                                    lastProgressUpdate = now
+                                }
                             }
                         }
                     }
