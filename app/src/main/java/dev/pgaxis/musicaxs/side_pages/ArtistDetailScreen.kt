@@ -45,8 +45,6 @@ import dev.pgaxis.musicaxs.tabs.ArtistDetailItem
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ArtistDetailScreen(
@@ -57,15 +55,13 @@ fun ArtistDetailScreen(
 ) {
     val artist by vm.artist.collectAsStateWithLifecycle()
     val items by vm.detailItems.collectAsStateWithLifecycle()
+    val isInitialized by vm.isInitialized.collectAsStateWithLifecycle()
     var selectedSong by remember { mutableStateOf<Song?>(null) }
 
     LaunchedEffect(artistName) { vm.init(artistName) }
 
-    LaunchedEffect(items.isEmpty()) {
-        if (items.isEmpty()) {
-            delay(3000.milliseconds)
-            if (items.isEmpty()) onBack()
-        }
+    LaunchedEffect(artist) {
+        if (artist == null && isInitialized) onBack()
     }
 
     val currentArtist = artist ?: return

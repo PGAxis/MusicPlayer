@@ -1,0 +1,4 @@
+Bug fixes:
+- The high resolution artwork now persists even after a long time of inactivity
+- Queue is now reorderable again
+- Editing a song's artist in the artist detail screen no longer causes a gray screen if the artist ends up with no songs

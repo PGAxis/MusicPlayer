@@ -1,0 +1,4 @@
+Opravy chyb:
+- Artwork ve vysokém rozlišení nyní přetrvává i po dlouhé době nečinnosti
+- Fronta je opět přeřaditelná
+- Úprava interpreta skladby na obrazovce detailu interpreta již nezpůsobuje šedou obrazovku, pokud interpret skončí bez skladeb

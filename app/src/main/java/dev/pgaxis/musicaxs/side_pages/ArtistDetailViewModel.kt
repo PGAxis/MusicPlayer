@@ -12,19 +12,25 @@ import dev.pgaxis.musicaxs.tabs.ArtistDetailItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class ArtistDetailViewModel(application: Application) : AndroidViewModel(application) {
     private val settings = SettingsSave.getInstance(getApplication())
 
     private val _artistName = MutableStateFlow<String?>(null)
 
+    private val _isInitialized = MutableStateFlow(false)
+    val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
+
     val artist: StateFlow<Artist?> = combine(
         _artistName,
         ArtistRepository.getInstance().artists
     ) { name, artists -> artists.find { it.name == name } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val detailItems: StateFlow<List<ArtistDetailItem>> = combine(
         _artistName,
@@ -47,9 +53,13 @@ class ArtistDetailViewModel(application: Application) : AndroidViewModel(applica
                 albumSongs.forEach { add(ArtistDetailItem.SongItem(it)) }
             }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun init(artistName: String) {
-        _artistName.value = artistName
+        viewModelScope.launch {
+            _artistName.value = artistName
+            artist.first { _ -> _artistName.value == artistName }
+            _isInitialized.value = true
+        }
     }
 }

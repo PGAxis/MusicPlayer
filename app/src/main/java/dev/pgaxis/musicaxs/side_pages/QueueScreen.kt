@@ -88,7 +88,7 @@ fun QueueScreen(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 itemsIndexed(vm.queueItems, key = { _, item ->
-                    System.identityHashCode(item)
+                    "${item.uri}_${item.source}"
                 }) { index, item ->
                     ReorderableItem(reorderableState, key = "${item.uri}_${item.source}") { _ ->
                         Column {

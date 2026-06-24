@@ -1,6 +1,5 @@
 package dev.pgaxis.musicaxs.services
 
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -15,7 +14,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -58,6 +56,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.graphics.scale
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -397,6 +397,34 @@ class MusicService : MediaSessionService() {
         val x = (scaledWidth - size) / 2
         val y = (scaledHeight - size) / 2
         return Bitmap.createBitmap(scaled, x, y, size, size)
+    }
+
+    private fun resolveBitmap(context: Context, mediaItem: MediaItem): Bitmap? {
+        val uri = mediaItem.localConfiguration?.uri
+        val artworkUri = mediaItem.mediaMetadata.artworkUri
+
+        if (uri != null) {
+            val mmr = MediaMetadataRetriever()
+            try {
+                mmr.setDataSource(context, uri)
+                mmr.embeddedPicture?.let {
+                    return BitmapFactory.decodeByteArray(it, 0, it.size)
+                }
+            } catch (_: Exception) {
+            } finally {
+                mmr.release()
+            }
+        }
+
+        if (artworkUri != null) {
+            runCatching {
+                context.contentResolver.openInputStream(artworkUri)?.use {
+                    BitmapFactory.decodeStream(it)
+                }
+            }.getOrNull()?.let { return it }
+        }
+
+        return null
     }
 
     private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
@@ -814,38 +842,23 @@ class MusicService : MediaSessionService() {
                     }
                 }
 
-                serviceScope.launch {
-                    delay(300.milliseconds)
-                    val uri = mediaItem.localConfiguration?.uri ?: return@launch
-                    try {
-                        val bitmap = MediaMetadataRetriever().let { mmr ->
-                            mmr.setDataSource(this@MusicService, uri)
-                            val art = mmr.embeddedPicture
-                            mmr.release()
-                            art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-                        } ?: run {
-                            val artworkUri = mediaItem.mediaMetadata.artworkUri
-                            artworkUri?.let { artUri ->
-                                contentResolver.openInputStream(artUri)?.use {
-                                    BitmapFactory.decodeStream(it)
-                                }
-                            }
+                serviceScope.launch(Dispatchers.IO) {
+                    val bitmap = resolveBitmap(this@MusicService, mediaItem) ?: return@launch
+                    val scaled = if (bitmap.width > 512 || bitmap.height > 512) centerCrop(bitmap) else bitmap
+                    val stream = ByteArrayOutputStream()
+                    scaled.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    val updated = mediaItem.buildUpon()
+                        .setMediaMetadata(
+                            mediaItem.mediaMetadata.buildUpon()
+                                .setArtworkData(stream.toByteArray(), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                                .build()
+                        )
+                        .build()
+                    withContext(Dispatchers.Main) {
+                        val index = player.currentMediaItemIndex
+                        if (player.getMediaItemAt(index).localConfiguration?.uri == mediaItem.localConfiguration?.uri) {
+                            player.replaceMediaItem(index, updated)
                         }
-                        if (bitmap != null) {
-                            val scaled = if (bitmap.width > 512 || bitmap.height > 512)
-                                centerCrop(bitmap)
-                            else bitmap
-                            val nm = getSystemService(NotificationManager::class.java)
-                            val existing = nm.activeNotifications
-                                .firstOrNull { it.packageName == packageName }
-                                ?: return@launch
-                            val updated =
-                                NotificationCompat.Builder(this@MusicService, existing.notification)
-                                    .setLargeIcon(scaled)
-                                    .build()
-                            nm.notify(existing.id, updated)
-                        }
-                    } catch (_: Exception) {
                     }
                 }
             }
