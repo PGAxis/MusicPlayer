@@ -2,7 +2,6 @@ package dev.pgaxis.musicaxs.templates
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,11 +71,10 @@ fun QueueItemRow(
                 else Color.Transparent
             )
             .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(15.dp)
     ) {
-        Log.d("QueueItemRow", "albumArtUri for '${item.title}': ${item.albumArtUri}")
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(

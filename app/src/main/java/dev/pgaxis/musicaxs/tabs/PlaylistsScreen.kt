@@ -55,6 +55,7 @@ fun PlaylistsScreen(
     val recentlyAdded by vm.recentlyAdded.collectAsStateWithLifecycle()
     val recentlyPlayed by vm.recentlyPlayed.collectAsStateWithLifecycle()
     val mostPlayed by vm.mostPlayed.collectAsStateWithLifecycle()
+    val favourites by vm.favourites.collectAsStateWithLifecycle()
     val favPlaylists = remember { FavouritedPlaylistsSave.getInstance(context) }
 
     var renameTarget by remember { mutableStateOf<Playlist?>(null) }
@@ -72,7 +73,8 @@ fun PlaylistsScreen(
     val smartPlaylists = listOf(
         SmartInfo(stringResource(R.string.pls_scr_rec_added), recentlyAdded.size, recentlyAdded.firstOrNull()?.uri, 1),
         SmartInfo(stringResource(R.string.pls_scr_rec_played), recentlyPlayed.size, recentlyPlayed.firstOrNull()?.uri, 2),
-        SmartInfo(stringResource(R.string.pls_scr_most_played), mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3)
+        SmartInfo(stringResource(R.string.pls_scr_most_played), mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3),
+        SmartInfo(stringResource(R.string.tab_favourites), favourites.size, favourites.firstOrNull()?.uri, 0)
     )
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -110,7 +112,7 @@ fun PlaylistsScreen(
             item {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(smartPlaylists) { (name, size, iconUri, id) ->

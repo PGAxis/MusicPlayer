@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,13 +52,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +76,13 @@ import dev.pgaxis.musicaxs.models.labelRes
 import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.templates.ListDivider
 import sh.calvin.reorderable.ReorderableColumn
+import kotlin.collections.component1
+import kotlin.collections.component2
+
+enum class SettingsEntryType {
+    TEXT,
+    NUMBER
+}
 
 @Composable
 fun SettingsScreen(
@@ -114,13 +128,24 @@ fun SettingsScreen(
         ) {
             SettingsGroup(title = stringResource(R.string.set_scr_library), initiallyExpanded = false) {
                 SettingsToggleRow(
-                    label = stringResource(R.string.set_scr_hide_wa_audio),
+                    title = stringResource(R.string.set_scr_hide_wa_audio),
                     description = stringResource(R.string.set_scr_hide_wa_audio_desc),
                     checked = vm.settings.hideWhatsAppAudio,
                     onCheckedChange = { value ->
                         vm.onHideWhatsAppChanged(value)
                         onScan()
                     }
+                )
+
+                ListDivider(hasArt = false)
+
+                SettingsEntryRow(
+                    title = stringResource(R.string.set_scr_smart_limit),
+                    description = stringResource(R.string.set_scr_smart_limit_desc),
+                    value = vm.settings.smartLimitInput,
+                    onValueChange = vm::onSmartLimitChanged,
+                    onCleared = vm::onSmartLimitCleared,
+                    type = SettingsEntryType.NUMBER
                 )
 
                 ListDivider(hasArt = false)
@@ -134,7 +159,7 @@ fun SettingsScreen(
 
             SettingsGroup(title = stringResource(R.string.set_scr_customization), initiallyExpanded = false) {
                 SettingsDropdownRow(
-                    label = stringResource(R.string.set_scr_theme),
+                    title = stringResource(R.string.set_scr_theme),
                     options = vm.themeOptions,
                     selected = vm.selectedTheme,
                     onSelectChange = { vm.onThemeChanged(it as Theme) }
@@ -155,7 +180,7 @@ fun SettingsScreen(
             if (ytcnvReady) {
                 SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
                     SettingsDropdownRow(
-                        label = stringResource(R.string.language),
+                        title = stringResource(R.string.language),
                         options = vm.langOptions,
                         selected = vm.selectedLang,
                         onSelectChange = { vm.onLanguageChange(it as String) }
@@ -164,7 +189,7 @@ fun SettingsScreen(
                     ListDivider(hasArt = false)
 
                     SettingsToggleRow(
-                        label = stringResource(R.string.set_scr_ytconv_add_songs),
+                        title = stringResource(R.string.set_scr_ytconv_add_songs),
                         description = stringResource(R.string.set_scr_ytconv_add_songs_desc),
                         checked = vm.settings.allowYTCnv,
                         onCheckedChange = vm::onAllowYTCnvChanged
@@ -245,7 +270,7 @@ fun SettingsGroup(
 
 @Composable
 fun SettingsToggleRow(
-    label: String,
+    title: String,
     description: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
@@ -258,7 +283,7 @@ fun SettingsToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
             if (description != null) {
                 Text(
                     description,
@@ -283,7 +308,7 @@ fun SettingsToggleRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDropdownRow(
-    label: String,
+    title: String,
     description: String? = null,
     options: Map<out Any, String>,
     selected: Any,
@@ -307,7 +332,7 @@ fun SettingsDropdownRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
             if (description != null) {
                 Text(
                     description,
@@ -362,6 +387,90 @@ fun SettingsDropdownRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SettingsEntryRow(
+    title: String,
+    description: String? = null,
+    value: String,
+    onValueChange: (String) -> Unit,
+    onCleared: () -> Unit = {},
+    type: SettingsEntryType = SettingsEntryType.TEXT
+) {
+    var focused by remember { mutableStateOf(false) }
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+
+    val fieldWidth = remember(value) {
+        val textPx = textMeasurer.measure(
+            text = value.ifEmpty { "0" },
+            style = TextStyle(fontSize = 16.sp)
+        ).size.width
+        with(density) { (textPx.toDp() + 24.dp).coerceIn(48.dp, 140.dp) }
+    }
+
+    val indicatorColor = if (focused) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.outline
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            if (description != null) {
+                Text(
+                    description,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        BasicTextField(
+            value = value,
+            onValueChange = { new ->
+                when (type) {
+                    SettingsEntryType.NUMBER -> if (new.isEmpty() || new.all { it.isDigit() }) {
+                        onValueChange(new)
+                    }
+                    SettingsEntryType.TEXT -> onValueChange(new)
+                }
+            },
+            singleLine = true,
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (type == SettingsEntryType.NUMBER) KeyboardType.Number else KeyboardType.Text
+            ),
+            modifier = Modifier
+                .width(fieldWidth)
+                .onFocusChanged { state ->
+                    if (focused && !state.isFocused && value.isEmpty()) {
+                        onCleared()
+                    }
+                    focused = state.isFocused
+                }
+                .padding(bottom = 4.dp)
+                .drawBehind {
+                    val strokeWidth = if (focused) 2.dp.toPx() else 1.dp.toPx()
+                    drawLine(
+                        color = indicatorColor,
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = strokeWidth
+                    )
+                }
+        )
     }
 }
 

@@ -11,9 +11,9 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
+import androidx.core.graphics.scale
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -55,11 +55,49 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.core.graphics.scale
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
+import androidx.media3.common.util.BitmapLoader
+import com.google.common.util.concurrent.MoreExecutors
+import java.util.concurrent.Executors
 
 enum class QueueSource { PLAYLIST, MANUAL }
+
+@UnstableApi
+class EmbeddedArtBitmapLoader(private val context: Context) : BitmapLoader {
+    private val executor = Executors.newSingleThreadExecutor()
+
+    override fun supportsMimeType(mimeType: String) = false
+
+    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> =
+        Futures.immediateFuture(BitmapFactory.decodeByteArray(data, 0, data.size))
+
+    private fun Bitmap.constrained(size: Int = 512): Bitmap {
+        val scale = maxOf(size.toFloat() / this.width, size.toFloat() / this.height)
+        val scaledWidth = (this.width * scale).toInt()
+        val scaledHeight = (this.height * scale).toInt()
+        val scaled = this.scale(scaledWidth, scaledHeight)
+        val x = (scaledWidth - size) / 2
+        val y = (scaledHeight - size) / 2
+        return Bitmap.createBitmap(scaled, x, y, size, size)
+    }
+
+    override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> {
+        return MoreExecutors.listeningDecorator(executor).submit<Bitmap> {
+            val mmr = MediaMetadataRetriever()
+            val bitmap = try {
+                mmr.setDataSource(context, uri)
+                mmr.embeddedPicture?.let {
+                    BitmapFactory.decodeByteArray(it, 0, it.size)
+                } ?: context.contentResolver.openInputStream(uri)?.use {
+                    BitmapFactory.decodeStream(it)
+                } ?: throw IllegalStateException("No artwork found for $uri")
+            } finally {
+                mmr.release()
+            }
+
+            bitmap.constrained()
+        }
+    }
+}
 
 class MusicService : MediaSessionService() {
 
@@ -75,6 +113,7 @@ class MusicService : MediaSessionService() {
     private var wasPlayingBeforeTransition = false
 
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
+    private val shuffleSave by lazy { ShuffleSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
     private val songRepo = SongRepository.getInstance()
 
@@ -389,49 +428,13 @@ class MusicService : MediaSessionService() {
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
-    private fun centerCrop(bitmap: Bitmap, size: Int = 512): Bitmap {
-        val scale = maxOf(size.toFloat() / bitmap.width, size.toFloat() / bitmap.height)
-        val scaledWidth = (bitmap.width * scale).toInt()
-        val scaledHeight = (bitmap.height * scale).toInt()
-        val scaled = bitmap.scale(scaledWidth, scaledHeight)
-        val x = (scaledWidth - size) / 2
-        val y = (scaledHeight - size) / 2
-        return Bitmap.createBitmap(scaled, x, y, size, size)
-    }
-
-    private fun resolveBitmap(context: Context, mediaItem: MediaItem): Bitmap? {
-        val uri = mediaItem.localConfiguration?.uri
-        val artworkUri = mediaItem.mediaMetadata.artworkUri
-
-        if (uri != null) {
-            val mmr = MediaMetadataRetriever()
-            try {
-                mmr.setDataSource(context, uri)
-                mmr.embeddedPicture?.let {
-                    return BitmapFactory.decodeByteArray(it, 0, it.size)
-                }
-            } catch (_: Exception) {
-            } finally {
-                mmr.release()
-            }
-        }
-
-        if (artworkUri != null) {
-            runCatching {
-                context.contentResolver.openInputStream(artworkUri)?.use {
-                    BitmapFactory.decodeStream(it)
-                }
-            }.getOrNull()?.let { return it }
-        }
-
-        return null
-    }
-
     private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
         val player = mediaSession?.player ?: return
 
         when (currentSource) {
             QueueSource.PLAYLIST -> {
+                shuffleSave.updateShuffled(false)
+                isShuffleOn = false
                 currentSource = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
                 player.setMediaItem(song.toMediaItem(), startPositionMs)
@@ -454,10 +457,9 @@ class MusicService : MediaSessionService() {
         settings.queueSource = QueueSource.PLAYLIST
         settings.lastPlaylistId = playlistId
 
-        val save = ShuffleSave.getInstance(this)
-        save.updateShuffled(false)
+        shuffleSave.updateShuffled(false)
         isShuffleOn = false
-        save.setOriginalQueue(songs.map { it.uri.toString() })
+        shuffleSave.setOriginalQueue(songs.map { it.uri.toString() })
 
         player.setMediaItems(songs.map { it.toMediaItem() })
         player.prepare()
@@ -470,11 +472,10 @@ class MusicService : MediaSessionService() {
         settings.queueSource = QueueSource.PLAYLIST
         settings.lastPlaylistId = playlistId
 
-        val save = ShuffleSave.getInstance(this)
         val shuffled = songs.shuffled()
 
-        save.setOriginalQueue(songs.map { it.uri.toString() })
-        save.updateShuffled(true)
+        shuffleSave.setOriginalQueue(songs.map { it.uri.toString() })
+        shuffleSave.updateShuffled(true)
         isShuffleOn = true
 
         player.setMediaItems(shuffled.map { it.toMediaItem() })
@@ -497,6 +498,8 @@ class MusicService : MediaSessionService() {
 
         if (currentSource == QueueSource.PLAYLIST && resetPlaylist) {
             settings.lastPlaylistId = -1L
+            shuffleSave.updateShuffled(false)
+            isShuffleOn = false
             currentSource = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
         }
@@ -506,6 +509,8 @@ class MusicService : MediaSessionService() {
         val player = mediaSession?.player ?: return
         when (currentSource) {
             QueueSource.PLAYLIST -> {
+                shuffleSave.updateShuffled(false)
+                isShuffleOn = false
                 currentSource = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
                 player.setMediaItem(episode.toMediaItem(feed))
@@ -526,10 +531,9 @@ class MusicService : MediaSessionService() {
         settings.queueSource = QueueSource.PLAYLIST
         settings.lastPlaylistId = -1L
 
-        val save = ShuffleSave.getInstance(this)
-        save.updateShuffled(false)
+        shuffleSave.updateShuffled(false)
         isShuffleOn = false
-        save.setOriginalQueue(episodes.map { it.audioUrl })
+        shuffleSave.setOriginalQueue(episodes.map { it.audioUrl })
 
         player.setMediaItems(episodes.map { it.toMediaItem(feed) })
         player.prepare()
@@ -542,11 +546,10 @@ class MusicService : MediaSessionService() {
         settings.queueSource = QueueSource.PLAYLIST
         settings.lastPlaylistId = -1L
 
-        val save = ShuffleSave.getInstance(this)
         val shuffled = episodes.shuffled()
 
-        save.setOriginalQueue(episodes.map { it.audioUrl })
-        save.updateShuffled(true)
+        shuffleSave.setOriginalQueue(episodes.map { it.audioUrl })
+        shuffleSave.updateShuffled(true)
         isShuffleOn = true
 
         player.setMediaItems(shuffled.map { it.toMediaItem(feed) })
@@ -563,6 +566,8 @@ class MusicService : MediaSessionService() {
 
         if (currentSource == QueueSource.PLAYLIST) {
             settings.lastPlaylistId = -1L
+            shuffleSave.updateShuffled(false)
+            isShuffleOn = false
             currentSource = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
         }
@@ -582,7 +587,7 @@ class MusicService : MediaSessionService() {
                     MediaMetadata.Builder()
                         .setTitle(titles.getOrElse(i) { "Unknown" })
                         .setArtist(artists.getOrElse(i) { "Unknown" })
-                        .setArtworkUri(song?.albumArtUri)
+                        .setArtworkUri(song?.uri)
                         .setExtras(Bundle().apply {
                             putString("source", QueueItemSource.LOCAL.name)
                         })
@@ -695,7 +700,7 @@ class MusicService : MediaSessionService() {
                         MediaMetadata.Builder()
                             .setTitle(entry.title)
                             .setArtist(entry.artist)
-                            .setArtworkUri(entry.albumArtUri?.toUri())
+                            .setArtworkUri(entry.uri.toUri())
                             .setExtras(Bundle().apply {
                                 putString("source", entry.source.name)
                                 entry.deviceId?.let { putString("deviceId", it) }
@@ -766,6 +771,7 @@ class MusicService : MediaSessionService() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
+            .setBitmapLoader(EmbeddedArtBitmapLoader(this))
             .build()
 
         player.addListener(object : Player.Listener {
@@ -779,10 +785,8 @@ class MusicService : MediaSessionService() {
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                Log.d("MusicService", "onPlayWhenReadyChanged: playWhenReady=$playWhenReady reason=$reason")
                 if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
                     wasPlayingBeforeTransition = playWhenReady
-                    Log.d("MusicService", "wasPlayingBeforeTransition updated to $playWhenReady")
                 }
             }
 
@@ -838,26 +842,6 @@ class MusicService : MediaSessionService() {
                                     break
                                 }
                             }
-                        }
-                    }
-                }
-
-                serviceScope.launch(Dispatchers.IO) {
-                    val bitmap = resolveBitmap(this@MusicService, mediaItem) ?: return@launch
-                    val scaled = if (bitmap.width > 512 || bitmap.height > 512) centerCrop(bitmap) else bitmap
-                    val stream = ByteArrayOutputStream()
-                    scaled.compress(Bitmap.CompressFormat.PNG, 100, stream)
-                    val updated = mediaItem.buildUpon()
-                        .setMediaMetadata(
-                            mediaItem.mediaMetadata.buildUpon()
-                                .setArtworkData(stream.toByteArray(), MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-                                .build()
-                        )
-                        .build()
-                    withContext(Dispatchers.Main) {
-                        val index = player.currentMediaItemIndex
-                        if (player.getMediaItemAt(index).localConfiguration?.uri == mediaItem.localConfiguration?.uri) {
-                            player.replaceMediaItem(index, updated)
                         }
                     }
                 }
@@ -940,7 +924,7 @@ class MusicService : MediaSessionService() {
                                 MediaMetadata.Builder()
                                     .setTitle(entry.title)
                                     .setArtist(entry.artist)
-                                    .setArtworkUri(entry.albumArtUri?.toUri())
+                                    .setArtworkUri(entry.uri.toUri())
                                     .setExtras(Bundle().apply {
                                         putString("source", entry.source.name)
                                         entry.deviceId?.let { id -> putString("deviceId", id) }

@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ContentUris
 import android.content.Context
 import android.database.ContentObserver
-import android.net.Uri
 import android.provider.MediaStore
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
@@ -14,6 +13,8 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
+import dev.pgaxis.musicaxs.settings.FavouritesSave
+import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -28,12 +29,16 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.collections.map
+import kotlin.time.Duration.Companion.milliseconds
 
 class PlaylistsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repo = PlaylistRepository.getInstance(application)
+    private val settings = SettingsSave.getInstance(getApplication())
+    private val repo = PlaylistRepository.getInstance(getApplication())
     private val songRepo = SongRepository.getInstance()
-    private val tracker = PlayCountTracker.getInstance(application)
+    private val tracker = PlayCountTracker.getInstance(getApplication())
+    private val favouriteTracker = FavouritesSave.getInstance(getApplication())
 
     val playlists: StateFlow<List<Playlist>> = repo.playlists
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -42,10 +47,10 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val recentlyAdded: StateFlow<List<Song>> =
         recentlyAddedFlow(getApplication())
-            .debounce(300)
+            .debounce(300.milliseconds)
             .mapLatest {
                 withContext(Dispatchers.IO) {
-                    queryRecentlyAdded()
+                    queryRecentlyAdded(getLimit())
                 }
             }
             .stateIn(
@@ -60,7 +65,7 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
             .map { entries ->
                 entries.entries
                     .sortedByDescending { it.value.lastPlayedMs }
-                    .take(50)
+                    .take(getLimit())
                     .map { it.key }
             }
             .mapLatest { uris ->
@@ -80,12 +85,26 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
             .map { entries ->
                 entries.entries
                     .sortedByDescending { it.value.count }
-                    .take(50)
+                    .take(getLimit())
                     .map { it.key }
             }
             .mapLatest { uris ->
                 withContext(Dispatchers.IO) {
                     resolveUris(uris)
+                }
+            }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
+            )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val favourites: StateFlow<List<Song>> =
+        favouriteTracker.orderedIdsFlow
+            .mapLatest { ids ->
+                withContext(Dispatchers.IO) {
+                    resolveIds(ids)
                 }
             }
             .stateIn(
@@ -103,7 +122,7 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     fun getSongsForExport(playlist: Playlist): List<Song> {
         return playlist.songIds.mapNotNull { id ->
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            querySong(uri)
+            songRepo.resolveSong(uri)
         }
     }
 
@@ -133,10 +152,10 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
             .take(limit)
 
     private fun resolveUris(uris: List<String>): List<Song> =
-        uris.mapNotNull { uri -> querySong(uri.toUri()) }
+        uris.mapNotNull { uri -> songRepo.resolveSong(uri.toUri()) }
 
-    private fun querySong(uri: Uri): Song? =
-        songRepo.songs.value.find { it.uri == uri }
+    private fun resolveIds(ids: List<Long>): List<Song> =
+        ids.mapNotNull { id -> songRepo.resolveSong(id) }
 
     private fun recentlyAddedFlow(context: Context): Flow<List<Song>> = callbackFlow {
         val resolver = context.contentResolver
@@ -162,5 +181,9 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
         awaitClose {
             resolver.unregisterContentObserver(observer)
         }
+    }
+
+    private fun getLimit(): Int {
+        return if (settings.smartLimit == 0) Int.MAX_VALUE else settings.smartLimit
     }
 }

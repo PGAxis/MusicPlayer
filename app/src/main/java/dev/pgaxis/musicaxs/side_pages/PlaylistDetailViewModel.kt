@@ -2,7 +2,6 @@ package dev.pgaxis.musicaxs.side_pages
 
 import android.app.Application
 import android.content.ContentUris
-import android.net.Uri
 import android.provider.MediaStore
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
@@ -13,6 +12,7 @@ import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
+import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +30,7 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
     private val _uiState = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
 
+    private val settings = SettingsSave.getInstance(getApplication())
     private val repo = PlaylistRepository.getInstance(getApplication())
     private val songRepo = SongRepository.getInstance()
     private val tracker = PlayCountTracker.getInstance(getApplication())
@@ -47,7 +48,7 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
                             ids.mapNotNull { id ->
                                 val uri = ContentUris.withAppendedId(
                                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-                                querySong(uri)
+                                songRepo.resolveSong(uri)
                             }
                         }
                         _uiState.value = DetailUiState.Ready("Favourite tracks", songs)
@@ -57,9 +58,9 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
             1L, 2L, 3L -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val songs = when (id) {
-                        1L -> queryRecentlyAdded()
-                        2L -> getSongsForPlaylist(tracker.recentlyPlayed())
-                        else -> getSongsForPlaylist(tracker.topPlayed())
+                        1L -> queryRecentlyAdded(getLimit())
+                        2L -> getSongsForPlaylist(tracker.recentlyPlayed(getLimit()))
+                        else -> getSongsForPlaylist(tracker.topPlayed(getLimit()))
                     }
                     val name = when (id) {
                         1L -> "Recently Added"
@@ -91,14 +92,14 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
     fun getSongsForPlaylist(list: List<String>): List<Song> {
         return list.mapNotNull { uriString ->
             val uri = uriString.toUri()
-            querySong(uri)
+            songRepo.resolveSong(uri)
         }
     }
 
     fun getSongsForPlaylist(playlist: Playlist): List<Song> {
         return playlist.songIds.mapNotNull { id ->
             val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            querySong(uri)
+            songRepo.resolveSong(uri)
         }
     }
 
@@ -112,6 +113,7 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    private fun querySong(uri: Uri): Song? =
-        songRepo.songs.value.find { it.uri == uri }
+    private fun getLimit(): Int {
+        return if (settings.smartLimit == 0) Int.MAX_VALUE else settings.smartLimit
+    }
 }

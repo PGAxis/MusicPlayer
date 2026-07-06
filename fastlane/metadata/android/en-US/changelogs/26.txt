@@ -1,0 +1,8 @@
+Bug fixes:
+- The playlist icons on the "Add to sheet" were displayed as gray squares
+- The artwork in notification is now 512x512, sacrificing its presence on wearable devices
+
+Additions:
+- The 50 song limit on Smart Playlists is now configurable in settings
+- The Playlist detail screen's UI was reworked
+- 2 new themes

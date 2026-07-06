@@ -101,12 +101,14 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
     override var podcastFeeds by setting(emptyList(), SettingsData::podcastFeeds)
+    override var smartLimitInput by setting("50", SettingsData::smartLimitInput)
     // settings
     override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
     override var theme by setting(Theme.CYAN, SettingsData::theme)
     override var tabs by setting(DEFAULT_TABS, SettingsData::tabs)
     override var artistSeparator by setting(arrayOf(",").toList(), SettingsData::artistSeparator)
+    override var smartLimit by intSetting(50, SettingsData::smartLimit)
 
     // -- Data class
     @Keep
@@ -122,12 +124,14 @@ class SettingsSave private constructor(context: Context): ISettings {
         var repeatMode: Int = 2,
         var queueSource: QueueSource = QueueSource.MANUAL,
         var podcastFeeds: List<PodcastFeed> = emptyList(),
+        var smartLimitInput: String = "50",
         // settings
         var hideWhatsAppAudio: Boolean = false,
         var allowYTCnv: Boolean = false,
         var theme: Theme = Theme.CYAN,
         var tabs: List<TitleVis> = DEFAULT_TABS,
         var artistSeparator: List<String> = arrayOf(",").toList(),
+        var smartLimit: Int = 50
     )
 
     @Keep
@@ -155,12 +159,9 @@ class SettingsSave private constructor(context: Context): ISettings {
         axsFile.open()
 
         try {
-            Log.d("SettingsSaveDebug", "\nAbout to bind file")
             boundSettings = axsFile.bind(SettingsData())
-            Log.d("SettingsSaveDebug", "File successfully bound\n")
 
             val s = boundSettings.get()
-            Log.d("SettingsSaveDebug", "$s")
 
             lastTabIndex = s.lastTabIndex
             lastSongUri = s.lastSongUri
@@ -172,11 +173,13 @@ class SettingsSave private constructor(context: Context): ISettings {
             repeatMode = s.repeatMode
             queueSource = s.queueSource
             podcastFeeds = s.podcastFeeds
+            smartLimitInput = s.smartLimitInput
             hideWhatsAppAudio = s.hideWhatsAppAudio
             allowYTCnv = s.allowYTCnv
             theme = s.theme
             tabs = s.tabs
             artistSeparator = s.artistSeparator
+            smartLimit = s.smartLimit
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }
@@ -194,7 +197,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             axsFile.open()
             boundSettings = axsFile.bind(SettingsData())
         } finally {
-            isInitializing = false // always runs, both paths
+            isInitializing = false
         }
     }
 }

@@ -119,14 +119,7 @@ fun PlaylistDetailScreen(
                     IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
                         Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
                     }
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.basicMarquee())
-                        Text(
-                            pluralStringResource(R.plurals.track_count, state.songs.size, state.songs.size),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Spacer(Modifier.weight(1f))
                     when (playlistId) {
                         0L, 1L, 2L, 3L -> { }
                         else -> {
@@ -158,8 +151,6 @@ fun PlaylistDetailScreen(
                             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                     }
                 }
-
-                HorizontalDivider()
 
                 if (state.songs.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -193,36 +184,48 @@ fun PlaylistDetailScreen(
                                 fallback = painterResource(R.drawable.default_cover),
                                 modifier = Modifier
                                     .size(150.dp)
-                                    .clip(RoundedCornerShape(10.dp)),
+                                    .clip(RoundedCornerShape(15.dp)),
                                 contentScale = ContentScale.Crop,
                                 onError = { if (!useFallbackUri) useFallbackUri = true }
                             )
                         }
 
-                        HorizontalDivider()
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.basicMarquee())
+                            Text(
+                                pluralStringResource(R.plurals.track_count, state.songs.size, state.songs.size),
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            state = listState
+                        Surface(
+                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
-                                ReorderableItem(reorderState, key = keyed.key) { _ ->
-                                    Column {
-                                        SongRow(
-                                            song = keyed.song,
-                                            onSeeDetails = onSeeDetail,
-                                            onAddTo = { selectedSong = keyed.song },
-                                            showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
-                                            onRemoveFrom = {
-                                                vm.removeSong(playlistId, index)
-                                                PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
-                                            },
-                                            dragHandleModifier = Modifier.draggableHandle()
-                                        )
+                            LazyColumn(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                state = listState
+                            ) {
+                                itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
+                                    ReorderableItem(reorderState, key = keyed.key) { _ ->
+                                        Column {
+                                            SongRow(
+                                                song = keyed.song,
+                                                onSeeDetails = onSeeDetail,
+                                                onAddTo = { selectedSong = keyed.song },
+                                                showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
+                                                onRemoveFrom = {
+                                                    vm.removeSong(playlistId, index)
+                                                    PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
+                                                },
+                                                dragHandleModifier = Modifier.draggableHandle()
+                                            )
 
-                                        if (index < songs.lastIndex) {
-                                            ListDivider()
+                                            if (index < songs.lastIndex) {
+                                                ListDivider()
+                                            }
                                         }
                                     }
                                 }

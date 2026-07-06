@@ -40,10 +40,6 @@ class FavouritesSave private constructor(context: Context) {
         }
     }
 
-    // Returns favourite IDs sorted newest-first.
-    fun orderedIds(): List<Long> =
-        _favourites.entries.sortedBy { it.value }.map { it.key }
-
     val orderedIdsFlow: Flow<List<Long>> = snapshotFlow {
         _favourites.entries
             .sortedBy { it.value }

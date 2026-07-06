@@ -291,7 +291,9 @@ fun MainScreen(
                 // -- Content pager
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxWidth().weight(1f)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
                 ) { page ->
                     val tabType = TabType.valueOf(visibleTabs[page].tab)
                     Box(

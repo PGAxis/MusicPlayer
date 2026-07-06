@@ -17,6 +17,7 @@ interface ISettings {
     var repeatMode: Int
     var queueSource: QueueSource
     var podcastFeeds: List<PodcastFeed>
+    var smartLimitInput: String
 
     // settings
     var hideWhatsAppAudio: Boolean
@@ -24,4 +25,5 @@ interface ISettings {
     var theme: Theme
     var tabs: List<TitleVis>
     var artistSeparator: List<String>
+    var smartLimit: Int
 }

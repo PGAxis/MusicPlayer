@@ -1,0 +1,8 @@
+Opravy chyb:
+- Ikony playlistů v "Přidat do" se zobrazovaly jako šedé čtverce
+- Artwork v notifikaci je nyní 512x512, což obětuje jeho zobrazení na wearable zařízeních
+
+Co je nového:
+- Limit 50 skladeb u Chytrých playlistů je nyní konfigurovatelný v nastavení
+- UI obrazovky detailu playlistu bylo přepracováno
+- 2 nové motivy

@@ -57,6 +57,8 @@
     <string name="set_scr_library">Library</string>
     <string name="set_scr_hide_wa_audio">Hide WhatsApp audio</string>
     <string name="set_scr_hide_wa_audio_desc">Hides songs from the "WhatsApp Audio" album</string>
+    <string name="set_scr_smart_limit">Set smart limit</string>
+    <string name="set_scr_smart_limit_desc">Sets the maximum number of songs shown in Smart Playlists. Setting this to 0 removes the limit.</string>
     <string name="set_scr_tab_order">Set tab order</string>
     <string name="set_scr_customization">Customization</string>
     <string name="set_scr_theme">Color Theme</string>
@@ -137,6 +139,8 @@
     <string name="set_vm_chalk">Chalk</string>
     <string name="set_vm_sunshine">Sunshine</string>
     <string name="set_vm_grayscale">Grayscale</string>
+    <string name="set_vm_bordo">Bordó</string>
+    <string name="set_vm_void">Void</string>
     
     <!-- Podcasts screen -->
     <string name="podcasts_empty">No podcasts added yet</string>

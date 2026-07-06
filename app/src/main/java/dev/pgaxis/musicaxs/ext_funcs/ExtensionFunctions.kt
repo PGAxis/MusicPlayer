@@ -1,9 +1,11 @@
 package dev.pgaxis.musicaxs.ext_funcs
 
 import android.os.Bundle
+import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.QueueItem
@@ -14,6 +16,7 @@ fun String.splitByArtistSeparator(regex: Regex?): List<String> =
     if (regex == null) listOf(trim()).filter { it.isNotEmpty() }
     else split(regex).map { it.trim() }.filter { it.isNotEmpty() }
 
+@OptIn(UnstableApi::class)
 fun Song.toMediaItem(
     source: QueueItemSource = QueueItemSource.LOCAL,
     deviceId: String? = null
@@ -23,7 +26,7 @@ fun Song.toMediaItem(
         MediaMetadata.Builder()
             .setTitle(title)
             .setArtist(artist)
-            .setArtworkUri(albumArtUri)
+            .setArtworkUri(uri)
             .setExtras(Bundle().apply {
                 putString("source", source.name)
                 deviceId?.let { putString("deviceId", it) }
@@ -84,3 +87,15 @@ fun MediaItem.toQueueItem(): QueueItem {
         deviceId = deviceId
     )
 }
+
+/*private fun getBitmapData(context: Context, uri: Uri): ByteArray {
+    val mmr = MediaMetadataRetriever()
+    val bitmap = try {
+        mmr.setDataSource(context, uri)
+        mmr.embeddedPicture ?: throw IllegalStateException("No artwork found for $uri")
+    } finally {
+        mmr.release()
+    }
+
+    return bitmap
+}*/

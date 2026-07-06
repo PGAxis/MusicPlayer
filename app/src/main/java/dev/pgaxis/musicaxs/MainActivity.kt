@@ -15,12 +15,14 @@ import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsAetherScheme
+import dev.pgaxis.musicaxs.ui.theme.MusicAxsBordoScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsChalkScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsCyanScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsEmberScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsGrayscaleScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsPhosphorScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicAxsSoleilScheme
+import dev.pgaxis.musicaxs.ui.theme.MusicAxsVoidScheme
 import dev.pgaxis.musicaxs.ui.theme.MusicaxsTheme
 
 class MainActivity : AppCompatActivity() {
@@ -51,6 +53,8 @@ class MainActivity : AppCompatActivity() {
                 Theme.PHOSPHOR -> MusicAxsPhosphorScheme
                 Theme.CHALK -> MusicAxsChalkScheme
                 Theme.SUNSHINE -> MusicAxsSoleilScheme
+                Theme.BORDO -> MusicAxsBordoScheme
+                Theme.VOID -> MusicAxsVoidScheme
             }
             MusicaxsTheme(colorScheme = colorScheme) {
                 AppNavigation()

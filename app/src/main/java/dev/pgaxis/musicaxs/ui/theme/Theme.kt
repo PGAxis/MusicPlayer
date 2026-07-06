@@ -3,6 +3,7 @@ package dev.pgaxis.musicaxs.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -161,7 +162,7 @@ val MusicAxsPhosphorScheme = darkColorScheme(
     onError = TextWhitePrimary,
 )
 
-val MusicAxsChalkScheme = darkColorScheme(
+val MusicAxsChalkScheme = lightColorScheme(
     primary = ChalkPrimary,
     onPrimary = TextWhitePrimary,
     primaryContainer = ChalkSurfaceVariant,
@@ -192,7 +193,7 @@ val MusicAxsChalkScheme = darkColorScheme(
     onError = TextWhitePrimary,
 )
 
-val MusicAxsSoleilScheme = darkColorScheme(
+val MusicAxsSoleilScheme = lightColorScheme(
     primary = SoleilPrimary,
     onPrimary = TextWhitePrimary,
     primaryContainer = SoleilSurfaceVariant,
@@ -218,6 +219,68 @@ val MusicAxsSoleilScheme = darkColorScheme(
 
     outline = SoleilBorder,
     outlineVariant = SoleilDivider,
+
+    error = PopupError,
+    onError = TextWhitePrimary,
+)
+
+val MusicAxsBordoScheme = darkColorScheme(
+    primary = BordoPrimary,
+    onPrimary = TextWhitePrimary,
+    primaryContainer = BordoSurfaceVariant,
+    onPrimaryContainer = TextWhitePrimary,
+
+    secondary = BordoSecondary,
+    onSecondary = TextWhitePrimary,
+    secondaryContainer = BordoCard,
+    onSecondaryContainer = TextWhitePrimary,
+
+    tertiary = BordoTertiary,
+    onTertiary = TextWhitePrimary,
+    tertiaryContainer = BordoSurfaceVariant,
+    onTertiaryContainer = TextWhitePrimary,
+
+    background = BordoBackground,
+    onBackground = TextWhitePrimary,
+
+    surface = BordoSurface,
+    onSurface = TextWhitePrimary,
+    surfaceVariant = BordoSurfaceVariant,
+    onSurfaceVariant = TextBordoSecondary,
+
+    outline = BordoBorder,
+    outlineVariant = BordoDivider,
+
+    error = PopupError,
+    onError = TextWhitePrimary,
+)
+
+val MusicAxsVoidScheme = darkColorScheme(
+    primary = VoidPrimary,
+    onPrimary = Color(0xFF001A17),
+    primaryContainer = VoidSurfaceVariant,
+    onPrimaryContainer = TextWhitePrimary,
+
+    secondary = VoidSecondary,
+    onSecondary = TextWhitePrimary,
+    secondaryContainer = VoidCard,
+    onSecondaryContainer = TextWhitePrimary,
+
+    tertiary = VoidTertiary,
+    onTertiary = Color(0xFF001A17),
+    tertiaryContainer = VoidSurfaceVariant,
+    onTertiaryContainer = TextWhitePrimary,
+
+    background = VoidBackground,
+    onBackground = TextWhitePrimary,
+
+    surface = VoidSurface,
+    onSurface = TextWhitePrimary,
+    surfaceVariant = VoidSurfaceVariant,
+    onSurfaceVariant = TextVoidSecondary,
+
+    outline = VoidBorder,
+    outlineVariant = VoidDivider,
 
     error = PopupError,
     onError = TextWhitePrimary,
