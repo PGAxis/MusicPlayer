@@ -187,6 +187,25 @@ fun SettingsScreen(
                     )
 
                     ListDivider(hasArt = false)
+                    
+                    SettingsActionRow(
+                        title = stringResource(R.string.set_scr_equalizer),
+                        description = stringResource(R.string.set_scr_equalizer_desc),
+                        onClick = {
+                            try {
+                                val intent = android.content.Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
+                                context.startActivity(intent)
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.no_equalizer_found),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+
+                    ListDivider(hasArt = false)
 
                     SettingsToggleRow(
                         title = stringResource(R.string.set_scr_ytconv_add_songs),
@@ -700,6 +719,32 @@ fun SettingsArtistSeparatorsRow(
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsActionRow(
+    title: String,
+    description: String? = null,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            if (description != null) {
+                Text(
+                    description,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music.axs</string>
+
+    <!-- General -->
+    <string name="name">Nombre</string>
+    <string name="create">Crear</string>
+    <string name="see_details">Ver detalles</string>
+    <string name="cancel">Cancelar</string>
+    <string name="rename">Renombrar</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_w_arg">¿Eliminar \"%s\"?</string>
+    <string name="no_coming_back">Esta acción no se puede deshacer</string>
+    <string name="queue">Cola</string>
+    <string name="ok">Aceptar</string>
+    <string name="download">Descargar</string>
+    <string name="delete_download">Eliminar descarga</string>
+
+    <plurals name="song_count">
+        <item quantity="one">%d canción</item>
+        <item quantity="other">%d canciones</item>
+    </plurals>
+    <plurals name="track_count">
+        <item quantity="one">%d pista</item>
+        <item quantity="other">%d pistas</item>
+    </plurals>
+    <plurals name="album_count">
+        <item quantity="one">%d álbum</item>
+        <item quantity="other">%d álbumes</item>
+    </plurals>
+    <plurals name="episode_count">
+        <item quantity="one">%d episodio</item>
+        <item quantity="other">%d episodios</item>
+    </plurals>
+
+    <!-- Remove from -->
+    <string name="rm_from_fav">Eliminar de favoritos</string>
+    <string name="rm_from_queue">Eliminar de la cola</string>
+    <string name="rm_from_playlist">Eliminar de la playlist</string>
+
+    <!-- Add to -->
+    <string name="add_to">Añadir a</string>
+    <string name="add_to_fav">Añadir a favoritos</string>
+    <string name="add_to_queue">Añadir a la cola</string>
+    <string name="add_to_playlist">Añadir a la playlist</string>
+
+    <!-- Main screen -->
+    <string name="tab_favourites">Favoritos</string>
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_songs">Canciones</string>
+    <string name="tab_albums">Álbumes</string>
+    <string name="tab_artists">Intérpretes</string>
+    <string name="tab_podcasts">Podcasts</string>
+    <string name="main_new_playlist">Nueva playlist</string>
+
+    <!-- Settings screen -->
+    <string name="set_scr_title">Ajustes</string>
+    <string name="set_scr_library">Biblioteca</string>
+    <string name="set_scr_hide_wa_audio">Ocultar audios de WhatsApp</string>
+    <string name="set_scr_hide_wa_audio_desc">Oculta las canciones del álbum \"WhatsApp Audio\"</string>
+    <string name="set_scr_smart_limit">Límite inteligente</string>
+    <string name="set_scr_smart_limit_desc">Establece el número máximo de canciones en las playlists inteligentes. Ponlo en 0 para quitar el límite.</string>
+    <string name="set_scr_tab_order">Orden de pestañas</string>
+    <string name="set_scr_customization">Personalización</string>
+    <string name="set_scr_theme">Tema de color</string>
+    <string name="set_scr_artist_separators">Separadores de artistas</string>
+    <string name="set_scr_artist_separators_desc">Caracteres o palabras usadas para separar artistas cuando una canción tiene varios</string>
+    <string name="set_scr_artist_separators_placeholder">Añadir separador…</string>
+    <string name="set_scr_app_settings">Ajustes de la aplicación</string>
+    <string name="language">Idioma</string>
+    <string name="set_scr_ytconv_add_songs">Permitir a YouTube Conv.axs añadir canciones</string>
+    <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs puede añadir canciones descargadas directamente a tus playlists</string>
+    
+    <!-- Equalizer -->
+    <string name="set_scr_equalizer">Ecualizador del sistema</string>
+    <string name="set_scr_equalizer_desc">Abrir los efectos de audio integrados del dispositivo</string>
+    <string name="no_equalizer_found">No se encontró ningún ecualizador del sistema en este dispositivo</string>
+
+    <!-- Albums screen -->
+    <string name="alb_scr_no_found">No se encontraron álbumes</string>
+
+    <!-- Artists screen -->
+    <string name="art_scr_no_found">No se encontraron artistas</string>
+
+    <!-- Favourites screen -->
+    <string name="fav_scr_no_found">Aún no hay favoritos</string>
+
+    <!-- Playlists screen -->
+    <string name="pls_scr_rec_added">Añadidas recientemente</string>
+    <string name="pls_scr_rec_played">Reproducidas recientemente</string>
+    <string name="pls_scr_most_played">Más reproducidas</string>
+    <string name="pls_scr_my_playlists">Mis playlists</string>
+    <string name="pls_scr_no_found">Aún no hay playlists</string>
+    <string name="pls_scr_import">Importar</string>
+    <string name="pls_scr_import_desc">Importar playlist desde .m3u</string>
+    <string name="pls_scr_export">Exportar</string>
+    <string name="pls_scr_export_desc">Exportar a .m3u — aún no hay playlists</string>
+    <string name="pls_scr_name_playlist">Nombra tu playlist</string>
+    <string name="pls_scr_playlist_name">Nombre de la playlist</string>
+    <string name="pls_scr_rename_playlist">Renombrar playlist</string>
+    <string name="pls_scr_new_name">Nuevo nombre</string>
+    <string name="pls_scr_merge">Fusionar en…</string>
+
+    <!-- Songs screen -->
+    <string name="song_scr_storage_perm">Se requiere permiso de almacenamiento para mostrar tus canciones</string>
+    <string name="song_scr_grant">Conceder permiso</string>
+    <string name="song_scr_no_found">No se encontraron canciones en este dispositivo</string>
+
+    <!-- Merge to sheet -->
+    <string name="mer_sh_into">Fusionar \"%s\" en…</string>
+    <string name="mer_sh_no_found">No hay otras playlists para fusionar</string>
+
+    <!-- Song row -->
+    <string name="song_row_delete">Eliminar canción</string>
+    <string name="song_row_delete_desc">\"%s\" se eliminará permanentemente de tu dispositivo. Esta acción es irreversible.</string>
+
+    <!-- Playlist detail screen -->
+    <string name="pls_det_no_found">Esta playlist está vacía</string>
+
+    <!-- Search screen -->
+    <string name="search_scr_search">Buscar…</string>
+    <string name="search_scr_search_long">Empieza a escribir para buscar…</string>
+    <string name="search_scr_songs">Canciones</string>
+    <string name="search_scr_artists">Intérpretes</string>
+    <string name="search_scr_albums">Álbumes</string>
+
+    <!-- Song detail screen -->
+    <string name="song_det_title">Título</string>
+    <string name="song_det_artist">Intérprete</string>
+    <string name="song_det_album">Álbum</string>
+    <string name="song_det_track">Número de pista</string>
+    <string name="song_det_duration">Duración</string>
+    <string name="song_det_file">Tipo de archivo</string>
+    <string name="song_det_size">Tamaño</string>
+    <string name="song_det_path">Ruta</string>
+    <string name="song_det_detail">Detalles</string>
+    <string name="song_det_save">Guardar</string>
+    <string name="song_det_saved">Guardado</string>
+
+    <!-- Settings view model -->
+    <string name="set_vm_cyan">Cian</string>
+    <string name="set_vm_ember">Ámbar</string>
+    <string name="set_vm_aether">Éter</string>
+    <string name="set_vm_phosphor">Fósforo</string>
+    <string name="set_vm_chalk">Tiza</string>
+    <string name="set_vm_sunshine">Sol</string>
+    <string name="set_vm_grayscale">Escala de grises</string>
+    <string name="set_vm_bordo">Burdeos</string>
+    <string name="set_vm_void">Vacío</string>
+    
+    <!-- Podcasts screen -->
+    <string name="podcasts_empty">Aún no se han añadido podcasts</string>
+    <string name="podcasts_add_feed">Añadir un feed</string>
+    <string name="podcasts_rss_url">URL del feed RSS</string>
+
+    <!-- Podcasts downloader -->
+    <string name="download_complete">Descarga completada</string>
+</resources>

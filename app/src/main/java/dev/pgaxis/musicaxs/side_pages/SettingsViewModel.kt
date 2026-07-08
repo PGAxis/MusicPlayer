@@ -41,7 +41,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     )
     var selectedTheme by mutableStateOf(settings.theme)
 
-    val langOptions = mapOf("en" to "English", "cs" to "Čeština")
+    val langOptions = mapOf("en" to "English", "cs" to "Čeština", "es" to "Español")
     var selectedLang = AppCompatDelegate.getApplicationLocales().toLanguageTags()
         .ifEmpty { Locale.getDefault().language.ifEmpty { langOptions.keys.first() } }!!
 

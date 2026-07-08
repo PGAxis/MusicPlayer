@@ -77,6 +77,11 @@
     <string name="language">Jazyk</string>
     <string name="set_scr_ytconv_add_songs">Povolit YouTube Conv.axs přidávat skladby</string>
     <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs může přidávat skladby přímo do vašich playlistů</string>
+    
+    <!-- Equalizer -->
+    <string name="set_scr_equalizer">Systémový ekvalizér</string>
+    <string name="set_scr_equalizer_desc">Otevřít vestavěné zvukové efekty zařízení</string>
+    <string name="no_equalizer_found">Na tomto zařízení nebyl nalezen žádný systémový ekvalizér</string>
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">Nenalezena žádná alba</string>

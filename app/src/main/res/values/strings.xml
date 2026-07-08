@@ -69,6 +69,11 @@
     <string name="language">Language</string>
     <string name="set_scr_ytconv_add_songs">Allow YouTube Conv.axs to add songs</string>
     <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs can add downloaded songs directly to your playlists</string>
+    
+    <!-- Equalizer -->
+    <string name="set_scr_equalizer">System Equalizer</string>
+    <string name="set_scr_equalizer_desc">Open device\'s built-in audio effects</string>
+    <string name="no_equalizer_found">No system equalizer found on this device</string>
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">No albums found</string>
