@@ -177,10 +177,10 @@ fun SettingsScreen(
                 )
             }
 
-            if (ytcnvReady) {
-                SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
+            // --- GRUPO DE AJUSTES (AHORA SIEMPRE VISIBLE) ---
+            SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
                 
-                // 1. Language Selector (Always visible)
+                // 1. Selector de Idiomas (Siempre visible)
                 SettingsDropdownRow(
                     title = stringResource(R.string.language),
                     options = vm.langOptions,
@@ -190,7 +190,7 @@ fun SettingsScreen(
 
                 ListDivider(hasArt = false)
 
-                // 2. Our Equalizer (Always visible)
+                // 2. Nuestro Ecualizador (Siempre visible)
                 SettingsActionRow(
                     title = stringResource(R.string.set_scr_equalizer),
                     description = stringResource(R.string.set_scr_equalizer_desc),
@@ -208,7 +208,7 @@ fun SettingsScreen(
                     }
                 )
 
-                // 3. YouTube button (Visible only if the app is installed)
+                // 3. Botón de YouTube (Solo visible si la app está instalada)
                 if (ytcnvReady) {
                     ListDivider(hasArt = false)
                     
