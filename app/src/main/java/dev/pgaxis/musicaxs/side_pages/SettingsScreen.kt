@@ -179,34 +179,39 @@ fun SettingsScreen(
 
             if (ytcnvReady) {
                 SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
-                    SettingsDropdownRow(
-                        title = stringResource(R.string.language),
-                        options = vm.langOptions,
-                        selected = vm.selectedLang,
-                        onSelectChange = { vm.onLanguageChange(it as String) }
-                    )
+                
+                // 1. Language Selector (Always visible)
+                SettingsDropdownRow(
+                    title = stringResource(R.string.language),
+                    options = vm.langOptions,
+                    selected = vm.selectedLang,
+                    onSelectChange = { vm.onLanguageChange(it as String) }
+                )
 
+                ListDivider(hasArt = false)
+
+                // 2. Our Equalizer (Always visible)
+                SettingsActionRow(
+                    title = stringResource(R.string.set_scr_equalizer),
+                    description = stringResource(R.string.set_scr_equalizer_desc),
+                    onClick = {
+                        try {
+                            val intent = android.content.Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
+                            context.startActivity(intent)
+                        } catch (e: android.content.ActivityNotFoundException) {
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.no_equalizer_found),
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                )
+
+                // 3. YouTube button (Visible only if the app is installed)
+                if (ytcnvReady) {
                     ListDivider(hasArt = false)
                     
-                    SettingsActionRow(
-                        title = stringResource(R.string.set_scr_equalizer),
-                        description = stringResource(R.string.set_scr_equalizer_desc),
-                        onClick = {
-                            try {
-                                val intent = android.content.Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
-                                context.startActivity(intent)
-                            } catch (e: android.content.ActivityNotFoundException) {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_equalizer_found),
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    )
-
-                    ListDivider(hasArt = false)
-
                     SettingsToggleRow(
                         title = stringResource(R.string.set_scr_ytconv_add_songs),
                         description = stringResource(R.string.set_scr_ytconv_add_songs_desc),
