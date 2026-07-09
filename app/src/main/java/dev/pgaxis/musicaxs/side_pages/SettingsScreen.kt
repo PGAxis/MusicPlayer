@@ -177,10 +177,10 @@ fun SettingsScreen(
                 )
             }
 
-            // --- GRUPO DE AJUSTES (AHORA SIEMPRE VISIBLE) ---
+            // --- SETTINGS GROUP (NOW ALWAYS VISIBLE) ---
             SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
                 
-                // 1. Selector de Idiomas (Siempre visible)
+                // 1. Language Selector (Always visible)
                 SettingsDropdownRow(
                     title = stringResource(R.string.language),
                     options = vm.langOptions,
@@ -190,13 +190,21 @@ fun SettingsScreen(
 
                 ListDivider(hasArt = false)
 
-                // 2. Nuestro Ecualizador (Siempre visible)
+                // 2. Our Equalizer (Always visible)
                 SettingsActionRow(
                     title = stringResource(R.string.set_scr_equalizer),
                     description = stringResource(R.string.set_scr_equalizer_desc),
                     onClick = {
                         try {
-                            val intent = android.content.Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
+                            val intent = android.content.Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
+                                // Get the audio ID of the player (if something is playing) or 0 (global)
+                                val player = dev.pgaxis.musicaxs.services.MusicService.playerInstance as? androidx.media3.exoplayer.ExoPlayer
+                                val sessionId = player?.audioSessionId ?: 0
+                                
+                                putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
+                                putExtra(android.media.audiofx.AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+                                putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE, android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC)
+                            }
                             context.startActivity(intent)
                         } catch (e: android.content.ActivityNotFoundException) {
                             android.widget.Toast.makeText(
