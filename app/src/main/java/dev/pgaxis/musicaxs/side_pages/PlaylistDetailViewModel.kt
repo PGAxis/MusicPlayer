@@ -55,7 +55,7 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
                     }
                 }
             }
-            1L, 2L, 3L -> {
+            1L, 2L, 3L, 4L -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val songs = when (id) {
                         1L -> queryRecentlyAdded(getLimit())

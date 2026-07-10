@@ -1,0 +1,6 @@
+Bug fixes:
+- Songs deleted from outside the app now get properly removed from queue
+- When editing metadata of a song inside the queue, they now show instantly
+
+Additions:
+- Queue screen now shows the source (normal queue, playlist, podcasts)

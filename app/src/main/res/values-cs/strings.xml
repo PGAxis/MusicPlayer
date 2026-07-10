@@ -108,6 +108,9 @@
     <string name="song_scr_grant">Udělit oprávnění</string>
     <string name="song_scr_no_found">Na tomto zařízení nebyly nalezeny žádné skladby</string>
 
+    <!-- Queue screen -->
+    <string name="que_scr_playing">Hraje:</string>
+
     <!-- Merge to sheet -->
     <string name="mer_sh_into">Připojit „%s" do…</string>
     <string name="mer_sh_no_found">Žádné další playlisty k připojení</string>

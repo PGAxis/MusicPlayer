@@ -1,0 +1,6 @@
+Opravy chyb:
+- Písničky odstraněny mimo aplikaci jsou nyní řádně odstraněny z fronty
+- Po upravení metadat písničky ve frontě se řádně a instantně změní
+
+Co je nového:
+- Obrazovka Fronty nyní ukazuje zdroj (normální fronta, playlist, podcasty)

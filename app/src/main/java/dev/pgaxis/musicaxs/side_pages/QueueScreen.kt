@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -7,11 +8,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +39,7 @@ fun QueueScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val currentIndex by vm.currentIndex.collectAsStateWithLifecycle()
+    val currentTitle by vm.currentTitle.collectAsStateWithLifecycle()
     val shuffleSave = remember { ShuffleSave.getInstance(context) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
 
@@ -57,13 +61,16 @@ fun QueueScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Header
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                .padding(horizontal = 4.dp, vertical = 8.dp)
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+            IconButton(
+                onClick = onBack,
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
@@ -71,13 +78,24 @@ fun QueueScreen(
                     modifier = Modifier.size(25.dp)
                 )
             }
-            Text(
-                text = stringResource(R.string.queue),
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.primary
-            )
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.que_scr_playing),
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                )
+                Text(
+                    text = currentTitle,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.basicMarquee()
+                )
+            }
         }
 
         HorizontalDivider()

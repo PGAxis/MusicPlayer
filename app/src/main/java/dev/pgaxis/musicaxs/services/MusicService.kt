@@ -127,6 +127,7 @@ class MusicService : MediaSessionService() {
         val currentUri: Uri? get() = instance?.mediaSession?.player?.currentMediaItem?.localConfiguration?.uri
         val currentUriState = MutableStateFlow<Uri?>(null)
         val queueState = MutableStateFlow<List<MediaItem>>(emptyList())
+        val queueSourceState = MutableStateFlow(QueueSource.MANUAL)
         val isPlayingState = MutableStateFlow(false)
         val currentIndexState = MutableStateFlow(-1)
 
@@ -433,10 +434,12 @@ class MusicService : MediaSessionService() {
 
         when (currentSource) {
             QueueSource.PLAYLIST -> {
+                settings.lastPlaylistId = -1L
                 shuffleSave.updateShuffled(false)
                 isShuffleOn = false
                 currentSource = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
+                queueSourceState.value = QueueSource.MANUAL
                 player.setMediaItem(song.toMediaItem(), startPositionMs)
             }
             QueueSource.MANUAL -> {
@@ -445,17 +448,16 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        settings.lastPlaylistId = -1L
-
         player.prepare()
         player.play()
     }
 
     private fun replaceQueueInternal(songs: List<Song>, playlistId: Long = -1L) {
         val player = mediaSession?.player ?: return
+        settings.lastPlaylistId = playlistId
         currentSource = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.lastPlaylistId = playlistId
+        queueSourceState.value = QueueSource.PLAYLIST
 
         shuffleSave.updateShuffled(false)
         isShuffleOn = false
@@ -468,9 +470,10 @@ class MusicService : MediaSessionService() {
 
     private fun playShuffledInternal(songs: List<Song>, playlistId: Long = -1L) {
         val player = mediaSession?.player ?: return
+        settings.lastPlaylistId = playlistId
         currentSource = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.lastPlaylistId = playlistId
+        queueSourceState.value = QueueSource.PLAYLIST
 
         val shuffled = songs.shuffled()
 
@@ -501,6 +504,7 @@ class MusicService : MediaSessionService() {
             shuffleSave.updateShuffled(false)
             isShuffleOn = false
             currentSource = QueueSource.MANUAL
+            queueSourceState.value = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
         }
     }
@@ -509,9 +513,11 @@ class MusicService : MediaSessionService() {
         val player = mediaSession?.player ?: return
         when (currentSource) {
             QueueSource.PLAYLIST -> {
+                settings.lastPlaylistId = -1L
                 shuffleSave.updateShuffled(false)
                 isShuffleOn = false
                 currentSource = QueueSource.MANUAL
+                queueSourceState.value = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
                 player.setMediaItem(episode.toMediaItem(feed))
             }
@@ -520,16 +526,16 @@ class MusicService : MediaSessionService() {
                 player.seekTo(0, 0)
             }
         }
-        settings.lastPlaylistId = -1L
         player.prepare()
         player.play()
     }
 
     private fun replaceQueuePodcastInternal(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
         val player = mediaSession?.player ?: return
+        settings.lastPlaylistId = 4L
         currentSource = QueueSource.PLAYLIST
+        queueSourceState.value = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.lastPlaylistId = -1L
 
         shuffleSave.updateShuffled(false)
         isShuffleOn = false
@@ -542,9 +548,10 @@ class MusicService : MediaSessionService() {
 
     private fun playShuffledPodcastInternal(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
         val player = mediaSession?.player ?: return
+        settings.lastPlaylistId = 4L
         currentSource = QueueSource.PLAYLIST
+        queueSourceState.value = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
-        settings.lastPlaylistId = -1L
 
         val shuffled = episodes.shuffled()
 
@@ -569,6 +576,7 @@ class MusicService : MediaSessionService() {
             shuffleSave.updateShuffled(false)
             isShuffleOn = false
             currentSource = QueueSource.MANUAL
+            queueSourceState.value = QueueSource.MANUAL
             settings.queueSource = QueueSource.MANUAL
         }
     }
@@ -596,6 +604,7 @@ class MusicService : MediaSessionService() {
                 .build()
         }
         currentSource = QueueSource.PLAYLIST
+        queueSourceState.value = QueueSource.PLAYLIST
         settings.queueSource = QueueSource.PLAYLIST
         player.setMediaItems(items)
         player.prepare()
@@ -902,6 +911,7 @@ class MusicService : MediaSessionService() {
         queueState.value = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
         currentIndexState.value = player.currentMediaItemIndex
         currentSource = settings.queueSource
+        queueSourceState.value = settings.queueSource
         player.repeatMode = settings.repeatMode
         isShuffleOn = ShuffleSave.getInstance(this).isShuffled
 

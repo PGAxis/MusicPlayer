@@ -36,10 +36,10 @@ import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.AlbumArtPreloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class CurrentSong(
     val title: String = "Song Title",
@@ -78,34 +78,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
 
-    val currentSong: StateFlow<CurrentSong?> = MusicService.currentUriState
-        .map { uri ->
-            uri ?: return@map null
-            val mediaItem = MusicService.queueState.value
-                .find { it.localConfiguration?.uri == uri }
-            val source = mediaItem?.mediaMetadata?.extras
-                ?.getString("source")
-                ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
-                ?: QueueItemSource.LOCAL
+    val currentSong: StateFlow<CurrentSong?> = combine(
+        MusicService.currentUriState,
+        songRepo.songs
+    ) { uri, _ ->
+        uri ?: return@combine null
+        val mediaItem = MusicService.queueState.value
+            .find { it.localConfiguration?.uri == uri }
+        val source = mediaItem?.mediaMetadata?.extras
+            ?.getString("source")
+            ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
+            ?: QueueItemSource.LOCAL
 
-            if (source == QueueItemSource.LOCAL) {
-                songRepo.isLoaded.first { it }
-                val song = songRepo.resolveSong(uri)
-                CurrentSong(
-                    title = song?.title ?: mediaItem?.mediaMetadata?.title?.toString() ?: "",
-                    artist = song?.artist ?: mediaItem?.mediaMetadata?.artist?.toString() ?: "",
-                    songUri = uri.toString(),
-                    source = source
-                )
-            } else {
-                CurrentSong(
-                    title = mediaItem?.mediaMetadata?.title?.toString() ?: "",
-                    artist = mediaItem?.mediaMetadata?.artist?.toString() ?: "",
-                    songUri = uri.toString(),
-                    source = source
-                )
-            }
+        if (source == QueueItemSource.LOCAL) {
+            val song = songRepo.resolveSong(uri)
+            CurrentSong(
+                title = song?.title ?: mediaItem?.mediaMetadata?.title?.toString() ?: "",
+                artist = song?.artist ?: mediaItem?.mediaMetadata?.artist?.toString() ?: "",
+                songUri = uri.toString(),
+                source = source
+            )
+        } else {
+            CurrentSong(
+                title = mediaItem?.mediaMetadata?.title?.toString() ?: "",
+                artist = mediaItem?.mediaMetadata?.artist?.toString() ?: "",
+                songUri = uri.toString(),
+                source = source
+            )
         }
+    }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private fun hasPermission(): Boolean {
@@ -184,6 +185,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 albumRepo.update(albums)
                 artistRepo.update(artists)
                 prewarmAlbumArtCache(songs)
+
+                val context = getApplication<Application>()
+                withContext(Dispatchers.Main) {
+                    val songsByUri = songs.associateBy { it.uri.toString() }
+                    val player = MusicService.playerInstance ?: return@withContext
+                    (player.mediaItemCount - 1 downTo 0).forEach { index ->
+                        val item = player.getMediaItemAt(index)
+                        val uri = item.localConfiguration?.uri?.toString() ?: return@forEach
+                        val song = songsByUri[uri]
+                        if (song == null) {
+                            MusicService.removeFromQueue(context, index)
+                        } else {
+                            val currentTitle = item.mediaMetadata.title?.toString()
+                            val currentArtist = item.mediaMetadata.artist?.toString()
+                            if (currentTitle != song.title || currentArtist != song.artist) {
+                                player.replaceMediaItem(
+                                    index,
+                                    item.buildUpon()
+                                        .setMediaMetadata(
+                                            item.mediaMetadata.buildUpon()
+                                                .setTitle(song.title)
+                                                .setArtist(song.artist)
+                                                .build()
+                                        )
+                                        .build()
+                                )
+                            }
+                        }
+                    }
+                }
             } catch (_: Exception) { }
         }
     }

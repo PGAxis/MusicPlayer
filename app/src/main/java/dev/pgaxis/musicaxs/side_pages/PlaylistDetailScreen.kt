@@ -121,7 +121,7 @@ fun PlaylistDetailScreen(
                     }
                     Spacer(Modifier.weight(1f))
                     when (playlistId) {
-                        0L, 1L, 2L, 3L -> { }
+                        0L, 1L, 2L, 3L, 4L -> { }
                         else -> {
                             IconButton(onClick = {
                                 favPlaylists.toggle(playlistId)
@@ -215,7 +215,7 @@ fun PlaylistDetailScreen(
                                                 song = keyed.song,
                                                 onSeeDetails = onSeeDetail,
                                                 onAddTo = { selectedSong = keyed.song },
-                                                showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L),
+                                                showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L, 4L),
                                                 onRemoveFrom = {
                                                     vm.removeSong(playlistId, index)
                                                     PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)

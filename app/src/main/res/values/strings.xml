@@ -100,6 +100,9 @@
     <string name="song_scr_grant">Grant permission</string>
     <string name="song_scr_no_found">No songs found on this device</string>
 
+    <!-- Queue screen -->
+    <string name="que_scr_playing">Playing:</string>
+
     <!-- Merge to sheet -->
     <string name="mer_sh_into">Merge "%s" into…</string>
     <string name="mer_sh_no_found">No other playlists to merge into</string>
