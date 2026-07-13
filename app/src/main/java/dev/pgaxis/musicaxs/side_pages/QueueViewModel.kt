@@ -14,9 +14,12 @@ import dev.pgaxis.musicaxs.services.QueueSource
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.settings.SettingsSave.QueueEntry
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class QueueViewModel(application: Application) : AndroidViewModel(application) {
@@ -29,8 +32,20 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentIndex = MutableStateFlow(-1)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
-    private val _currentTitle = MutableStateFlow(context.getString(R.string.queue))
-    val currentTitle: StateFlow<String> = _currentTitle.asStateFlow()
+    val currentTitle: StateFlow<String> = combine(
+        MusicService.queueSourceState,
+        MusicService.playlistIdState,
+        MusicService.playlistRenamedState
+    ) { source, _, state ->
+        when(source) {
+            QueueSource.MANUAL -> context.getString(R.string.queue)
+            QueueSource.PLAYLIST -> {
+                val name = getPlaylistName()
+                if (state) MusicService.changePlaylistRenamedState(false)
+                name
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, context.getString(R.string.queue))
 
     init {
         viewModelScope.launch {
@@ -44,14 +59,6 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             MusicService.currentIndexState.collectLatest {
                 _currentIndex.value = it
-            }
-        }
-        viewModelScope.launch {
-            MusicService.queueSourceState.collectLatest { source ->
-                when(source) {
-                    QueueSource.MANUAL -> _currentTitle.value = context.getString(R.string.queue)
-                    QueueSource.PLAYLIST -> _currentTitle.value = getPlaylistName()
-                }
             }
         }
     }
@@ -91,7 +98,7 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
             else -> {
                 val playlist = playlistRepo.playlistById(settings.lastPlaylistId)
                 if (playlist != null) {
-                    "Playlist: ${playlist.name}"
+                    "${context.getString(R.string.que_scr_playlist)} ${playlist.name}"
                 } else {
                     context.getString(R.string.queue)
                 }

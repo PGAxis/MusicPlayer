@@ -106,8 +106,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 source = source
             )
         }
-    }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private fun hasPermission(): Boolean {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)

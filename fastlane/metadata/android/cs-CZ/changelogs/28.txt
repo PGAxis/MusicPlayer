@@ -1,0 +1,7 @@
+Opravy chyb:
+- Obrazovka Fronty nyní zobrazuje správný název playlistu i po změně z playlistu na jiný playlist
+- Přejmenování playlistu nyní hned změní název playlistu na obrazovce Fronty
+- Když bylo jméno playlistu moc dlouhé, zakrývalo tlačítko "zpět" na obrazovce Fronty
+
+Co je nového:
+- Nositelná zařízení (např. chytré hodinky) nyní opět dostávají artwork

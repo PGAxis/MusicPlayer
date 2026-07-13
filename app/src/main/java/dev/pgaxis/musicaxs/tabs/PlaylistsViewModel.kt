@@ -13,6 +13,7 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
+import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +128,12 @@ class PlaylistsViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun rename(playlistId: Long, name: String) {
-        viewModelScope.launch(Dispatchers.IO) { repo.rename(playlistId, name) }
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.rename(playlistId, name)
+            if (playlistId == settings.lastPlaylistId) {
+                MusicService.changePlaylistRenamedState(true)
+            }
+        }
     }
 
     fun delete(playlistId: Long) {

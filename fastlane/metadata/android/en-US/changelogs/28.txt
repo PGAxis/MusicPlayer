@@ -1,0 +1,7 @@
+Bug fixes:
+- The Queue screen now shows the correct playlist name even when switching from playlist to playlist
+- Renaming a playlist now immediately changes the playlist title in the Queue screen
+- If a playlist name was too long, it would cover the back button on the Queue screen
+
+Additions:
+- Wearables (e.g. smartwatches) now once again get the artwork

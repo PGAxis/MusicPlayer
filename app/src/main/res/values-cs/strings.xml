@@ -110,6 +110,7 @@
 
     <!-- Queue screen -->
     <string name="que_scr_playing">Hraje:</string>
+    <string name="que_scr_playlist">Playlist:</string>
 
     <!-- Merge to sheet -->
     <string name="mer_sh_into">Připojit „%s" do…</string>

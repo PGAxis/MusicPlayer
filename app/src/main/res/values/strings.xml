@@ -102,6 +102,7 @@
 
     <!-- Queue screen -->
     <string name="que_scr_playing">Playing:</string>
+    <string name="que_scr_playlist">Playlist:</string>
 
     <!-- Merge to sheet -->
     <string name="mer_sh_into">Merge "%s" into…</string>
