@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.pgaxis.musicaxs.BannerCenter
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
@@ -59,6 +60,8 @@ fun AddToSheet(
 
             HorizontalDivider()
 
+            val addedToQueueMessage = stringResource(R.string.added_to_queue, song.title)
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.queue)) },
                 leadingContent = {
@@ -66,11 +69,15 @@ fun AddToSheet(
                 },
                 modifier = Modifier.clickable {
                     MusicService.addToQueue(context, song)
+                    BannerCenter.show(message = addedToQueueMessage)
                     onDismiss()
                 }
             )
 
+
             val isFav = favourites.isFavourite(song.uri)
+            val addedToFavouritesMessage = stringResource(R.string.added_to_favourites, song.title)
+            val removedFromFavouritesMessage = stringResource(R.string.removed_from_favourites, song.title)
             ListItem(
                 headlineContent = {
                     Text(stringResource(if (isFav) R.string.rm_from_fav else R.string.add_to_fav), color = MaterialTheme.colorScheme.onSecondaryContainer)
@@ -84,6 +91,7 @@ fun AddToSheet(
                 modifier = Modifier.clickable {
                     if (MusicService.currentUri == song.uri) MusicService.like(favourites)
                     else favourites.toggle(song.uri, !isFav)
+                    BannerCenter.show(message = if (!isFav) addedToFavouritesMessage else removedFromFavouritesMessage)
                     onDismiss()
                 }
             )
@@ -98,6 +106,7 @@ fun AddToSheet(
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 playlists.forEach { playlist ->
+                    val addedToPlaylistMessage = stringResource(R.string.added_to_playlist, song.title, playlist.name)
                     ListItem(
                         headlineContent = { Text(playlist.name, color = MaterialTheme.colorScheme.onSecondaryContainer) },
                         leadingContent = {
@@ -112,10 +121,12 @@ fun AddToSheet(
                         modifier = Modifier.clickable {
                             PlaylistRepository.getInstance(context).addSong(playlist.id, song.id)
                             PlaylistToQueue(context).addSongIfCurrent(playlist.id, song)
+                            BannerCenter.show(message = addedToPlaylistMessage)
                             onDismiss()
                         }
                     )
                 }
+
             }
         }
     }

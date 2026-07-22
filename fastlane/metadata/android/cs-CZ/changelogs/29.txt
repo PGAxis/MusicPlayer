@@ -1,0 +1,7 @@
+Opravy chyb:
+- Výběr jazyka je nyní vidět i když není nainstalovaná aplikace YouTube Conv.axs
+
+Co je nového:
+- Obrazovka Detailu playlistu má nyní svůj režim na šířku
+- Každé tlačítko "zpět" v hlavičkách obrazovek má nyní stejnou velikost
+- Při přidávání do/odebírání z playlistu/fronty/oblíbených zobrazí aplikace "oznámení"

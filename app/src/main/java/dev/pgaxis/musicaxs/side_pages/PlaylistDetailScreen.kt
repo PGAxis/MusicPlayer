@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.side_pages
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -11,7 +12,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,12 +21,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +47,10 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 data class KeyedSong(val key: Long, val song: Song)
+
+private val ART_FULL_SIZE = 150.dp
+private val ART_TITLE_SPACING = 16.dp
+private val HEADER_VERTICAL_PADDING = 8.dp
 
 @SuppressLint("FrequentlyChangingValue")
 @Composable
@@ -85,13 +91,14 @@ fun PlaylistDetailScreen(
             }
 
             val density = LocalDensity.current
-            val imageHeightPx = with(density) { 180.dp.toPx() }
+            // Range (in px) the art (and with it, the whole header) collapses over.
+            val headerCollapseRangePx = with(density) { ART_FULL_SIZE.toPx() }
             var imageOffsetPx by remember { mutableFloatStateOf(0f) }
 
             val nestedScrollConnection = remember {
                 object : NestedScrollConnection {
                     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                        val newOffset = (imageOffsetPx + available.y).coerceIn(-imageHeightPx, 0f)
+                        val newOffset = (imageOffsetPx + available.y).coerceIn(-headerCollapseRangePx, 0f)
                         val consumed = newOffset - imageOffsetPx
                         imageOffsetPx = newOffset
                         return Offset(0f, consumed)
@@ -99,8 +106,16 @@ fun PlaylistDetailScreen(
                 }
             }
 
+            // 0f = fully expanded header, 1f = fully collapsed header.
+            val scrollFraction by remember {
+                derivedStateOf { (-imageOffsetPx / headerCollapseRangePx).coerceIn(0f, 1f) }
+            }
+
             val favPlaylists = remember { FavouritedPlaylistsSave.getInstance(context) }
             var isFavourited by remember { mutableStateOf(favPlaylists.isFavourited(playlistId)) }
+
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
             Column(
                 modifier = Modifier
@@ -109,14 +124,14 @@ fun PlaylistDetailScreen(
                     .background(MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header
+                // -- Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+                    IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                         Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.weight(1f))
@@ -136,14 +151,12 @@ fun PlaylistDetailScreen(
                             }
                         }
                     }
-                    // Play shuffle button
                     IconButton(onClick = {
                         if (state.songs.isNotEmpty()) MusicService.playShuffled(context, state.songs, playlistId)
                     }, shape = RoundedCornerShape(0.dp)) {
                         Icon(painterResource(R.drawable.shuffle), "Play shuffled",
                             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                     }
-                    // Play all button
                     IconButton(onClick = {
                         if (state.songs.isNotEmpty()) MusicService.playNormal(context, state.songs, playlistId)
                     }, shape = RoundedCornerShape(0.dp)) {
@@ -162,42 +175,13 @@ fun PlaylistDetailScreen(
                             .fillMaxSize()
                             .nestedScroll(nestedScrollConnection)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(with(density) { (imageHeightPx + imageOffsetPx).toDp().coerceAtLeast(0.dp) })
-                                .clipToBounds(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val validAlbumArtUri = state.songs.first().albumArtUri.takeIf { it != Uri.EMPTY && (it?.lastPathSegment?.toLongOrNull() ?: 0L) > 0L }
-                            var useFallbackUri by remember { mutableStateOf(false) }
-
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(if (useFallbackUri) state.songs.first().uri else validAlbumArtUri)
-                                    .size(150)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Album art",
-                                error = painterResource(R.drawable.default_cover),
-                                placeholder = painterResource(R.drawable.default_cover),
-                                fallback = painterResource(R.drawable.default_cover),
-                                modifier = Modifier
-                                    .size(150.dp)
-                                    .clip(RoundedCornerShape(15.dp)),
-                                contentScale = ContentScale.Crop,
-                                onError = { if (!useFallbackUri) useFallbackUri = true }
-                            )
-                        }
-
-                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(state.name, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.basicMarquee())
-                            Text(
-                                pluralStringResource(R.plurals.track_count, state.songs.size, state.songs.size),
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        PlaylistHeader(
+                            song = state.songs.first(),
+                            name = state.name,
+                            trackCount = state.songs.size,
+                            isLandscape = isLandscape,
+                            scrollFraction = scrollFraction
+                        )
 
                         Surface(
                             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
@@ -239,5 +223,93 @@ fun PlaylistDetailScreen(
                 AddToSheet(song = song, onDismiss = { selectedSong = null })
             }
         }
+    }
+}
+
+@Composable
+private fun PlaylistHeader(
+    song: Song,
+    name: String,
+    trackCount: Int,
+    isLandscape: Boolean,
+    scrollFraction: Float
+) {
+    val artSize = ART_FULL_SIZE * (1f - scrollFraction)
+    val spacing = ART_TITLE_SPACING * (1f - scrollFraction)
+
+    if (isLandscape) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = HEADER_VERTICAL_PADDING),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AlbumArt(song = song, size = artSize)
+            if (artSize > 0.dp) Spacer(Modifier.width(spacing))
+            PlaylistTitle(name = name, trackCount = trackCount)
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = HEADER_VERTICAL_PADDING),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AlbumArt(song = song, size = artSize)
+            if (artSize > 0.dp) Spacer(Modifier.height(spacing))
+            PlaylistTitle(name = name, trackCount = trackCount)
+        }
+    }
+}
+
+@Composable
+private fun AlbumArt(song: Song, size: Dp) {
+    val context = LocalContext.current
+    val validAlbumArtUri = song.albumArtUri.takeIf {
+        it != Uri.EMPTY && (it?.lastPathSegment?.toLongOrNull() ?: 0L) > 0L
+    }
+    var useFallbackUri by remember(song.uri) { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .size(size.coerceAtLeast(0.dp))
+            .clipToBounds(),
+        contentAlignment = Alignment.Center
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(if (useFallbackUri) song.uri else validAlbumArtUri)
+                .size(150)
+                .crossfade(true)
+                .build(),
+            contentDescription = "Album art",
+            error = painterResource(R.drawable.default_cover),
+            placeholder = painterResource(R.drawable.default_cover),
+            fallback = painterResource(R.drawable.default_cover),
+            modifier = Modifier
+                .size(ART_FULL_SIZE)
+                .clip(RoundedCornerShape(15.dp)),
+            contentScale = ContentScale.Crop,
+            onError = { if (!useFallbackUri) useFallbackUri = true }
+        )
+    }
+}
+
+@Composable
+private fun PlaylistTitle(name: String, trackCount: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            name,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.basicMarquee()
+        )
+        Text(
+            pluralStringResource(R.plurals.track_count, trackCount, trackCount),
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

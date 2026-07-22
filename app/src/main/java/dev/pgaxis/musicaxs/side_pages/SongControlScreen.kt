@@ -80,7 +80,7 @@ fun SongControlScreen(
     ) {
         // -- Header
         Row(modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onCollapse, shape = RoundedCornerShape(0.dp)) {
+            IconButton(onClick = onCollapse, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",

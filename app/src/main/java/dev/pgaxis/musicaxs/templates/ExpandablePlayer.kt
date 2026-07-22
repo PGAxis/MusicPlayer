@@ -475,6 +475,7 @@ fun ExpandablePlayer(
                                     SliderDefaults.Track(
                                         sliderState = sliderState,
                                         modifier = Modifier.height(3.dp),
+                                        thumbTrackGapSize = 0.dp,
                                         colors = SliderDefaults.colors(
                                             activeTrackColor = MaterialTheme.colorScheme.primary,
                                             inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)

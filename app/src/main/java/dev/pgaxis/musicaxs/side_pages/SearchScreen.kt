@@ -85,7 +85,7 @@ fun SearchScreen(
                 .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                 Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
             }
             OutlinedTextField(

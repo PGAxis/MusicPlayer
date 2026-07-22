@@ -105,7 +105,7 @@ fun SettingsScreen(
                 .padding(horizontal = 4.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                 Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
             }
             Text(
@@ -177,15 +177,16 @@ fun SettingsScreen(
                 )
             }
 
-            if (ytcnvReady) {
-                SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
-                    SettingsDropdownRow(
-                        title = stringResource(R.string.language),
-                        options = vm.langOptions,
-                        selected = vm.selectedLang,
-                        onSelectChange = { vm.onLanguageChange(it as String) }
-                    )
 
+            SettingsGroup(title = stringResource(R.string.set_scr_app_settings), initiallyExpanded = false) {
+                SettingsDropdownRow(
+                    title = stringResource(R.string.language),
+                    options = vm.langOptions,
+                    selected = vm.selectedLang,
+                    onSelectChange = { vm.onLanguageChange(it as String) }
+                )
+
+                if (ytcnvReady) {
                     ListDivider(hasArt = false)
 
                     SettingsToggleRow(

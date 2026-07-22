@@ -206,7 +206,7 @@ fun SongDetailScreen(
                     .fillMaxWidth()
                     .height(25.dp)
             ) {
-                IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+                IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.back),
                         contentDescription = "Back",

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -78,7 +79,7 @@ fun ArtistDetailScreen(
                 .windowInsetsPadding(WindowInsets.systemBars),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",

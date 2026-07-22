@@ -49,6 +49,7 @@ import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun AlbumDetailScreen(
@@ -65,7 +66,7 @@ fun AlbumDetailScreen(
 
     LaunchedEffect(songs.isEmpty()) {
         if (songs.isEmpty()) {
-            delay(3000)
+            delay(3000.milliseconds)
             if (songs.isEmpty()) onBack()
         }
     }
@@ -84,7 +85,7 @@ fun AlbumDetailScreen(
                 .windowInsetsPadding(WindowInsets.systemBars),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp)) {
+            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",

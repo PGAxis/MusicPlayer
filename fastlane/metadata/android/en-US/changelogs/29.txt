@@ -1,0 +1,7 @@
+Bug fixes:
+- Language options are now visible even when the YouTube Conv.axs app is not installed
+
+Additions:
+- Playlist detail screen now has its own landscape mode
+- Every back button in screen headers is now the same size
+- When adding to/removing from a playlist/queue/favourites, the app now shows a "notification"

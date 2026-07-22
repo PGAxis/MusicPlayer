@@ -14,6 +14,10 @@
     <string name="ok">OK</string>
     <string name="download">Stáhnout</string>
     <string name="delete_download">Smazat stažení</string>
+    <string name="added_to_playlist">%1$s přidáno do %2$s</string>
+    <string name="added_to_queue">%1$s přidáno do fronty</string>
+    <string name="added_to_favourites">%1$s přidáno do oblíbených</string>
+    <string name="removed_from_favourites">%1$s odebráno z oblíbených</string>
 
     <plurals name="song_count">
         <item quantity="one">%d skladba</item>

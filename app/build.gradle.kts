@@ -19,8 +19,8 @@ android {
         applicationId = "dev.pgaxis.musicaxs"
         minSdk = 26
         targetSdk = 37
-        versionCode = 28
-        versionName = "1.11.2"
+        versionCode = 29
+        versionName = "1.12.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -28,6 +28,14 @@ android {
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("../debug.jks")
+            storePassword = "android"
+            keyAlias = "debug"
+            keyPassword = "android"
+        }
     }
     buildTypes {
         release {

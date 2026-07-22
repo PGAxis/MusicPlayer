@@ -87,15 +87,3 @@ fun MediaItem.toQueueItem(): QueueItem {
         deviceId = deviceId
     )
 }
-
-/*private fun getBitmapData(context: Context, uri: Uri): ByteArray {
-    val mmr = MediaMetadataRetriever()
-    val bitmap = try {
-        mmr.setDataSource(context, uri)
-        mmr.embeddedPicture ?: throw IllegalStateException("No artwork found for $uri")
-    } finally {
-        mmr.release()
-    }
-
-    return bitmap
-}*/

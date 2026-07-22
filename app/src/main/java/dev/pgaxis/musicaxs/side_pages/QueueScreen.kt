@@ -70,7 +70,7 @@ fun QueueScreen(
             IconButton(
                 onClick = onBack,
                 shape = RoundedCornerShape(0.dp),
-                modifier = Modifier.align(Alignment.CenterStart)
+                modifier = Modifier.align(Alignment.CenterStart).size(45.dp).padding(horizontal = 5.dp)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.back),
@@ -83,7 +83,7 @@ fun QueueScreen(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp),
+                    .padding(horizontal = 45.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
