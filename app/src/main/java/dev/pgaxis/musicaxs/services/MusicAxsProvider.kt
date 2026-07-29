@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.SettingsSave
@@ -50,19 +51,19 @@ class MusicAxsProvider : ContentProvider() {
         Log.d("MusicAxsProvider", "isAllowed=${isAllowed()}")
         if (!isAllowed()) return null
         values ?: return null
-
         return when (uri) {
             MusicAxsContract.Songs.URI -> {
                 val playlistId = values.getAsLong(MusicAxsContract.Songs.PLAYLIST_ID) ?: return null
-                val songId = values.getAsLong(MusicAxsContract.Songs.SONG_ID) ?: return null
-                val song = SongRepository.getInstance().resolveSong(songId) ?: return null
-                repo.addSong(playlistId, songId)
+                val songUriString = values.getAsString(MusicAxsContract.Songs.SONG_URI) ?: return null
+                val song = SongRepository.getInstance().resolveSong(context!!, songUriString.toUri()) ?: return null
+                repo.addSong(playlistId, song.id)
                 ptq.addSongIfCurrent(playlistId, song)
                 MusicAxsContract.Songs.URI
             }
             else -> null
         }
     }
+
 
     private fun isAllowed(): Boolean {
         val settings = context?.let { SettingsSave.getInstance(it) } ?: return false

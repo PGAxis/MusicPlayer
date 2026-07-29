@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs.repositories
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dev.pgaxis.musicaxs.models.Playlist
@@ -100,8 +101,18 @@ class PlaylistRepository private constructor(context: Context) {
             ?.mapNotNull { file ->
                 try {
                     val type = object : TypeToken<PlaylistData>() {}.type
-                    gson.fromJson<PlaylistData>(file.readText(), type)?.toPlaylist()
-                } catch (_: Exception) { null }
+                    val data = gson.fromJson<PlaylistData>(file.readText(), type)
+                    if (data == null || data.id == 0L) {
+                        Log.w("PlaylistRepository", "Deleting corrupt playlist file: ${file.name}")
+                        file.delete()
+                        null
+                    } else {
+                        data.toPlaylist()
+                    }
+                } catch (e: Exception) {
+                    Log.w("PlaylistRepository", "Failed to parse playlist file: ${file.name}", e)
+                    null
+                }
             }
             ?.sortedBy { it.name }
             ?: emptyList()

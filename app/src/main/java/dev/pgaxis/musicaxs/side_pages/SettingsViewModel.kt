@@ -16,6 +16,7 @@ import dev.pgaxis.musicaxs.repositories.AlbumRepository
 import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicAxsContract
+import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import java.util.Locale
@@ -105,6 +106,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun onSmartLimitCleared() {
         settings.smartLimitInput = "50"
         settings.smartLimit = 50
+    }
+
+    fun onRealBarsChanged(value: Boolean) {
+        MusicService.setRealBarsEnabled(value)
     }
 
     @Suppress("DEPRECATION")

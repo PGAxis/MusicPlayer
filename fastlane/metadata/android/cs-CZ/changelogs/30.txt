@@ -1,0 +1,6 @@
+Opravy chyb:
+- Když se poškodil soubor s playlistem, aplikace při každém spuštění spadla
+- Když byla píseň přidána z YouTube Conv.axs a tato aplikace neběžela, přidání písně selhalo
+
+Co je nového:
+- Ekvalizérové pruhy vedle přehrávané písně nyní mohou zobrazovat skutečné hodnoty zvuku dané písně (volitelné v nastavení)

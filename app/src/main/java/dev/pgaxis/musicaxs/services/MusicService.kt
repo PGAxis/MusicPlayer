@@ -6,6 +6,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.Visualizer
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -13,6 +15,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.core.graphics.scale
@@ -61,6 +64,7 @@ import androidx.media3.common.util.BitmapLoader
 import com.google.common.util.concurrent.MoreExecutors
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
+import kotlin.math.sqrt
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -117,6 +121,7 @@ class MusicService : MediaSessionService() {
 
     // -- Queue state
     private var currentSource: QueueSource = QueueSource.MANUAL
+    private var visualizer: Visualizer? = null
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var playCountJob: Job? = null
@@ -144,6 +149,9 @@ class MusicService : MediaSessionService() {
         val playlistRenamedState = MutableStateFlow(false)
         val isPlayingState = MutableStateFlow(false)
         val currentIndexState = MutableStateFlow(-1)
+        val audioBandsState = MutableStateFlow(Triple(0f, 0f, 0f)) // bass, mid, treble
+        val realBarsEnabledState = MutableStateFlow(false)
+        val visualizerActiveState = MutableStateFlow(false)
 
         var isShuffleOn = false
             private set
@@ -183,6 +191,18 @@ class MusicService : MediaSessionService() {
             }
 
             instance?.mediaSession?.let { instance?.updateNotificationButtons(it) }
+        }
+
+        @OptIn(UnstableApi::class)
+        fun setRealBarsEnabled(enabled: Boolean) {
+            instance?.settings?.realBars = enabled
+            realBarsEnabledState.value = enabled
+            val inst = instance ?: return
+            if (enabled) {
+                inst.mediaSession?.player?.let { inst.attachVisualizer(it.audioSessionId) }
+            } else {
+                inst.releaseVisualizer()
+            }
         }
 
         fun seekTo(positionMs: Long) {
@@ -436,6 +456,87 @@ class MusicService : MediaSessionService() {
 
     private fun setRepeatInternal(repeatMode: Int) {
         settings.repeatMode = repeatMode
+    }
+
+    private fun attachVisualizer(sessionId: Int) {
+        releaseVisualizer()
+        if (!settings.realBars) return
+        if (sessionId == AudioEffect.ERROR_BAD_VALUE || sessionId == 0) return
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.RECORD_AUDIO
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w("AudioViz", "RECORD_AUDIO not granted, staying in fallback mode")
+            return
+        }
+
+        try {
+            visualizer = Visualizer(sessionId).apply {
+                captureSize = Visualizer.getCaptureSizeRange()[1]
+                setDataCaptureListener(
+                    object : Visualizer.OnDataCaptureListener {
+                        override fun onWaveFormDataCapture(v: Visualizer?, w: ByteArray?, r: Int) {}
+                        override fun onFftDataCapture(v: Visualizer?, fft: ByteArray?, rateMilliHz: Int) {
+                            fft ?: return
+                            audioBandsState.value = bandsFromFft(fft, rateMilliHz)
+                        }
+                    },
+                    Visualizer.getMaxCaptureRate() / 2,
+                    false,
+                    true
+                )
+                enabled = true
+            }
+            visualizerActiveState.value = true
+        } catch (_: Exception) {
+            visualizer = null
+            visualizerActiveState.value = false
+        }
+    }
+
+    private fun releaseVisualizer() {
+        visualizer?.enabled = false
+        visualizer?.release()
+        visualizer = null
+        visualizerActiveState.value = false
+        audioBandsState.value = Triple(0f, 0f, 0f)
+    }
+
+    private var bassRunningMax = 1f
+    private var midRunningMax = 1f
+    private var trebleRunningMax = 1f
+
+    private fun bandsFromFft(fft: ByteArray, samplingRateMilliHz: Int): Triple<Float, Float, Float> {
+        val sampleRate = samplingRateMilliHz / 1000f
+        val n = fft.size / 2
+
+        fun magnitude(bin: Int): Float = when (bin) {
+            0 -> abs(fft[0].toInt()).toFloat()
+            n -> abs(fft[1].toInt()).toFloat()
+            else -> {
+                val re = fft[2 * bin].toFloat()
+                val im = fft[2 * bin + 1].toFloat()
+                sqrt(re * re + im * im)
+            }
+        }
+
+        fun binForFreq(freq: Float) = ((freq / (sampleRate / 2f)) * n).toInt().coerceIn(0, n)
+        fun avg(range: IntRange) = if (range.isEmpty()) 0f else range.map(::magnitude).average().toFloat()
+
+        val rawBass   = avg(binForFreq(20f)..binForFreq(250f))
+        val rawMid    = avg(binForFreq(250f)..binForFreq(4000f))
+        val rawTreble = avg(binForFreq(4000f)..binForFreq(sampleRate / 2f))
+
+        bassRunningMax = maxOf(rawBass, bassRunningMax * 0.98f)
+        midRunningMax = maxOf(rawMid, midRunningMax * 0.98f)
+        trebleRunningMax = maxOf(rawTreble, trebleRunningMax * 0.98f)
+
+        val bass = (rawBass / bassRunningMax).coerceIn(0f, 1f)
+        val mid = (rawMid / midRunningMax).coerceIn(0f, 1f)
+        val treble = (rawTreble / trebleRunningMax).coerceIn(0f, 1f)
+
+        return Triple(bass, mid, treble)
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -792,6 +893,8 @@ class MusicService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
+        realBarsEnabledState.value = settings.realBars
+
         setMediaNotificationProvider(CustomNotificationProvider(this))
 
         mediaSession = MediaSession.Builder(this, player)
@@ -950,6 +1053,10 @@ class MusicService : MediaSessionService() {
                     player.pause()
                 }
             }
+
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                attachVisualizer(audioSessionId)
+            }
         })
 
         queueState.value = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
@@ -1044,6 +1151,7 @@ class MusicService : MediaSessionService() {
             settings.lastDurationMs = player.duration.coerceAtLeast(0L)
         }
         settings.flush()
+        releaseVisualizer()
         instance = null
         mediaSession?.run {
             player.release()

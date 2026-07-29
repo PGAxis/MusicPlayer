@@ -1,6 +1,10 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -67,6 +71,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.TabType
@@ -163,6 +168,42 @@ fun SettingsScreen(
                     options = vm.themeOptions,
                     selected = vm.selectedTheme,
                     onSelectChange = { vm.onThemeChanged(it as Theme) }
+                )
+
+                ListDivider(hasArt = false)
+
+                var realBars by remember { mutableStateOf(vm.settings.realBars) }
+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    if (granted) {
+                        realBars = true
+                        vm.onRealBarsChanged(true)
+                    }
+                }
+
+                SettingsToggleRow(
+                    title = stringResource(R.string.set_scr_real_bars),
+                    description = stringResource(R.string.set_scr_real_bars_desc),
+                    checked = realBars,
+                    onCheckedChange = { turningOn ->
+                        if (turningOn) {
+                            val granted = ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+
+                            if (granted) {
+                                realBars = true
+                                vm.onRealBarsChanged(true)
+                            } else {
+                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        } else {
+                            realBars = false
+                            vm.onRealBarsChanged(false)
+                        }
+                    }
                 )
 
                 ListDivider(hasArt = false)
@@ -276,33 +317,41 @@ fun SettingsToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-            if (description != null) {
-                Text(
-                    description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.background,
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f)
             )
-        )
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.background,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
+        }
+        if (description != null) {
+            Text(
+                description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -326,67 +375,76 @@ fun SettingsDropdownRow(
         with(density) { maxPx.toDp() + 32.dp }
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 20.dp, vertical = 4.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-            if (description != null) {
-                Text(
-                    description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
-                    .wrapContentWidth()
-                    .border(
-                        width = 2.dp,
-                        color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = options.entries.find { it.key == selected }?.value ?: selected.toString(),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+            Text(
+                title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f)
+            )
 
-                Spacer(modifier = Modifier.width(4.dp))
-
-                Icon(
-                    painter = painterResource(if (expanded) R.drawable.expand_less else R.drawable.expand_more),
-                    contentDescription = null,
-                    tint = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.height(15.dp)
-                )
-            }
-            ExposedDropdownMenu(
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.widthIn(min = minDropdownWidth).background(MaterialTheme.colorScheme.secondaryContainer)
+                onExpandedChange = { expanded = !expanded }
             ) {
-                options.forEach { (backendValue, displayLabel) ->
-                    DropdownMenuItem(
-                        text = { Text(displayLabel, color = MaterialTheme.colorScheme.onSecondaryContainer) },
-                        onClick = {
-                            onSelectChange(backendValue)
-                            expanded = false
-                        }
+                Row(
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
+                        .wrapContentWidth()
+                        .border(
+                            width = 2.dp,
+                            color = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = options.entries.find { it.key == selected }?.value ?: selected.toString(),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Icon(
+                        painter = painterResource(if (expanded) R.drawable.expand_less else R.drawable.expand_more),
+                        contentDescription = null,
+                        tint = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.height(15.dp)
                     )
                 }
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.widthIn(min = minDropdownWidth).background(MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    options.forEach { (backendValue, displayLabel) ->
+                        DropdownMenuItem(
+                            text = { Text(displayLabel, color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                            onClick = {
+                                onSelectChange(backendValue)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
+        }
+        if (description != null) {
+            Text(
+                description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -412,66 +470,73 @@ fun SettingsEntryRow(
         with(density) { (textPx.toDp() + 24.dp).coerceIn(48.dp, 140.dp) }
     }
 
-    val indicatorColor = if (focused) MaterialTheme.colorScheme.primary
-    else MaterialTheme.colorScheme.outline
+    val indicatorColor = if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 20.dp, vertical = 4.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
-            if (description != null) {
-                Text(
-                    description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            BasicTextField(
+                value = value,
+                onValueChange = { new ->
+                    when (type) {
+                        SettingsEntryType.NUMBER -> if (new.isEmpty() || new.all { it.isDigit() }) {
+                            onValueChange(new)
+                        }
+                        SettingsEntryType.TEXT -> onValueChange(new)
+                    }
+                },
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (type == SettingsEntryType.NUMBER) KeyboardType.Number else KeyboardType.Text
+                ),
+                modifier = Modifier
+                    .width(fieldWidth)
+                    .onFocusChanged { state ->
+                        if (focused && !state.isFocused && value.isEmpty()) {
+                            onCleared()
+                        }
+                        focused = state.isFocused
+                    }
+                    .padding(bottom = 4.dp)
+                    .drawBehind {
+                        val strokeWidth = if (focused) 2.dp.toPx() else 1.dp.toPx()
+                        drawLine(
+                            color = indicatorColor,
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = strokeWidth
+                        )
+                    }
+            )
         }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        BasicTextField(
-            value = value,
-            onValueChange = { new ->
-                when (type) {
-                    SettingsEntryType.NUMBER -> if (new.isEmpty() || new.all { it.isDigit() }) {
-                        onValueChange(new)
-                    }
-                    SettingsEntryType.TEXT -> onValueChange(new)
-                }
-            },
-            singleLine = true,
-            textStyle = TextStyle(
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = if (type == SettingsEntryType.NUMBER) KeyboardType.Number else KeyboardType.Text
-            ),
-            modifier = Modifier
-                .width(fieldWidth)
-                .onFocusChanged { state ->
-                    if (focused && !state.isFocused && value.isEmpty()) {
-                        onCleared()
-                    }
-                    focused = state.isFocused
-                }
-                .padding(bottom = 4.dp)
-                .drawBehind {
-                    val strokeWidth = if (focused) 2.dp.toPx() else 1.dp.toPx()
-                    drawLine(
-                        color = indicatorColor,
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = strokeWidth
-                    )
-                }
-        )
+        if (description != null) {
+            Text(
+                description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

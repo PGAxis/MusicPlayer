@@ -26,4 +26,5 @@ interface ISettings {
     var tabs: List<TitleVis>
     var artistSeparator: List<String>
     var smartLimit: Int
+    var realBars: Boolean
 }

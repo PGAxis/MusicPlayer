@@ -81,6 +81,8 @@
     <string name="language">Jazyk</string>
     <string name="set_scr_ytconv_add_songs">Povolit YouTube Conv.axs přidávat skladby</string>
     <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs může přidávat skladby přímo do vašich playlistů</string>
+    <string name="set_scr_real_bars">Živá animace ekvalizéru</string>
+    <string name="set_scr_real_bars_desc">Reaguje na skutečný zvuk pomocí oprávnění pro záznam zvuku - stejná kategorie oprávnění jako u mikrofonu, zvuk se ale nenahrává ani neopouští zařízení. Pokud je vypnuto, použije se obecná animace.</string>
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">Nenalezena žádná alba</string>

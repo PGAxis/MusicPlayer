@@ -109,6 +109,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var tabs by setting(DEFAULT_TABS, SettingsData::tabs)
     override var artistSeparator by setting(arrayOf(",").toList(), SettingsData::artistSeparator)
     override var smartLimit by intSetting(50, SettingsData::smartLimit)
+    override var realBars by setting(false, SettingsData::realBars)
 
     // -- Data class
     @Keep
@@ -131,7 +132,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         var theme: Theme = Theme.CYAN,
         var tabs: List<TitleVis> = DEFAULT_TABS,
         var artistSeparator: List<String> = arrayOf(",").toList(),
-        var smartLimit: Int = 50
+        var smartLimit: Int = 50,
+        var realBars: Boolean = false
     )
 
     @Keep
@@ -180,6 +182,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             tabs = s.tabs
             artistSeparator = s.artistSeparator
             smartLimit = s.smartLimit
+            realBars = s.realBars
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }

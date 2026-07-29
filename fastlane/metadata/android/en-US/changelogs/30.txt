@@ -1,0 +1,6 @@
+Bug fixes:
+- When a playlist file would get corrupted, it would crash the entire app on every startup
+- When a song was added from YouTube Conv.axs and this app was not running, it would fail to add the song
+
+Additions:
+- The "Equalizer bars" next to a playing song can now reflect the real sound values from said song (opt-in in settings)
