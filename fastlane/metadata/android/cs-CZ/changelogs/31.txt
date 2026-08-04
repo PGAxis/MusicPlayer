@@ -1,0 +1,7 @@
+Opravy chyb:
+- Při úpravě fronty a následném rychlém vynuceném ukončení aplikace se nastavení někdy poškodilo
+- Při přidávání skladeb do aktivně přehrávaného playlistu externě (např. z YouTube Conv.axs), když aplikace nebyla spuštěna, skladby se do playlistu nepřidaly správně
+- Pokud byla aplikace delší dobu na pozadí a poté byla otevřena v libovolném detailu playlistu, někdy se playlist nenačetl, což vedlo k prázdné obrazovce
+
+Co je nového:
+- Fronta nyní více sleduje aktivní skladbu (např. se automaticky posouvá při přechodech mezi skladbami). Toto se zastaví po jednom ručním posunutí fronty a znovu se aktivuje pouze při úplném zavření a opětovném otevření rozbalitelného přehrávače

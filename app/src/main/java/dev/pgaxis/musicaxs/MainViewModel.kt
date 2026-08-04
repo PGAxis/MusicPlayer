@@ -34,6 +34,7 @@ import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.AlbumArtPreloader
+import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -63,10 +64,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settings = SettingsSave.getInstance(application)
     private val repo = PlaylistRepository.getInstance(application)
-
     private val songRepo = SongRepository.getInstance()
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
+
+    private val playlistToQueue = PlaylistToQueue(application)
 
     val visibleTabs get() = settings.tabs.filter { it.visible }
 
@@ -152,7 +154,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         if (hasPermission()) scanAll()
 
-
         controllerFuture = MediaController.Builder(context, token).buildAsync()
         controllerFuture?.addListener({
             controller = controllerFuture?.get()
@@ -186,6 +187,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 prewarmAlbumArtCache(songs)
 
                 val context = getApplication<Application>()
+
+                playlistToQueue.syncQueueWithPlaylist()
+
                 withContext(Dispatchers.Main) {
                     val songsByUri = songs.associateBy { it.uri.toString() }
                     val player = MusicService.playerInstance ?: return@withContext

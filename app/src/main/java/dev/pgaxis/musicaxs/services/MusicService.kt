@@ -19,52 +19,53 @@ import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.BitmapLoader
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import dev.pgaxis.musicaxs.models.Song
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.DefaultMediaNotificationProvider
-import com.google.common.collect.ImmutableList
-import dev.pgaxis.musicaxs.settings.FavouritesSave
-import dev.pgaxis.musicaxs.settings.SettingsSave
-import kotlinx.coroutines.flow.MutableStateFlow
-import androidx.core.net.toUri
-import androidx.media3.common.PlaybackException
+import com.google.common.util.concurrent.MoreExecutors
 import dev.pgaxis.musicaxs.MainActivity
+import dev.pgaxis.musicaxs.MusicAxsApplication
 import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.QueueItemSource
+import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.SongRepository
+import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
-import dev.pgaxis.musicaxs.settings.ShuffleSave
+import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.settings.SettingsSave.QueueEntry
+import dev.pgaxis.musicaxs.settings.ShuffleSave
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.time.Duration.Companion.milliseconds
-import androidx.media3.common.util.BitmapLoader
-import com.google.common.util.concurrent.MoreExecutors
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
@@ -107,7 +108,7 @@ class EmbeddedArtBitmapLoader(
             val constrained = bitmap.constrained()
 
             val stream = ByteArrayOutputStream()
-            constrained.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+            constrained.compress(Bitmap.CompressFormat.JPEG, 75, stream)
             onBitmapReady?.invoke(uri, stream.toByteArray())
 
             constrained
@@ -265,18 +266,17 @@ class MusicService : MediaSessionService() {
         fun addToQueue(context: Context, song: Song, applyShuffleRandomness: Boolean = false, resetPlaylist: Boolean = true) {
             val save = ShuffleSave.getInstance(context)
             if (save.isShuffled) save.addToOriginal(song.uri.toString())
-            instance?.addToQueueInternal(song, applyShuffleRandomness, resetPlaylist)
-                ?: if (isAppInForeground(context)) {
-                    playSingular(context, song)
-                } else {
-                    addToSettingsQueue(context, song, applyShuffleRandomness, resetPlaylist)
-                }
+
+            val inst = instance
+            if (inst != null && MusicAxsApplication.hasUIBeenActive) {
+                inst.addToQueueInternal(song, applyShuffleRandomness, resetPlaylist)
+            } else if (MusicAxsApplication.hasUIBeenActive) {
+                playSingular(context, song)
+            }
         }
 
         fun playSingularPodcast(episode: PodcastEpisode, feed: PodcastFeed) {
-            instance?.playSingularPodcastInternal(episode, feed) ?: run {
-
-            }
+            instance?.playSingularPodcastInternal(episode, feed)
         }
 
         fun replaceQueuePodcast(episodes: List<PodcastEpisode>, feed: PodcastFeed) {
@@ -293,25 +293,6 @@ class MusicService : MediaSessionService() {
             instance?.addToQueuePodcastInternal(episode, feed)
         }
 
-        private fun addToSettingsQueue(context: Context, song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
-            val settings = SettingsSave.getInstance(context)
-            val queue = settings.lastQueue.toMutableList()
-
-            if (applyShuffleRandomness && queue.isNotEmpty()) {
-                val randomIndex = queue.indices.random()
-                queue.add(randomIndex, QueueEntry(song.uri.toString(), song.title, song.artist))
-            } else {
-                queue.add(QueueEntry(song.uri.toString(), song.title, song.artist))
-            }
-
-            settings.lastQueue = queue
-
-            if (resetPlaylist) {
-                settings.lastPlaylistId = -1L
-                settings.queueSource = QueueSource.MANUAL
-            }
-        }
-
         fun moveQueueItem(from: Int, to: Int) {
             instance?.mediaSession?.player?.moveMediaItem(from, to)
         }
@@ -319,12 +300,13 @@ class MusicService : MediaSessionService() {
         fun removeFromQueue(context: Context, index: Int) {
             val settings = SettingsSave.getInstance(context)
             val player = instance?.mediaSession?.player ?: return
+            if (index >= player.mediaItemCount) return
             val uri = player.getMediaItemAt(index).localConfiguration?.uri?.toString()
-            if (uri != null && ShuffleSave.getInstance(instance!!).isShuffled) {
-                ShuffleSave.getInstance(instance!!).removeFromOriginal(uri)
+            if (uri != null) {
+                if (ShuffleSave.getInstance(instance!!).isShuffled) ShuffleSave.getInstance(instance!!).removeFromOriginal(uri)
+                player.removeMediaItem(index)
+                if (index < settings.lastQueueIndex) settings.lastQueueIndex--
             }
-            player.removeMediaItem(index)
-            if (index < settings.lastQueueIndex) settings.lastQueueIndex--
         }
 
         fun removeFromQueue(context: Context, uri: String) {
@@ -912,7 +894,9 @@ class MusicService : MediaSessionService() {
             .setBitmapLoader(EmbeddedArtBitmapLoader(this) { uri, artworkData ->
                 Handler(Looper.getMainLooper()).post {
                     val player = mediaSession?.player ?: return@post
+                    if (player.mediaItemCount == 0) return@post
                     val index = player.currentMediaItemIndex
+                    if (index !in 0 until player.mediaItemCount) return@post
                     val item = player.getMediaItemAt(index)
                     if (item.localConfiguration?.uri == uri) {
                         player.replaceMediaItem(
@@ -951,6 +935,7 @@ class MusicService : MediaSessionService() {
                     currentUriState.value = null
                     return
                 }
+
                 val uri = mediaItem.localConfiguration?.uri ?: return
                 val source = mediaItem.mediaMetadata.extras?.getString("source")?.let {
                     runCatching {

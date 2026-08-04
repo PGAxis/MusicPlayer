@@ -32,6 +32,9 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentIndex = MutableStateFlow(-1)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
+    private val _lastIndex = MutableStateFlow(_currentIndex.value)
+    val lastIndex: StateFlow<Int> = _lastIndex.asStateFlow()
+
     val currentTitle: StateFlow<String> = combine(
         MusicService.queueSourceState,
         MusicService.playlistIdState,
@@ -58,6 +61,7 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             MusicService.currentIndexState.collectLatest {
+                _lastIndex.value = _currentIndex.value
                 _currentIndex.value = it
             }
         }

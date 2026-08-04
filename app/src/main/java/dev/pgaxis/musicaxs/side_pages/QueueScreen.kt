@@ -1,5 +1,6 @@
 package dev.pgaxis.musicaxs.side_pages
 
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.R
@@ -28,8 +32,10 @@ import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.BounceMarqueeText
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.QueueItemRow
+import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.math.abs
 
 @Composable
 fun QueueScreen(
@@ -40,12 +46,54 @@ fun QueueScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val currentIndex by vm.currentIndex.collectAsStateWithLifecycle()
+    val lastIndex by vm.lastIndex.collectAsStateWithLifecycle()
     val currentTitle by vm.currentTitle.collectAsStateWithLifecycle()
     val shuffleSave = remember { ShuffleSave.getInstance(context) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
 
     val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
         vm.onMove(from.index, to.index)
+    }
+
+    var userHasScrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(listState) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) {
+                userHasScrolled = true
+            }
+        }
+    }
+
+    LaunchedEffect(currentIndex) {
+        if (currentIndex >= 0 && !userHasScrolled) {
+            if (abs(currentIndex - lastIndex) > 10) listState.scrollToItem(currentIndex)
+            else listState.animateScrollToItem(currentIndex)
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    if (currentIndex >= 0) {
+                        userHasScrolled = false
+                        coroutineScope.launch {
+                            listState.scrollToItem(currentIndex)
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     LaunchedEffect(Unit) {

@@ -1,0 +1,7 @@
+Bug fixes:
+- When modifying queue and then quickly force quiting the app, the settings would get corrupted sometimes
+- When adding songs to an actively playing playlist externally (e.g. from YouTube Conv.axs) while the app was not running, it would not add them to the playlist correctly
+- When having the app in the background for a long and then opening it on any playlist detail, it sometimes didn't load the playlist, resulting in an empty screen
+
+Additions:
+- The queue now follows the active song more (e.g. it automatically scrolls on song transitions). This stops once the queue is scrolled manually once and only re-enables when fully closing and re-opening the expandable player

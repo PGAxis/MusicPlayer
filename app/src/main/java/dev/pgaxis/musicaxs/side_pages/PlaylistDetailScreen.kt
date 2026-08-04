@@ -1,6 +1,5 @@
 package dev.pgaxis.musicaxs.side_pages
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -31,6 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -52,7 +54,6 @@ private val ART_FULL_SIZE = 150.dp
 private val ART_TITLE_SPACING = 16.dp
 private val HEADER_VERTICAL_PADDING = 8.dp
 
-@SuppressLint("FrequentlyChangingValue")
 @Composable
 fun PlaylistDetailScreen(
     playlistId: Long,
@@ -62,11 +63,29 @@ fun PlaylistDetailScreen(
 ) {
     val context = LocalContext.current
     var selectedSong by remember { mutableStateOf<Song?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(playlistId) {
         vm.initPlaylist(playlistId)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    vm.initPlaylist(playlistId)
+                }
+
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     when (val state = uiState) {
