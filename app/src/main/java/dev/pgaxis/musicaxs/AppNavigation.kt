@@ -12,6 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import dev.pgaxis.musicaxs.side_pages.SongDetailScreen
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.pgaxis.musicaxs.settings_screens.ArtistSeparatorsScreen
+import dev.pgaxis.musicaxs.settings_screens.TabOrderScreen
 import dev.pgaxis.musicaxs.side_pages.AlbumDetailScreen
 import dev.pgaxis.musicaxs.side_pages.ArtistDetailScreen
 import dev.pgaxis.musicaxs.side_pages.PlaylistDetailScreen
@@ -87,7 +89,12 @@ fun AppNavigation() {
                 )
             }
             composable("settings") {
-                SettingsScreen(onBack = { popBack() }, onScan = { mainViewModel.scanAll() })
+                SettingsScreen(
+                    onBack = { popBack() },
+                    onScan = { mainViewModel.scanAll() },
+                    onTabOrder = { navController.navigate("tabOrder") },
+                    onArtistSeparators = { navController.navigate("artistSep") }
+                )
             }
             composable("album/{albumId}") { backStackEntry ->
                 val albumId = backStackEntry.arguments?.getString("albumId")!!.toLong()
@@ -109,6 +116,16 @@ fun AppNavigation() {
                 val feedUrl = Uri.decode(backStackEntry.arguments?.getString("feedUrl")!!)
                 PodcastDetailScreen(
                     feedUrl = feedUrl,
+                    onBack = { popBack() }
+                )
+            }
+            composable("tabOrder") {
+                TabOrderScreen(
+                    onBack = { popBack() }
+                )
+            }
+            composable("artistSep") {
+                ArtistSeparatorsScreen(
                     onBack = { popBack() }
                 )
             }

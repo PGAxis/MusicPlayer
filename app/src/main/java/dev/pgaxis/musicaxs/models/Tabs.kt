@@ -7,7 +7,7 @@ enum class TabType {
     FAVOURITES, PLAYLISTS, SONGS, ALBUMS, ARTISTS, PODCASTS
 }
 
-fun TabType.isMandatory() = this == TabType.SONGS || this == TabType.ALBUMS || this == TabType.ARTISTS
+fun TabType.isMandatory() = this == TabType.SONGS
 
 fun TabType.labelRes() = when (this) {
     TabType.FAVOURITES -> R.string.tab_favourites

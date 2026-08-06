@@ -53,11 +53,22 @@ fun QueueScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
+    var keyedQueueItems by remember {
+        mutableStateOf(vm.queueItems.mapIndexed { i, item -> i.toLong() to item })
+    }
+
     val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
+        keyedQueueItems = keyedQueueItems.toMutableList().apply {
+            add(to.index, removeAt(from.index))
+        }
         vm.onMove(from.index, to.index)
     }
 
     var userHasScrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(vm.queueItems.size, shuffleSave.isShuffled) {
+        keyedQueueItems = vm.queueItems.mapIndexed { i, item -> i.toLong() to item }
+    }
 
     LaunchedEffect(listState) {
         listState.interactionSource.interactions.collect { interaction ->
@@ -109,11 +120,11 @@ fun QueueScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 8.dp)
+                .windowInsetsPadding(WindowInsets.systemBars)
         ) {
             IconButton(
                 onClick = onBack,
@@ -123,8 +134,7 @@ fun QueueScreen(
                 Icon(
                     painter = painterResource(R.drawable.back),
                     contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(25.dp)
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
             Column(
@@ -159,10 +169,9 @@ fun QueueScreen(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                itemsIndexed(vm.queueItems, key = { _, item ->
-                    "${item.uri}_${item.source}"
-                }) { index, item ->
-                    ReorderableItem(reorderableState, key = "${item.uri}_${item.source}") { _ ->
+                itemsIndexed(keyedQueueItems, key = { _, keyed -> keyed.first }) { index, keyed ->
+                    val item = keyed.second
+                    ReorderableItem(reorderableState, key = keyed.first) { _ ->
                         Column {
                             QueueItemRow(
                                 item = item,

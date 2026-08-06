@@ -115,6 +115,7 @@ fun MainScreen(
 
     BoxWithConstraints(Modifier
         .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)
         .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         val screenWidthDp = maxWidth
@@ -158,7 +159,6 @@ fun MainScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
             ) {
                 // -- Header
                 Row(

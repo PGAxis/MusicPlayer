@@ -1,0 +1,5 @@
+Opravy chyb:
+- Ve frontě mohou nyní být dvě stejné písničky
+
+Co je nového:
+- Komplexní nastavení mají nyní vlastní obrazovku

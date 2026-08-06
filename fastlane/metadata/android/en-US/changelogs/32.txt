@@ -1,0 +1,5 @@
+Bug fixes:
+- Queue can now have two repeating songs
+
+Additions:
+- Complex settings now have dedicated screens

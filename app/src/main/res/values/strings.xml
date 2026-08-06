@@ -75,6 +75,7 @@
     <string name="set_scr_ytconv_add_songs_desc">YouTube Conv.axs can add downloaded songs directly to your playlists</string>
     <string name="set_scr_real_bars">Live equalizer animation</string>
     <string name="set_scr_real_bars_desc">Reacts to the actual audio using the audio-capture permission - the same permission category as the microphone, but no audio is recorded or leaves your device. Falls back to a generic animation if disabled.</string>
+    <string name="set_scr_app_info">App Info</string>
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">No albums found</string>

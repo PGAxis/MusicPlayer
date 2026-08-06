@@ -44,6 +44,7 @@ import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SideScreenHeader
 import dev.pgaxis.musicaxs.templates.SongRow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -139,21 +140,14 @@ fun PlaylistDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars)
                     .background(MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // -- Header
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                SideScreenHeader(
+                    onBack = onBack
                 ) {
-                    IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
-                        Icon(painterResource(R.drawable.back), "Back", tint = MaterialTheme.colorScheme.primary)
-                    }
                     Spacer(Modifier.weight(1f))
+
                     when (playlistId) {
                         0L, 1L, 2L, 3L, 4L -> { }
                         else -> {

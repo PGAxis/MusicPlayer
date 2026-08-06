@@ -4,23 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,12 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.tabs.ArtistDetailItem
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SideScreenHeader
 import dev.pgaxis.musicaxs.templates.SongRow
 
 @Composable
@@ -72,21 +63,9 @@ fun ArtistDetailScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-                .windowInsetsPadding(WindowInsets.systemBars),
-            verticalAlignment = Alignment.CenterVertically
+        SideScreenHeader(
+            onBack = onBack
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.back),
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
             Spacer(Modifier.width(4.dp))
 
             Column(modifier = Modifier.weight(1f)) {
@@ -96,7 +75,7 @@ fun ArtistDetailScreen(
                     fontSize = 20.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "${pluralStringResource(R.plurals.album_count, currentArtist.albumCount, currentArtist.albumCount)} · ${pluralStringResource(R.plurals.song_count, currentArtist.songCount, currentArtist.songCount)}",
@@ -115,7 +94,7 @@ fun ArtistDetailScreen(
         } else {
             Box(Modifier.fillMaxSize()) {
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 8.dp, bottom = LocalPlayerBarTotalHeight.current)
+                    contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
                     itemsIndexed(items, key = { _, item ->
                         when (item) {

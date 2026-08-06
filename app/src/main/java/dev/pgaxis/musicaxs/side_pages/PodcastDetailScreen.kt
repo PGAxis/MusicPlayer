@@ -24,6 +24,7 @@ import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SideScreenHeader
 
 @Composable
 fun PodcastDetailScreen(
@@ -46,26 +47,18 @@ fun PodcastDetailScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+        SideScreenHeader(
+            onBack = onBack
         ) {
-            IconButton(onClick = onBack, shape = RoundedCornerShape(0.dp), modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)) {
-                Icon(
-                    painterResource(R.drawable.back), "Back",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            Spacer(Modifier.width(4.dp))
+
             Text(
                 text = currentFeed.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
             IconButton(
