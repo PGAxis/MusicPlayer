@@ -23,6 +23,7 @@ import org.jaudiotagger.tag.Tag
 import java.io.File
 import kotlin.arrayOf
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -95,7 +96,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         withContext(Dispatchers.Main) {
                             title = t; artist = a; album = al; track = tr
                             duration = d; mimeType = m; fileSize = s
-                            isEditable = m == "audio/mpeg"
+                            isEditable = m in setOf("audio/mpeg", "audio/mp4", "audio/opus", "audio/ogg", "audio/x-m4a")
                             originalTitle = t; originalArtist = a
                             originalAlbum = al; originalTrack = tr
                             filePath = path?.let { formatStoragePath(it) }
@@ -140,7 +141,8 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val path = resolveSystemPath(uri)
 
                 if (path != null) {
-                    val cacheFile = File(context.cacheDir, "edit_tmp_${System.currentTimeMillis()}.mp3")
+                    val ext = extensionForMime(mimeType)
+                    val cacheFile = File(context.cacheDir, "edit_tmp_${System.currentTimeMillis()}.$ext")
                     try {
                         File(path).copyTo(cacheFile, overwrite = true)
 
@@ -181,7 +183,7 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                     originalAlbum = album
                     originalTrack = track
                     isSaving = false
-                    delay(500)
+                    delay(500.milliseconds)
                     load(currentUri!!)
                     onDone()
                 }
@@ -234,6 +236,16 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
         val s = totalSeconds % 60
         return if (h > 0) "%d:%02d:%02d".format(h, m, s)
         else "%d:%02d".format(m, s)
+    }
+
+    private fun extensionForMime(mime: String): String = when (mime) {
+        "audio/mpeg" -> "mp3"
+        "audio/mp4", "audio/x-m4a" -> "m4a"
+        "audio/opus" -> "opus"
+        "audio/ogg", "audio/vorbis" -> "ogg"
+        "audio/flac", "audio/x-flac" -> "flac"
+        "audio/x-wav", "audio/wav" -> "wav"
+        else -> "mp3"
     }
 
     fun formatBytes(bytes: Long): String {

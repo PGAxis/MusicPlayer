@@ -1,4 +1,4 @@
-package dev.pgaxis.musicaxs.ext_funcs
+package dev.pgaxis.musicaxs.funcs
 
 import android.os.Bundle
 import androidx.annotation.OptIn

@@ -36,6 +36,7 @@ fun PodcastDetailScreen(
     val episodes by vm.episodes.collectAsStateWithLifecycle()
     val isLoading by vm.isLoading.collectAsStateWithLifecycle()
     val downloading by vm.downloading.collectAsStateWithLifecycle()
+    val downloadedUrls by vm.downloadedUrls.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(feedUrl) { vm.init(feedUrl) }
@@ -109,7 +110,7 @@ fun PodcastDetailScreen(
                 itemsIndexed(episodes, key = { _, ep -> ep.audioUrl }) { index, episode ->
                     EpisodeRow(
                         episode = episode,
-                        isDownloaded = vm.isDownloaded(episode.audioUrl),
+                        isDownloaded = downloadedUrls.contains(episode.audioUrl),
                         isDownloading = downloading.contains(episode.audioUrl),
                         onClick = {
                             MusicService.playSingularPodcast(
@@ -123,7 +124,7 @@ fun PodcastDetailScreen(
                                 currentFeed
                             )
                         },
-                        onDownload = { vm.downloadEpisode(episode.audioUrl, episode.title) },
+                        onDownload = { vm.downloadEpisode(episode) },
                         onDeleteDownload = { vm.deleteEpisode(episode.audioUrl) }
                     )
                     if (index < episodes.lastIndex) ListDivider(hasArt = false)
@@ -165,7 +166,8 @@ fun EpisodeRow(
                     fontSize = 15.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 when {
                     isDownloading -> CircularProgressIndicator(
@@ -212,17 +214,8 @@ fun EpisodeRow(
                     },
                     onClick = { menuExpanded = false; onAddToQueue() }
                 )
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            stringResource(R.string.see_details),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    },
-                    onClick = { menuExpanded = false }
-                )
-                if (isDownloaded) {
-                    DropdownMenuItem(
+                when {
+                    isDownloaded -> DropdownMenuItem(
                         text = {
                             Text(
                                 stringResource(R.string.delete_download),
@@ -231,15 +224,23 @@ fun EpisodeRow(
                         },
                         onClick = { menuExpanded = false; onDeleteDownload() }
                     )
-                } else {
-                    DropdownMenuItem(
+                    isDownloading -> DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.podcasts_downloading),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                            )
+                        },
+                        enabled = false,
+                        onClick = {}
+                    )
+                    else -> DropdownMenuItem(
                         text = {
                             Text(
                                 stringResource(R.string.download),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         },
-                        enabled = !isDownloading,
                         onClick = { menuExpanded = false; onDownload() }
                     )
                 }

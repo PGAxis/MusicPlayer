@@ -3,7 +3,7 @@ package dev.pgaxis.musicaxs.side_pages
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import dev.pgaxis.musicaxs.ext_funcs.splitByArtistSeparator
+import dev.pgaxis.musicaxs.funcs.splitByArtistSeparator
 import dev.pgaxis.musicaxs.models.Artist
 import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository

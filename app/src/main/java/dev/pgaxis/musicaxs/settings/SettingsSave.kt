@@ -95,7 +95,8 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var lastSongUri by setting("", SettingsData::lastSongUri)
     override var lastPositionMs by longSetting(0L, SettingsData::lastPositionMs)
     override var lastDurationMs by longSetting(0L, SettingsData::lastDurationMs)
-    override var lastPlaylistId by longSetting(-1L, SettingsData::lastPlaylistId) // TODO replace with null once I add null support to AXS
+    override var lastPlaylistId by longSetting(-1L, SettingsData::lastPlaylistId)
+    override var lastSyncedPlaylistHash by longSetting(-1, SettingsData::lastSyncedPlaylistHash)
     override var lastQueue by setting(emptyList(), SettingsData::lastQueue)
     override var lastQueueIndex by intSetting(-1, SettingsData::lastQueueIndex)
     override var repeatMode by intSetting(2, SettingsData::repeatMode)
@@ -120,6 +121,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var lastPositionMs: Long = 0L,
         var lastDurationMs: Long = 0L,
         var lastPlaylistId: Long = -1L,
+        var lastSyncedPlaylistHash: Long = -1,
         var lastQueue: List<QueueEntry> = emptyList(),
         var lastQueueIndex: Int = -1,
         var repeatMode: Int = 2,
@@ -170,6 +172,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             lastPositionMs = s.lastPositionMs
             lastDurationMs = s.lastDurationMs
             lastPlaylistId = s.lastPlaylistId
+            lastSyncedPlaylistHash = s.lastSyncedPlaylistHash
             lastQueue = s.lastQueue
             lastQueueIndex = s.lastQueueIndex
             repeatMode = s.repeatMode

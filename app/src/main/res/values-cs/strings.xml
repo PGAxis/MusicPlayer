@@ -165,7 +165,13 @@
     <string name="podcasts_empty">Zatím nebyly přidány žádné podcasty</string>
     <string name="podcasts_add_feed">Přidat zdroj</string>
     <string name="podcasts_rss_url">URL RSS zdroje</string>
+    <string name="podcasts_downloading">Stahuje se…</string>
 
     <!-- Podcasts downloader -->
     <string name="download_complete">Stahování dokončeno</string>
+
+    <!-- App Info screen -->
+    <string name="app_info_version">Verze:</string>
+    <string name="app_info_vcode">Kód verze:</string>
+    <string name="app_info_source">Zdrojový kód:</string>
 </resources>

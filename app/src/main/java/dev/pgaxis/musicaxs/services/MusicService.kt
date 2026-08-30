@@ -42,7 +42,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dev.pgaxis.musicaxs.MainActivity
 import dev.pgaxis.musicaxs.MusicAxsApplication
-import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
+import dev.pgaxis.musicaxs.funcs.toMediaItem
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.QueueItemSource
@@ -62,6 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -75,6 +76,7 @@ class EmbeddedArtBitmapLoader(
     private val onBitmapReady: ((uri: Uri, artworkData: ByteArray) -> Unit)? = null
 ) : BitmapLoader {
     private val executor = Executors.newSingleThreadExecutor()
+    private val TARGET_BYTES = 80_000
 
     override fun supportsMimeType(mimeType: String) = false
 
@@ -91,29 +93,72 @@ class EmbeddedArtBitmapLoader(
         return Bitmap.createBitmap(scaled, x, y, size, size)
     }
 
+    private fun cachedArtFor(uri: Uri): Bitmap? {
+        if (uri.authority != "media") return null
+        val songId = uri.lastPathSegment ?: return null
+        val dir = File(context.cacheDir, "album_art")
+
+        val sentinel = File(dir, "song_$songId.none")
+        if (sentinel.exists()) return null
+
+        val cacheFile = File(dir, "song_$songId.jpg")
+        if (!cacheFile.exists() || cacheFile.length() == 0L) return null
+
+        return try {
+            BitmapFactory.decodeFile(cacheFile.path)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> {
         return MoreExecutors.listeningDecorator(executor).submit<Bitmap> {
-            val mmr = MediaMetadataRetriever()
-            val bitmap = try {
-                mmr.setDataSource(context, uri)
-                mmr.embeddedPicture?.let {
-                    BitmapFactory.decodeByteArray(it, 0, it.size)
-                } ?: context.contentResolver.openInputStream(uri)?.use {
-                    BitmapFactory.decodeStream(it)
-                } ?: throw IllegalStateException("No artwork found for $uri")
-            } finally {
-                mmr.release()
+            val bitmap = cachedArtFor(uri) ?: run {
+                val mmr = MediaMetadataRetriever()
+                try {
+                    mmr.setDataSource(context, uri)
+                    mmr.embeddedPicture?.let {
+                        BitmapFactory.decodeByteArray(it, 0, it.size)
+                    } ?: context.contentResolver.openInputStream(uri)?.use {
+                        BitmapFactory.decodeStream(it)
+                    } ?: throw IllegalStateException("No artwork found for $uri")
+                } finally {
+                    mmr.release()
+                }
             }
 
             val constrained = bitmap.constrained()
 
-            val stream = ByteArrayOutputStream()
-            constrained.compress(Bitmap.CompressFormat.JPEG, 75, stream)
-            onBitmapReady?.invoke(uri, stream.toByteArray())
+            val artworkBytes = constrained.compressToMaxBytes(maxBytes = TARGET_BYTES)
+            onBitmapReady?.invoke(uri, artworkBytes)
 
             constrained
         }
     }
+}
+
+private fun Bitmap.compressToMaxBytes(maxBytes: Int, format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG): ByteArray {
+    var low = 0
+    var high = 100
+    var best = ByteArrayOutputStream().apply { this@compressToMaxBytes.compress(format, low, this) }.toByteArray()
+
+    if (best.size > maxBytes) return best
+
+    while (low <= high) {
+        val mid = (low + high) / 2
+        val stream = ByteArrayOutputStream()
+        compress(format, mid, stream)
+        val bytes = stream.toByteArray()
+
+        if (bytes.size <= maxBytes) {
+            best = bytes
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+
+    return best
 }
 
 class MusicService : MediaSessionService() {
@@ -362,6 +407,46 @@ class MusicService : MediaSessionService() {
             instance?.mediaSession?.player?.moveMediaItem(from, to)
         }
 
+        fun reorderQueueTo(context: Context, targetUris: List<String>) {
+            if (ShuffleSave.getInstance(context).isShuffled) {
+                ShuffleSave.getInstance(context).setOriginalQueue(targetUris)
+                return
+            }
+            val player = playerInstance ?: return
+            targetUris.forEachIndexed { targetIndex, uri ->
+                val currentIndex = (0 until player.mediaItemCount)
+                    .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
+                    ?: return@forEachIndexed
+                if (currentIndex != targetIndex) {
+                    reorderQueue(currentIndex, targetIndex)
+                }
+            }
+        }
+
+        fun syncMissingFromPlaylist(context: Context, missing: List<Pair<Int, Song>>) {
+            val player = playerInstance ?: return
+            val save = ShuffleSave.getInstance(context)
+            val settings = SettingsSave.getInstance(context)
+
+            if (save.isShuffled) {
+                for ((_, song) in missing) {
+                    save.addToOriginal(song.uri.toString())
+                    val insertIndex = if (player.mediaItemCount > 0)
+                        (0 until player.mediaItemCount).random()
+                    else 0
+                    player.addMediaItem(insertIndex, song.toMediaItem())
+                    if (insertIndex <= settings.lastQueueIndex) settings.lastQueueIndex++
+                }
+            } else {
+                for ((insertedSoFar, pair) in missing.withIndex()) {
+                    val (playlistIndex, song) = pair
+                    val insertAt = (playlistIndex + insertedSoFar).coerceIn(0, player.mediaItemCount)
+                    player.addMediaItem(insertAt, song.toMediaItem())
+                    if (insertAt <= settings.lastQueueIndex) settings.lastQueueIndex++
+                }
+            }
+        }
+
         fun initFromSettings(context: Context) {
             val settings = SettingsSave.getInstance(context)
             if (settings.lastQueue.isNotEmpty()) {
@@ -485,9 +570,7 @@ class MusicService : MediaSessionService() {
         audioBandsState.value = Triple(0f, 0f, 0f)
     }
 
-    private var bassRunningMax = 1f
-    private var midRunningMax = 1f
-    private var trebleRunningMax = 1f
+    private var sharedRunningMax = 1f
 
     private fun bandsFromFft(fft: ByteArray, samplingRateMilliHz: Int): Triple<Float, Float, Float> {
         val sampleRate = samplingRateMilliHz / 1000f
@@ -510,13 +593,11 @@ class MusicService : MediaSessionService() {
         val rawMid    = avg(binForFreq(250f)..binForFreq(4000f))
         val rawTreble = avg(binForFreq(4000f)..binForFreq(sampleRate / 2f))
 
-        bassRunningMax = maxOf(rawBass, bassRunningMax * 0.98f)
-        midRunningMax = maxOf(rawMid, midRunningMax * 0.98f)
-        trebleRunningMax = maxOf(rawTreble, trebleRunningMax * 0.98f)
+        sharedRunningMax = maxOf(rawBass, rawMid, rawTreble, sharedRunningMax * 0.98f)
 
-        val bass = (rawBass / bassRunningMax).coerceIn(0f, 1f)
-        val mid = (rawMid / midRunningMax).coerceIn(0f, 1f)
-        val treble = (rawTreble / trebleRunningMax).coerceIn(0f, 1f)
+        val bass = (rawBass / sharedRunningMax).coerceIn(0f, 1f)
+        val mid = (rawMid / sharedRunningMax).coerceIn(0f, 1f)
+        val treble = (rawTreble / sharedRunningMax).coerceIn(0f, 1f)
 
         return Triple(bass, mid, treble)
     }

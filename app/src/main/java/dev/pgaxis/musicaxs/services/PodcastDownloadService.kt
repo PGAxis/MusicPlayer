@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.models.PodcastEpisode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,14 +26,22 @@ class PodcastDownloadService : Service() {
         const val ACTION_CANCEL = "dev.pgaxis.musicaxs.ACTION_CANCEL"
         const val EXTRA_URL = "url"
         const val EXTRA_TITLE = "title"
+        const val EXTRA_FEED_URL = "feed_url"
+        const val EXTRA_DESCRIPTION = "description"
+        const val EXTRA_PUBLISH_DATE = "publish_date"
+        const val EXTRA_DURATION_MS = "duration_ms"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
 
-        fun startDownload(context: Context, audioUrl: String, episodeTitle: String) {
+        fun startDownload(context: Context, feedUrl: String, episode: PodcastEpisode) {
             val intent = Intent(context, PodcastDownloadService::class.java).apply {
                 action = ACTION_DOWNLOAD
-                putExtra(EXTRA_URL, audioUrl)
-                putExtra(EXTRA_TITLE, episodeTitle)
-                putExtra(EXTRA_NOTIFICATION_ID, audioUrl.hashCode())
+                putExtra(EXTRA_URL, episode.audioUrl)
+                putExtra(EXTRA_TITLE, episode.title)
+                putExtra(EXTRA_FEED_URL, feedUrl)
+                putExtra(EXTRA_DESCRIPTION, episode.description)
+                putExtra(EXTRA_PUBLISH_DATE, episode.publishDate)
+                putExtra(EXTRA_DURATION_MS, episode.durationMs)
+                putExtra(EXTRA_NOTIFICATION_ID, episode.audioUrl.hashCode())
             }
             context.startForegroundService(intent)
         }
@@ -54,9 +63,16 @@ class PodcastDownloadService : Service() {
         when (intent?.action) {
             ACTION_DOWNLOAD -> {
                 val url = intent.getStringExtra(EXTRA_URL) ?: return START_NOT_STICKY
-                val title = intent.getStringExtra(EXTRA_TITLE) ?: ""
+                val feedUrl = intent.getStringExtra(EXTRA_FEED_URL) ?: return START_NOT_STICKY
+                val episode = PodcastEpisode(
+                    title = intent.getStringExtra(EXTRA_TITLE) ?: "",
+                    description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: "",
+                    audioUrl = url,
+                    publishDate = intent.getStringExtra(EXTRA_PUBLISH_DATE) ?: "",
+                    durationMs = intent.getLongExtra(EXTRA_DURATION_MS, 0L)
+                )
                 val notifId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, url.hashCode())
-                startDownload(url, title, notifId)
+                startDownload(feedUrl, episode, notifId)
             }
             ACTION_CANCEL -> {
                 val url = intent.getStringExtra(EXTRA_URL) ?: return START_NOT_STICKY
@@ -67,8 +83,9 @@ class PodcastDownloadService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startDownload(url: String, title: String, notifId: Int) {
-        val notification = buildNotification(title, 0, url, notifId)
+    private fun startDownload(feedUrl: String, episode: PodcastEpisode, notifId: Int) {
+        val url = episode.audioUrl
+        val notification = buildNotification(episode.title, 0, url, notifId)
         startForeground(notifId, notification)
 
         val job = serviceScope.launch {
@@ -95,7 +112,7 @@ class PodcastDownloadService : Service() {
                                     val progress = ((downloadedBytes * 100) / totalBytes).toInt()
                                     notificationManager.notify(
                                         notifId,
-                                        buildNotification(title, progress, url, notifId)
+                                        buildNotification(episode.title, progress, url, notifId)
                                     )
                                     lastProgressUpdate = now
                                 }
@@ -103,7 +120,8 @@ class PodcastDownloadService : Service() {
                         }
                     }
                 }
-                notificationManager.notify(notifId, buildDoneNotification(title, notifId))
+                PodcastDownloader.saveMetadata(this@PodcastDownloadService, feedUrl, episode)
+                notificationManager.notify(notifId, buildDoneNotification(episode.title))
             } catch (_: Exception) {
                 notificationManager.cancel(notifId)
                 PodcastDownloader.fileFor(this@PodcastDownloadService, url).delete()
@@ -119,7 +137,7 @@ class PodcastDownloadService : Service() {
     private fun cancelDownload(url: String, notifId: Int) {
         activeJobs[url]?.cancel()
         activeJobs.remove(url)
-        PodcastDownloader.fileFor(this, url).delete()
+        PodcastDownloader.delete(this, url)
         PodcastDownloader.setDownloading(url, false)
         notificationManager.cancel(notifId)
         if (activeJobs.isEmpty()) stopSelf()
@@ -153,7 +171,7 @@ class PodcastDownloadService : Service() {
             .build()
     }
 
-    private fun buildDoneNotification(title: String, notifId: Int): android.app.Notification {
+    private fun buildDoneNotification(title: String): android.app.Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.download_done)
             .setContentTitle(title)

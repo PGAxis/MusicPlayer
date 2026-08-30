@@ -12,6 +12,7 @@ interface ISettings {
     var lastPositionMs: Long
     var lastDurationMs: Long
     var lastPlaylistId: Long
+    var lastSyncedPlaylistHash: Long
     var lastQueue: List<SettingsSave.QueueEntry>
     var lastQueueIndex: Int
     var repeatMode: Int

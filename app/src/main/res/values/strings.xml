@@ -157,7 +157,13 @@
     <string name="podcasts_empty">No podcasts added yet</string>
     <string name="podcasts_add_feed">Add a feed</string>
     <string name="podcasts_rss_url">RSS feed URL</string>
+    <string name="podcasts_downloading">Downloading…</string>
 
     <!-- Podcasts downloader -->
     <string name="download_complete">Download complete</string>
+
+    <!-- App Info screen -->
+    <string name="app_info_version">Version:</string>.
+    <string name="app_info_vcode">Version code:</string>
+    <string name="app_info_source">Source code:</string>
 </resources>

@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import dev.pgaxis.musicaxs.R
-import dev.pgaxis.musicaxs.ext_funcs.toQueueItem
+import dev.pgaxis.musicaxs.funcs.toQueueItem
 import dev.pgaxis.musicaxs.models.QueueItem
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.services.MusicService

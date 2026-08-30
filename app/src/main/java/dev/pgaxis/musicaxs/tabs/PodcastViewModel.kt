@@ -48,6 +48,8 @@ class PodcastViewModel(application: Application) : AndroidViewModel(application)
                 repo.add(feed)
                 settings.podcastFeeds += feed
                 Log.d("PodcastDebug", "Saved feeds: ${settings.podcastFeeds}")
+            } catch (e: PodcastFetcher.FeedFetchException) {
+                showError(e.message ?: "Couldn't load feed")
             } catch (_: Exception) {
                 showError("Couldn't load feed — check the URL and try again")
             } finally {

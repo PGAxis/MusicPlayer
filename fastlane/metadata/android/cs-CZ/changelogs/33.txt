@@ -1,0 +1,8 @@
+Opravy chyb:
+- Fronta by se nyní měla vždy synchronizovat s playlistem (pokud nějaký kopíruje)
+- Obrázek na obrazovce ovládání skladby občas zobrazoval výchozí obal alba při přeskakování skladeb
+- Nositelná zařízení se mohla desynchronizovat s přehrávačem, pokud byl obal alba příliš velký (nyní omezeno na 80 KB, netýká se obalu v oznámení hlavního zařízení)
+
+Co je nového:
+- Přepracování obrazovky podcastů a systému stahování
+- Nyní lze upravovat více MIME typů skladeb (audio/mpeg, audio/mp4, audio/opus, audio/ogg, audio/x-m4a)

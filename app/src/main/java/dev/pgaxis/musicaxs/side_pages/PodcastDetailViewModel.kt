@@ -3,7 +3,7 @@ package dev.pgaxis.musicaxs.side_pages
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import dev.pgaxis.musicaxs.ext_funcs.toMediaItem
+import dev.pgaxis.musicaxs.funcs.toMediaItem
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.repositories.PodcastRepository
@@ -37,20 +37,26 @@ class PodcastDetailViewModel(application: Application) : AndroidViewModel(applic
     private val _downloadedUrls = MutableStateFlow<Set<String>>(emptySet())
     val downloadedUrls: StateFlow<Set<String>> = _downloadedUrls.asStateFlow()
 
-    fun isDownloaded(audioUrl: String): Boolean =
-        PodcastDownloader.isDownloaded(context, audioUrl)
-
     val downloading: StateFlow<Set<String>> = PodcastDownloader.downloading
 
     fun init(feedUrl: String) {
         _feed.value = repo.feeds.value.find { it.url == feedUrl } ?: return
+
+        val cached = PodcastDownloader.downloadedEpisodes(context, feedUrl)
+        if (cached.isNotEmpty()) {
+            _episodes.value = cached
+            refreshDownloadedState()
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
+            _isLoading.value = cached.isEmpty()
             try {
                 _episodes.value = PodcastFetcher.fetchEpisodes(feedUrl)
                 refreshDownloadedState()
             } catch (_: Exception) {
-                _error.value = "Couldn't load episodes — check your connection"
+                if (cached.isEmpty()) {
+                    _error.value = "Couldn't load episodes — check your connection"
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -64,12 +70,14 @@ class PodcastDetailViewModel(application: Application) : AndroidViewModel(applic
             .toSet()
     }
 
-    fun downloadEpisode(audioUrl: String, title: String) {
-        PodcastDownloadService.startDownload(context, audioUrl, title)
+    fun downloadEpisode(episode: PodcastEpisode) {
+        val feedUrl = _feed.value?.url ?: return
+        PodcastDownloadService.startDownload(context, feedUrl, episode)
         viewModelScope.launch {
-            PodcastDownloader.downloading.first { !it.contains(audioUrl) }
-            if (PodcastDownloader.isDownloaded(context, audioUrl)) {
-                _downloadedUrls.value += audioUrl
+            PodcastDownloader.downloading.first { it.contains(episode.audioUrl) }
+            PodcastDownloader.downloading.first { !it.contains(episode.audioUrl) }
+            if (PodcastDownloader.isDownloaded(context, episode.audioUrl)) {
+                _downloadedUrls.value += episode.audioUrl
             }
         }
     }
@@ -78,7 +86,6 @@ class PodcastDetailViewModel(application: Application) : AndroidViewModel(applic
         PodcastDownloader.delete(context, audioUrl)
         _downloadedUrls.value -= audioUrl
 
-        // If this episode is currently playing via local file, switch back to online URL
         val localUri = PodcastDownloader.localUriFor(context, audioUrl)
         val player = MusicService.playerInstance ?: return
         val currentItem = player.currentMediaItem ?: return

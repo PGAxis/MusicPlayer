@@ -1,6 +1,6 @@
 package dev.pgaxis.musicaxs.models
 
-import dev.pgaxis.musicaxs.ext_funcs.splitByArtistSeparator
+import dev.pgaxis.musicaxs.funcs.splitByArtistSeparator
 
 data class Artist(
     val name: String,

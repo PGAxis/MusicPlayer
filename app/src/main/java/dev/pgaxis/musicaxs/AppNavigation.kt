@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.pgaxis.musicaxs.side_pages.SongDetailScreen
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.pgaxis.musicaxs.settings_screens.AppInfoScreen
 import dev.pgaxis.musicaxs.settings_screens.ArtistSeparatorsScreen
 import dev.pgaxis.musicaxs.settings_screens.TabOrderScreen
 import dev.pgaxis.musicaxs.side_pages.AlbumDetailScreen
@@ -93,7 +94,8 @@ fun AppNavigation() {
                     onBack = { popBack() },
                     onScan = { mainViewModel.scanAll() },
                     onTabOrder = { navController.navigate("tabOrder") },
-                    onArtistSeparators = { navController.navigate("artistSep") }
+                    onArtistSeparators = { navController.navigate("artistSep") },
+                    onAppInfo = { navController.navigate("appInfo") }
                 )
             }
             composable("album/{albumId}") { backStackEntry ->
@@ -126,6 +128,11 @@ fun AppNavigation() {
             }
             composable("artistSep") {
                 ArtistSeparatorsScreen(
+                    onBack = { popBack() }
+                )
+            }
+            composable("appInfo") {
+                AppInfoScreen(
                     onBack = { popBack() }
                 )
             }

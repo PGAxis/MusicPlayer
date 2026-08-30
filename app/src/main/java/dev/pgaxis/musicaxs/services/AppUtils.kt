@@ -1,17 +1,20 @@
 package dev.pgaxis.musicaxs.services
 
-import android.app.ActivityManager
-import android.content.Context
 import androidx.annotation.Keep
 
-fun isAppInForeground(context: Context): Boolean {
-    val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    val appProcesses = am.runningAppProcesses ?: return false
-    val packageName = context.packageName
-    return appProcesses.any {
-        it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-        && it.processName == packageName
+fun List<Long>.stableHash(playlistId: Long): Long {
+    var hash = -3750763034362895579L
+    fun foldLong(v0: Long) {
+        var v = v0
+        repeat(8) {
+            hash = hash xor (v and 0xFF)
+            hash *= 1099511628211L
+            v = v ushr 8
+        }
     }
+    foldLong(playlistId)
+    for (id in this) foldLong(id)
+    return hash
 }
 
 @Keep

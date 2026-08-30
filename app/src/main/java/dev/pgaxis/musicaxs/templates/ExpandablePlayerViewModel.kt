@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface PlayType {
     data object Repeat : PlayType
@@ -52,12 +53,12 @@ class ExpandablePlayerViewModel(application: Application) : AndroidViewModel(app
                 if (!isPlaying) {
                     while (true) {
                         performCheck()
-                        delay(500)
+                        delay(500.milliseconds)
                     }
                 } else {
                     while (true) {
                         performCheck()
-                        delay(200)
+                        delay(200.milliseconds)
                     }
                 }
             }
@@ -129,8 +130,10 @@ class ExpandablePlayerViewModel(application: Application) : AndroidViewModel(app
     }
 
     private fun performCheck() {
+        if (_isScrubbing.value) return
+
         val player = MusicService.playerInstance
-        if (player != null && !_isScrubbing.value) {
+        if (player != null) {
             val duration = player.duration.coerceAtLeast(0L)
             if (duration > 0L) {
                 _positionMs.value = player.currentPosition

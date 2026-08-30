@@ -68,7 +68,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
 
-    private val playlistToQueue = PlaylistToQueue(application)
+    val playlistToQueue = PlaylistToQueue(application)
 
     val visibleTabs get() = settings.tabs.filter { it.visible }
 

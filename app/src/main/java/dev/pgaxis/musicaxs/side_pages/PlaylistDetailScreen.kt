@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.models.AlwaysCrossfade
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.PlaylistToQueue
@@ -294,7 +295,7 @@ private fun AlbumArt(song: Song, size: Dp) {
             model = ImageRequest.Builder(context)
                 .data(if (useFallbackUri) song.uri else validAlbumArtUri)
                 .size(150)
-                .crossfade(true)
+                .transitionFactory(AlwaysCrossfade)
                 .build(),
             contentDescription = "Album art",
             error = painterResource(R.drawable.default_cover),

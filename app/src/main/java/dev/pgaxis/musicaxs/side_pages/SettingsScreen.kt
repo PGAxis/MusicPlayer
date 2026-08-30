@@ -2,7 +2,6 @@ package dev.pgaxis.musicaxs.side_pages
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -84,6 +83,7 @@ fun SettingsScreen(
     onScan: () -> Unit,
     onTabOrder: () -> Unit,
     onArtistSeparators: () -> Unit,
+    onAppInfo: () -> Unit,
     vm: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -121,12 +121,11 @@ fun SettingsScreen(
                 SettingsToggleRow(
                     title = stringResource(R.string.set_scr_hide_wa_audio),
                     description = stringResource(R.string.set_scr_hide_wa_audio_desc),
-                    checked = vm.settings.hideWhatsAppAudio,
-                    onCheckedChange = { value ->
-                        vm.onHideWhatsAppChanged(value)
-                        onScan()
-                    }
-                )
+                    checked = vm.settings.hideWhatsAppAudio
+                ) { value ->
+                    vm.onHideWhatsAppChanged(value)
+                    onScan()
+                }
 
                 ListDivider(hasArt = false)
 
@@ -164,9 +163,8 @@ fun SettingsScreen(
                 SettingsDropdownRow(
                     title = stringResource(R.string.set_scr_theme),
                     options = vm.themeOptions,
-                    selected = vm.selectedTheme,
-                    onSelectChange = { vm.onThemeChanged(it as Theme) }
-                )
+                    selected = vm.selectedTheme
+                ) { vm.onThemeChanged(it as Theme) }
 
                 ListDivider(hasArt = false)
 
@@ -184,25 +182,24 @@ fun SettingsScreen(
                 SettingsToggleRow(
                     title = stringResource(R.string.set_scr_real_bars),
                     description = stringResource(R.string.set_scr_real_bars_desc),
-                    checked = realBars,
-                    onCheckedChange = { turningOn ->
-                        if (turningOn) {
-                            val granted = ContextCompat.checkSelfPermission(
-                                context, Manifest.permission.RECORD_AUDIO
-                            ) == PackageManager.PERMISSION_GRANTED
+                    checked = realBars
+                ) { turningOn ->
+                    if (turningOn) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
 
-                            if (granted) {
-                                realBars = true
-                                vm.onRealBarsChanged(true)
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            }
+                        if (granted) {
+                            realBars = true
+                            vm.onRealBarsChanged(true)
                         } else {
-                            realBars = false
-                            vm.onRealBarsChanged(false)
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
+                    } else {
+                        realBars = false
+                        vm.onRealBarsChanged(false)
                     }
-                )
+                }
 
                 ListDivider(hasArt = false)
 
@@ -224,9 +221,8 @@ fun SettingsScreen(
                 SettingsDropdownRow(
                     title = stringResource(R.string.language),
                     options = vm.langOptions,
-                    selected = vm.selectedLang,
-                    onSelectChange = { vm.onLanguageChange(it as String) }
-                )
+                    selected = vm.selectedLang
+                ) { vm.onLanguageChange(it as String) }
 
                 if (ytcnvReady) {
                     ListDivider(hasArt = false)
@@ -234,28 +230,20 @@ fun SettingsScreen(
                     SettingsToggleRow(
                         title = stringResource(R.string.set_scr_ytconv_add_songs),
                         description = stringResource(R.string.set_scr_ytconv_add_songs_desc),
-                        checked = vm.settings.allowYTCnv,
-                        onCheckedChange = vm::onAllowYTCnvChanged
-                    )
+                        checked = vm.settings.allowYTCnv
+                    ) {
+                        vm.onAllowYTCnvChanged(it)
+                    }
                 }
+
+                ListDivider(hasArt = false)
+
+                SettingsActionRow(
+                    title = stringResource(R.string.set_scr_app_info),
+                    onClick = onAppInfo
+                ) { }
             }
         }
-
-        val packageInfo = LocalContext.current.packageManager.getPackageInfo(LocalContext.current.packageName, 0)
-        val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            packageInfo.longVersionCode
-        } else {
-            @Suppress("DEPRECATION")
-            packageInfo.versionCode.toLong()
-        }
-        Text(
-            text = "${packageInfo.versionName} ($versionCode)",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(8.dp)
-        )
     }
 }
 

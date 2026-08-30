@@ -33,6 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.models.TabType
@@ -91,6 +94,9 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+
     var bgColor by remember { mutableStateOf(Color.DarkGray) }
     val animatedBgColor by animateColorAsState(
         targetValue = bgColor,
@@ -111,6 +117,25 @@ fun MainScreen(
 
     LaunchedEffect(pagerState.settledPage) {
         vm.onPageChanged(pagerState.settledPage)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    coroutineScope.launch {
+                        vm.playlistToQueue.syncQueueWithPlaylist()
+                    }
+                }
+
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     BoxWithConstraints(Modifier

@@ -2,8 +2,6 @@ package dev.pgaxis.musicaxs.templates
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -29,8 +27,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -44,13 +40,10 @@ import androidx.compose.ui.util.lerp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.palette.graphics.Palette
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.CurrentSong
 import dev.pgaxis.musicaxs.PlayerBarDefaults
 import dev.pgaxis.musicaxs.R
-import dev.pgaxis.musicaxs.contrastColor
+import dev.pgaxis.musicaxs.models.MorphingAlbumArt
 import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.FavouritesSave
@@ -295,36 +288,15 @@ fun ExpandablePlayer(
                 }
 
                 // -- Morphing image
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(currentSong.songUri)
-                        .size(imageExpandedSizePx.roundToInt())
-                        .crossfade(false)
-                        .build(),
-                    contentDescription = "Album art",
-                    error = painterResource(R.drawable.default_cover),
-                    placeholder = painterResource(R.drawable.default_cover),
-                    fallback = painterResource(R.drawable.default_cover),
-                    modifier = Modifier
-                        .size(with(density) { imageSizePx.toDp() })
-                        .offset(imageX, imageY)
-                        .clip(RoundedCornerShape(imageCorner)),
-                    contentScale = ContentScale.Crop,
-                    onSuccess = { result ->
-                        val bitmap = (result.result.drawable as BitmapDrawable)
-                            .bitmap.copy(Bitmap.Config.ARGB_8888, false)
-                        Palette.from(bitmap).generate { palette ->
-                            palette?.getDominantColor(Color.DarkGray.toArgb())
-                                ?.let { dominant ->
-                                    onBgColorChange(Color(dominant))
-                                    onTxtColorChange(Color(dominant).contrastColor())
-                                }
-                        }
-                    },
-                    onError = {
-                        onBgColorChange(Color.DarkGray)
-                        onTxtColorChange(Color.DarkGray.contrastColor())
-                    }
+                MorphingAlbumArt(
+                    songUri = currentSong.songUri,
+                    sizeDp = with(density) { imageSizePx.toDp() },
+                    offsetX = imageX,
+                    offsetY = imageY,
+                    cornerDp = imageCorner,
+                    fetchSizePx = imageExpandedSizePx.roundToInt(),
+                    onBgColorChange = onBgColorChange,
+                    onTxtColorChange = onTxtColorChange
                 )
 
                 // -- Queue panel

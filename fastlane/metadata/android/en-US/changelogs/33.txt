@@ -1,0 +1,8 @@
+Bug fixes:
+- Queue should now always sync to its playlist (if it's reflecting one)
+- Image on the control screen sometimes showed the default cover art on song skips
+- Wearables could sometimes desync from the player if the cover art was too big (now capped at 80KB, not affecting the art in the main device's notification)
+
+Additions:
+- Podcasts screen and download rework
+- More song mime types can be edited now (audio/mpeg, audio/mp4, audio/opus, audio/ogg, audio/x-m4a)

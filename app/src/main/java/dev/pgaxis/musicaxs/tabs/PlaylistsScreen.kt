@@ -31,6 +31,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.models.AlwaysCrossfade
 import dev.pgaxis.musicaxs.models.Playlist
 import dev.pgaxis.musicaxs.services.M3uHandler
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
@@ -223,7 +224,7 @@ fun PlaylistsScreen(
                                 modifier = Modifier.clickable {
                                     showSheet = false
                                     exportTargetPlaylist = playlist
-                                    exportLauncher.launch("${playlist.name}.m3u8")
+                                    exportLauncher.launch("${playlist.name}.m3u")
                                 }
                             )
                         }
@@ -333,7 +334,7 @@ private fun SmartPlaylistCard(
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(iconUri)
-                        .crossfade(true)
+                        .transitionFactory(AlwaysCrossfade)
                         .build(),
                     contentDescription = "Album art",
                     error = painterResource(R.drawable.default_cover),
@@ -386,7 +387,7 @@ private fun PlaylistRow(
             model = ImageRequest.Builder(context)
                 .data(playlist.getImageUri())
                 .size(48)
-                .crossfade(true)
+                .transitionFactory(AlwaysCrossfade)
                 .build(),
             contentDescription = playlist.name,
             error = painterResource(R.drawable.default_cover),
