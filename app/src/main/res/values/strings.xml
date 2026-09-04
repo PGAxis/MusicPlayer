@@ -54,6 +54,7 @@
     <string name="tab_albums">Albums</string>
     <string name="tab_artists">Interprets</string>
     <string name="tab_podcasts">Podcasts</string>
+    <string name="tab_orbit">Orbit</string>
     <string name="main_new_playlist">New Playlist</string>
 
     <!-- Settings screen -->
@@ -166,4 +167,9 @@
     <string name="app_info_version">Version:</string>.
     <string name="app_info_vcode">Version code:</string>
     <string name="app_info_source">Source code:</string>
+
+    <!-- Orbit screen -->
+    <string name="orb_perm_ask">Orbit needs nearby device access to find other Music.axs instances.</string>
+    <string name="orb_no_peer">No Orbit peers connected yet</string>
+    <string name="orb_empty_lib">This library is empty</string>
 </resources>

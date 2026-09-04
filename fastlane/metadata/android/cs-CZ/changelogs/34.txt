@@ -1,0 +1,6 @@
+Opravy chyb:
+- Opravy knihovny AXS (fronta a playlisty mohly zobrazovat "ghost itemy")
+
+Co je nového:
+- "Nejvíce Hrané" playlist nyní zobrazuje kolikrát byly písničky přehrané
+- Alba nyní zobrazují indexy písniček

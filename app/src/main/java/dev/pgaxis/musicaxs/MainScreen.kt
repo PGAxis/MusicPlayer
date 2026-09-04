@@ -44,6 +44,7 @@ import dev.pgaxis.musicaxs.settings.SettingsSave
 import dev.pgaxis.musicaxs.tabs.AlbumsScreen
 import dev.pgaxis.musicaxs.tabs.FavouritesScreen
 import dev.pgaxis.musicaxs.tabs.ArtistsScreen
+import dev.pgaxis.musicaxs.tabs.OrbitScreen
 import dev.pgaxis.musicaxs.tabs.PlaylistsScreen
 import dev.pgaxis.musicaxs.tabs.PodcastsScreen
 import dev.pgaxis.musicaxs.tabs.SongsScreen
@@ -85,7 +86,8 @@ fun MainScreen(
             TabType.SONGS to { SongsScreen(goToDetail = goToDetail, scanSongs = vm::scanAll) },
             TabType.ALBUMS to { AlbumsScreen(onOpenAlbum = onOpenAlbum) },
             TabType.ARTISTS to { ArtistsScreen(onOpenArtist = onOpenArtist) },
-            TabType.PODCASTS to { PodcastsScreen(showAddDialog = showAddFeedDialog, onAddDialogDismiss = { showAddFeedDialog = false }, onOpenPodcast = onOpenPodcast) }
+            TabType.PODCASTS to { PodcastsScreen(showAddDialog = showAddFeedDialog, onAddDialogDismiss = { showAddFeedDialog = false }, onOpenPodcast = onOpenPodcast) },
+            //TabType.ORBIT to { OrbitScreen() }
         )
     }
 

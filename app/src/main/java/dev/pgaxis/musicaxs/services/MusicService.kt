@@ -572,6 +572,11 @@ class MusicService : MediaSessionService() {
 
     private var sharedRunningMax = 1f
 
+    //I don't fucking know, these seem to be best from a test
+    private val BASS_GAIN = 1.0f
+    private val MID_GAIN = 3.94f
+    private val TREBLE_GAIN = 9.4f
+
     private fun bandsFromFft(fft: ByteArray, samplingRateMilliHz: Int): Triple<Float, Float, Float> {
         val sampleRate = samplingRateMilliHz / 1000f
         val n = fft.size / 2
@@ -589,9 +594,9 @@ class MusicService : MediaSessionService() {
         fun binForFreq(freq: Float) = ((freq / (sampleRate / 2f)) * n).toInt().coerceIn(0, n)
         fun avg(range: IntRange) = if (range.isEmpty()) 0f else range.map(::magnitude).average().toFloat()
 
-        val rawBass   = avg(binForFreq(20f)..binForFreq(250f))
-        val rawMid    = avg(binForFreq(250f)..binForFreq(4000f))
-        val rawTreble = avg(binForFreq(4000f)..binForFreq(sampleRate / 2f))
+        val rawBass = avg(binForFreq(20f)..binForFreq(250f)) * BASS_GAIN
+        val rawMid = avg(binForFreq(250f)..binForFreq(4000f)) * MID_GAIN
+        val rawTreble = avg(binForFreq(4000f)..binForFreq(sampleRate / 2f)) * TREBLE_GAIN
 
         sharedRunningMax = maxOf(rawBass, rawMid, rawTreble, sharedRunningMax * 0.98f)
 

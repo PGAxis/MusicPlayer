@@ -1,0 +1,6 @@
+Bug fixes:
+- Fixes to the AXS library (queue and playlists could show "ghost items")
+
+Additions:
+- "Most Played" playlist now shows how many times the songs were played
+- Albums now show the index of the songs

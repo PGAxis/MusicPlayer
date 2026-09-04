@@ -43,6 +43,7 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.PlaylistToQueue
 import dev.pgaxis.musicaxs.settings.FavouritedPlaylistsSave
+import dev.pgaxis.musicaxs.settings.PlayCountTracker
 import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SideScreenHeader
@@ -92,7 +93,9 @@ fun PlaylistDetailScreen(
 
     when (val state = uiState) {
         is DetailUiState.Loading -> {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+            Box(Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -134,6 +137,8 @@ fun PlaylistDetailScreen(
 
             val favPlaylists = remember { FavouritedPlaylistsSave.getInstance(context) }
             var isFavourited by remember { mutableStateOf(favPlaylists.isFavourited(playlistId)) }
+
+            val tracker = remember { PlayCountTracker.getInstance(context) }
 
             val configuration = LocalConfiguration.current
             val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -209,17 +214,22 @@ fun PlaylistDetailScreen(
                                 itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
                                     ReorderableItem(reorderState, key = keyed.key) { _ ->
                                         Column {
-                                            SongRow(
-                                                song = keyed.song,
-                                                onSeeDetails = onSeeDetail,
-                                                onAddTo = { selectedSong = keyed.song },
-                                                showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L, 4L),
-                                                onRemoveFrom = {
-                                                    vm.removeSong(playlistId, index)
-                                                    PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
-                                                },
-                                                dragHandleModifier = Modifier.draggableHandle()
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                SongRow(
+                                                    song = keyed.song,
+                                                    onSeeDetails = onSeeDetail,
+                                                    onAddTo = { selectedSong = keyed.song },
+                                                    showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L, 4L),
+                                                    extraText = if (playlistId == 3L) "${tracker.getCount(keyed.song.uri)}×" else null,
+                                                    onRemoveFrom = {
+                                                        vm.removeSong(playlistId, index)
+                                                        PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
+                                                    },
+                                                    dragHandleModifier = Modifier.draggableHandle()
+                                                )
+                                            }
 
                                             if (index < songs.lastIndex) {
                                                 ListDivider()

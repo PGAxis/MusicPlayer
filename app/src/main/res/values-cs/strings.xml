@@ -62,6 +62,7 @@
     <string name="tab_albums">Alba</string>
     <string name="tab_artists">Interpreti</string>
     <string name="tab_podcasts">Podcasty</string>
+    <string name="tab_orbit">Orbita</string>
     <string name="main_new_playlist">Nový playlist</string>
 
     <!-- Settings screen -->
@@ -174,4 +175,9 @@
     <string name="app_info_version">Verze:</string>
     <string name="app_info_vcode">Kód verze:</string>
     <string name="app_info_source">Zdrojový kód:</string>
+
+    <!-- Orbit screen -->
+    <string name="orb_perm_ask">Funkce Orbit potřebuje přístup k nedalekým zařízením aby našla další Music.axs instance.</string>
+    <string name="orb_no_peer">Zatím nejsou připojená žádná další zařízení</string>
+    <string name="orb_empty_lib">Tato knihovna je prázdná</string>
 </resources>

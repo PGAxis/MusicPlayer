@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -173,12 +174,23 @@ fun AlbumDetailScreen(
                         ) {
                             itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
                                 Column {
-                                    SongRow(
-                                        song = song,
-                                        onSeeDetails = onSeeDetail,
-                                        onAddTo = { selectedSong = song },
-                                        showsImage = false
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "${song.track} -",
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(start = 8.dp).width(44.dp)
+                                        )
+
+                                        SongRow(
+                                            song = song,
+                                            onSeeDetails = onSeeDetail,
+                                            onAddTo = { selectedSong = song },
+                                            showsImage = false
+                                        )
+                                    }
 
                                     if (index < songs.lastIndex) {
                                         ListDivider(hasArt = false)

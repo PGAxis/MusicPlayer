@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +45,7 @@ fun SongRow(
     onAddTo: () -> Unit,
     showsImage: Boolean = true,
     showRemoveFrom: Boolean = false,
+    extraText: String? = null,
     onRemoveFrom: () -> Unit = {},
     dragHandleModifier: Modifier = Modifier
 ) {
@@ -75,7 +77,7 @@ fun SongRow(
                 else Color.Transparent
             )
             .clickable { MusicService.playSingular(context, song) }
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(15.dp)
     ) {
@@ -83,7 +85,7 @@ fun SongRow(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(song.uri)
-                    .size(64, 64)
+                    .size(64)
                     .crossfade(false)
                     .dispatcher(Dispatchers.IO.limitedParallelism(8))
                     .build(),
@@ -103,14 +105,14 @@ fun SongRow(
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
                 text = song.artist,
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
 
@@ -130,6 +132,15 @@ fun SongRow(
                     .size(24.dp)
                     .padding(4.dp),
                 tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (extraText != null) {
+            Text(
+                text = extraText,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(start = 6.dp)
             )
         }
 
