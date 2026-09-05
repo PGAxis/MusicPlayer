@@ -1,0 +1,2 @@
+Opravy chyb:
+- Odstranění (zatím) nepotřebných oprávnění (například ACCESS_FINE_LOCATION nebo NEARBY_WIFI_DEVICES)

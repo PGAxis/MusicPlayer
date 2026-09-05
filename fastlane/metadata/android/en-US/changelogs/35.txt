@@ -1,0 +1,2 @@
+Bug fixes:
+- Removed (yet) unneeded permissions (such as ACCESS_FINE_LOCATION or NEARBY_WIFI_DEVICES)
