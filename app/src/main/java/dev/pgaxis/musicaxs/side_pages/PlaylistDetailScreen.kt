@@ -28,6 +28,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -119,13 +120,40 @@ fun PlaylistDetailScreen(
             val headerCollapseRangePx = with(density) { ART_FULL_SIZE.toPx() }
             var imageOffsetPx by remember { mutableFloatStateOf(0f) }
 
-            val nestedScrollConnection = remember {
+            val nestedScrollConnection = remember(headerCollapseRangePx) {
                 object : NestedScrollConnection {
+                    private var listScrolledThisGesture = false
+
                     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                        if (available.y >= 0f) return Offset.Zero
                         val newOffset = (imageOffsetPx + available.y).coerceIn(-headerCollapseRangePx, 0f)
                         val consumed = newOffset - imageOffsetPx
                         imageOffsetPx = newOffset
                         return Offset(0f, consumed)
+                    }
+
+                    override fun onPostScroll(
+                        consumed: Offset,
+                        available: Offset,
+                        source: NestedScrollSource
+                    ): Offset {
+                        if (available.y <= 0f && consumed.y <= 0f) return Offset.Zero
+
+                        if (consumed.y > 0f) listScrolledThisGesture = true
+
+                        if (source != NestedScrollSource.UserInput || listScrolledThisGesture) {
+                            return Offset.Zero
+                        }
+
+                        val newOffset = (imageOffsetPx + available.y).coerceIn(-headerCollapseRangePx, 0f)
+                        val used = newOffset - imageOffsetPx
+                        imageOffsetPx = newOffset
+                        return Offset(0f, used)
+                    }
+
+                    override suspend fun onPreFling(available: Velocity): Velocity {
+                        listScrolledThisGesture = false
+                        return Velocity.Zero
                     }
                 }
             }
@@ -227,6 +255,11 @@ fun PlaylistDetailScreen(
                                                         vm.removeSong(playlistId, index)
                                                         PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
                                                     },
+                                                    onPlayList = if (vm.settings.playFull) {
+                                                        {
+                                                            MusicService.playNormal(context = context, songs = state.songs, playlistId = playlistId, index = index)
+                                                        }
+                                                    } else null,
                                                     dragHandleModifier = Modifier.draggableHandle()
                                                 )
                                             }

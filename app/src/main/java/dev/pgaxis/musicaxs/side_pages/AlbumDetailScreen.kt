@@ -50,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,8 +65,6 @@ import dev.pgaxis.musicaxs.templates.AddToSheet
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SideScreenHeader
 import dev.pgaxis.musicaxs.templates.SongRow
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
 
 private val ART_FULL_SIZE = 150.dp
 private val ART_TITLE_SPACING = 16.dp
@@ -81,6 +80,7 @@ fun AlbumDetailScreen(
     val context = LocalContext.current
     val album by vm.album.collectAsStateWithLifecycle()
     val songs by vm.songs.collectAsStateWithLifecycle()
+    val isInitialized by vm.isInitialized.collectAsStateWithLifecycle()
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     val listState = rememberLazyListState()
 
@@ -91,13 +91,40 @@ fun AlbumDetailScreen(
     val headerCollapseRangePx = with(density) { ART_FULL_SIZE.toPx() }
     var imageOffsetPx by remember { mutableFloatStateOf(0f) }
 
-    val nestedScrollConnection = remember {
+    val nestedScrollConnection = remember(headerCollapseRangePx) {
         object : NestedScrollConnection {
+            private var listScrolledThisGesture = false
+
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y >= 0f) return Offset.Zero
                 val newOffset = (imageOffsetPx + available.y).coerceIn(-headerCollapseRangePx, 0f)
                 val consumed = newOffset - imageOffsetPx
                 imageOffsetPx = newOffset
                 return Offset(0f, consumed)
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (available.y <= 0f && consumed.y <= 0f) return Offset.Zero
+
+                if (consumed.y > 0f) listScrolledThisGesture = true
+
+                if (source != NestedScrollSource.UserInput || listScrolledThisGesture) {
+                    return Offset.Zero
+                }
+
+                val newOffset = (imageOffsetPx + available.y).coerceIn(-headerCollapseRangePx, 0f)
+                val used = newOffset - imageOffsetPx
+                imageOffsetPx = newOffset
+                return Offset(0f, used)
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                listScrolledThisGesture = false
+                return Velocity.Zero
             }
         }
     }
@@ -109,11 +136,8 @@ fun AlbumDetailScreen(
 
     LaunchedEffect(albumId) { vm.init(albumId) }
 
-    LaunchedEffect(songs.isEmpty()) {
-        if (songs.isEmpty()) {
-            delay(3000.milliseconds)
-            if (songs.isEmpty()) onBack()
-        }
+    LaunchedEffect(album) {
+        if (album == null && isInitialized) onBack()
     }
 
     val currentAlbum = album ?: return
@@ -188,6 +212,11 @@ fun AlbumDetailScreen(
                                             song = song,
                                             onSeeDetails = onSeeDetail,
                                             onAddTo = { selectedSong = song },
+                                            onPlayList = if (vm.settings.playFull) {
+                                                {
+                                                    MusicService.playNormal(context = context, songs = songs, index = index)
+                                                }
+                                            } else null,
                                             showsImage = false
                                         )
                                     }

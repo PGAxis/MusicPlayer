@@ -30,7 +30,7 @@ class PlaylistsDetailViewModel(application: Application) : AndroidViewModel(appl
     private val _uiState = MutableStateFlow<DetailUiState>(DetailUiState.Loading)
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
 
-    private val settings = SettingsSave.getInstance(getApplication())
+    val settings = SettingsSave.getInstance(getApplication())
     private val repo = PlaylistRepository.getInstance(getApplication())
     private val songRepo = SongRepository.getInstance()
     private val tracker = PlayCountTracker.getInstance(getApplication())

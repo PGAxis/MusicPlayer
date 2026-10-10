@@ -28,4 +28,5 @@ interface ISettings {
     var artistSeparator: List<String>
     var smartLimit: Int
     var realBars: Boolean
+    var playFull: Boolean
 }

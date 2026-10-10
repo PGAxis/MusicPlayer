@@ -1,0 +1,14 @@
+Opravy chyb:
+- Oznámení přehrávače médií nyní funguje správně na starších zařízeních (Android <8)
+- Dolní odsazení na kartách se nepřepočítalo správně, pokud nebyla aktivní žádná skladba
+- Změna karet pomocí záhlaví nyní nezpůsobí okamžitou „re-synchronizaci“ záhlaví s obsahem, ale až po jeho "zaklapnutí" na místo
+- Při úpravě tagu alba skladby, po které by dané album zůstalo prázdné, mohl návrat z této obrazovky zobrazit prázdnou obrazovku
+
+Co je nového:
+- Orbit
+    -> umožněno díky Wi-Fi Direct (vyžaduje NEARBY_WIFI_DEVICES nebo ACCESS_FINE_LOCATION)
+    -> sdílený poslech
+    -> uživatelé se mohou připojit k hostiteli, poté vidí vzájemně své knihovny a mohou si sdílené skladby přidávat do fronty
+    -> když se uživatel od relace odpojí (nebo ji hostitel ukončí), sdílené skladby ve frontách uživatelů zešednou (a při opětovném připojení se buď znovu povolí, nebo se vymažou po ukončení aplikace)
+    -> v budoucnu: sdílená fronta, synchronizované přehrávání, stahování sdílených skladeb
+- Kliknutí na skladbu uvnitř playlistu nebo alba přidá do fronty celý playlist (nebo album). Ve výchozím nastavení vypnuto, lze zapnout v nastavení

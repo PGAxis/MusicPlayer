@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -57,6 +58,7 @@ fun QueueItemRow(
     onAddTo: () -> Unit,
     onRemoveFrom: () -> Unit,
     dragHandleModifier: Modifier = Modifier,
+    unavailable: Boolean = false,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -66,11 +68,12 @@ fun QueueItemRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .alpha(if (unavailable) 0.4f else 1f)
             .background(
                 if (isPlaying) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
                 else Color.Transparent
             )
-            .clickable { onClick() }
+            .clickable(enabled = !unavailable) { onClick() }
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(15.dp)

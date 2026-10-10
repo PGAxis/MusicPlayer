@@ -1,0 +1,14 @@
+Bug fixes:
+- The media notification now works correctly on older devices (Android <8)
+- The bottom padding on tabs didn't reapply properly when there was no active song
+- Changing tabs using the title bar now doesn't cause said title bar to "re-sync" with the content bar immediately, only once it snaps
+- When editing a song's album tag, which would result to that album being empty, going back from that screen could show a blank screen
+
+Additions:
+- Orbit
+    -> made possible with Wi-Fi Direct (needs NEARBY_WIFI_DEVICES or ACCESS_FINE_LOCATION)
+    -> shared listening experience
+    -> users can connect to a host, after which they can see each other's libraries and add these shared songs to their queue
+    -> when a user disconnects from a session (or the host stops it), the shared songs get greyed out in users queues (and either get re-enabled on reconnection or cleared once the app stops)
+    -> in the future: shared queue, synced playback, shared songs download
+- Clicking on a song inside a playlist or an album will add the full playlist (or the album) to the queue. Off by default, can be enabled in settings

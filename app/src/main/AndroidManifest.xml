@@ -17,16 +17,18 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Orbit Wi-Fi Direct -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" /> -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <!-- Android 12 and below -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:maxSdkVersion="32"/>
     <!-- Android 13+ -->
-    <!-- <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation"
-        tools:targetApi="31" /> -->
+        tools:targetApi="33" />
 
     <permission android:name="dev.pgaxis.musicaxs.PLAYLIST_ACCESS" android:protectionLevel="normal" />
 
@@ -60,7 +62,17 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="orbit" android:host="join" />
+            </intent-filter>
         </activity>
+        <activity
+            android:name=".orbit.OrbitCaptureActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <service
             android:name=".services.MusicService"
             android:foregroundServiceType="mediaPlayback"

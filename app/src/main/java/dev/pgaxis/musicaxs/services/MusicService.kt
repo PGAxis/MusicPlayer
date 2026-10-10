@@ -1,3 +1,5 @@
+@file:Suppress("PrivatePropertyName")
+
 package dev.pgaxis.musicaxs.services
 
 import android.app.PendingIntent
@@ -29,7 +31,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -42,11 +47,16 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dev.pgaxis.musicaxs.MainActivity
 import dev.pgaxis.musicaxs.MusicAxsApplication
+import dev.pgaxis.musicaxs.funcs.placeholderUri
 import dev.pgaxis.musicaxs.funcs.toMediaItem
+import dev.pgaxis.musicaxs.models.OrbitSong
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.models.Song
+import dev.pgaxis.musicaxs.orbit.OrbitDataSource
+import dev.pgaxis.musicaxs.orbit.OrbitRoutingDataSource
+import dev.pgaxis.musicaxs.repositories.OrbitRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings.FavouritesSave
 import dev.pgaxis.musicaxs.settings.PlayCountTracker
@@ -70,13 +80,26 @@ import kotlin.time.Duration.Companion.milliseconds
 
 enum class QueueSource { PLAYLIST, MANUAL }
 
+private fun MediaItem.itemSource(): QueueItemSource =
+    mediaMetadata.extras?.getString("source")
+        ?.let { runCatching { QueueItemSource.valueOf(it) }.getOrNull() }
+        ?: QueueItemSource.LOCAL
+
+private fun MediaItem.isGuest() = itemSource() == QueueItemSource.GUEST
+
+private fun MediaItem.isUnavailableGuest(): Boolean {
+    if (!isGuest()) return false
+    val owner = mediaMetadata.extras?.getString("deviceId") ?: return true
+    return owner !in OrbitRepository.getInstance().loadedOwners.value
+}
+
 @UnstableApi
 class EmbeddedArtBitmapLoader(
     private val context: Context,
     private val onBitmapReady: ((uri: Uri, artworkData: ByteArray) -> Unit)? = null
 ) : BitmapLoader {
     private val executor = Executors.newSingleThreadExecutor()
-    private val TARGET_BYTES = 80_000
+    private val TARGET_BYTES = 40_000
 
     override fun supportsMimeType(mimeType: String) = false
 
@@ -185,6 +208,7 @@ class MusicService : MediaSessionService() {
 
         val COMMAND_SHUFFLE = SessionCommand("ACTION_SHUFFLE", Bundle.EMPTY)
         val COMMAND_LIKE = SessionCommand("ACTION_LIKE", Bundle.EMPTY)
+        val COMMAND_PLAY = SessionCommand("ACTION_PLAY", Bundle.EMPTY)
         val COMMAND_PREVIOUS = SessionCommand("ACTION_PREVIOUS", Bundle.EMPTY)
         val COMMAND_NEXT = SessionCommand("ACTION_NEXT", Bundle.EMPTY)
         val currentUri: Uri? get() = instance?.mediaSession?.player?.currentMediaItem?.localConfiguration?.uri
@@ -271,6 +295,14 @@ class MusicService : MediaSessionService() {
             }
         }
 
+        private fun Context.startMusicService(intent: Intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        }
+
         fun playSingular(context: Context, song: Song, startPositionMs: Long = 0L) {
             instance?.playSingularInternal(song, startPositionMs) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
@@ -279,19 +311,23 @@ class MusicService : MediaSessionService() {
                     putExtra(EXTRA_ARTIST, song.artist)
                     putExtra(EXTRA_POSITION_MS, startPositionMs)
                 }
-                context.startForegroundService(intent)
+                context.startMusicService(intent)
             }
         }
 
-        fun playNormal(context: Context, songs: List<Song>, playlistId: Long = -1L) {
+        fun playSingular(song: OrbitSong) {
+            instance?.playItemSingular(song.toMediaItem())
+        }
+
+        fun playNormal(context: Context, songs: List<Song>, playlistId: Long = -1L, index: Int = 0) {
             if (songs.isEmpty()) return
-            instance?.playNormalInternal(songs, playlistId) ?: run {
+            instance?.playNormalInternal(songs, playlistId, index) ?: run {
                 val intent = Intent(context, MusicService::class.java).apply {
                     putStringArrayListExtra(EXTRA_QUEUE_URIS, ArrayList(songs.map { it.uri.toString() }))
                     putStringArrayListExtra(EXTRA_QUEUE_TITLES, ArrayList(songs.map { it.title }))
                     putStringArrayListExtra(EXTRA_QUEUE_ARTISTS, ArrayList(songs.map { it.artist }))
                 }
-                context.startForegroundService(intent)
+                context.startMusicService(intent)
             }
         }
 
@@ -304,7 +340,7 @@ class MusicService : MediaSessionService() {
                     putStringArrayListExtra(EXTRA_QUEUE_ARTISTS, ArrayList(songs.map { it.artist }))
                     putExtra(EXTRA_SHUFFLED, true)
                 }
-                context.startForegroundService(intent)
+                context.startMusicService(intent)
             }
         }
 
@@ -318,6 +354,13 @@ class MusicService : MediaSessionService() {
             } else if (MusicAxsApplication.hasUIBeenActive) {
                 playSingular(context, song)
             }
+        }
+
+        fun addToQueue(context: Context, song: OrbitSong) {
+            val inst = instance ?: return
+            val save = ShuffleSave.getInstance(context)
+            if (save.isShuffled) save.addToOriginal(song.placeholderUri().toString())
+            inst.addItemToQueue(song.toMediaItem(), applyShuffleRandomness = false, resetPlaylist = true)
         }
 
         fun playSingularPodcast(episode: PodcastEpisode, feed: PodcastFeed) {
@@ -616,7 +659,29 @@ class MusicService : MediaSessionService() {
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
-    private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) {
+    private fun removeGuestItems() {
+        val player = mediaSession?.player ?: return
+        for (i in player.mediaItemCount - 1 downTo 0) {
+            if (player.getMediaItemAt(i).isGuest()) removeFromQueue(this, i)
+        }
+    }
+
+    private fun skipToAvailable(player: Player, wrap: Boolean) {
+        val start = player.currentMediaItemIndex
+        val order = (start + 1 until player.mediaItemCount) + if (wrap) (0 until start) else emptyList()
+        val target = order.firstOrNull { !player.getMediaItemAt(it).isUnavailableGuest() }
+        if (target == null) {
+            player.pause()
+            return
+        }
+        player.seekTo(target, 0)
+        if (player.playbackState == Player.STATE_IDLE) player.prepare()
+    }
+
+    private fun playSingularInternal(song: Song, startPositionMs: Long = 0L) =
+        playItemSingular(song.toMediaItem(), startPositionMs)
+
+    private fun playItemSingular(item: MediaItem, startPositionMs: Long = 0L) {
         val player = mediaSession?.player ?: return
 
         when (currentSource) {
@@ -628,10 +693,10 @@ class MusicService : MediaSessionService() {
                 currentSource = QueueSource.MANUAL
                 settings.queueSource = QueueSource.MANUAL
                 queueSourceState.value = QueueSource.MANUAL
-                player.setMediaItem(song.toMediaItem(), startPositionMs)
+                player.setMediaItem(item, startPositionMs)
             }
             QueueSource.MANUAL -> {
-                player.addMediaItem(0, song.toMediaItem())
+                player.addMediaItem(0, item)
                 player.seekTo(0, startPositionMs)
             }
         }
@@ -640,7 +705,7 @@ class MusicService : MediaSessionService() {
         player.play()
     }
 
-    private fun playNormalInternal(songs: List<Song>, playlistId: Long = -1L) {
+    private fun playNormalInternal(songs: List<Song>, playlistId: Long = -1L, index: Int = 0) {
         val player = mediaSession?.player ?: return
         settings.lastPlaylistId = playlistId
         playlistIdState.value = playlistId
@@ -654,6 +719,7 @@ class MusicService : MediaSessionService() {
 
         player.setMediaItems(songs.map { it.toMediaItem() })
         player.prepare()
+        player.seekTo(index.coerceIn(0, songs.lastIndex), 0)
         player.play()
     }
 
@@ -679,14 +745,17 @@ class MusicService : MediaSessionService() {
         mediaSession?.let { updateNotificationButtons(it) }
     }
 
-    private fun addToQueueInternal(song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
+    private fun addToQueueInternal(song: Song, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) =
+        addItemToQueue(song.toMediaItem(), applyShuffleRandomness, resetPlaylist)
+
+    private fun addItemToQueue(item: MediaItem, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
         val player = mediaSession?.player ?: return
         val insertIndex = if (applyShuffleRandomness && player.mediaItemCount > 0)
             (0 until player.mediaItemCount).random()
         else
             player.mediaItemCount
 
-        player.addMediaItem(insertIndex, song.toMediaItem())
+        player.addMediaItem(insertIndex, item)
         if (insertIndex <= settings.lastQueueIndex) settings.lastQueueIndex++
 
         if (currentSource == QueueSource.PLAYLIST && resetPlaylist) {
@@ -819,6 +888,7 @@ class MusicService : MediaSessionService() {
                 .buildUpon()
                 .add(COMMAND_SHUFFLE)
                 .add(COMMAND_PREVIOUS)
+                .add(COMMAND_PLAY)
                 .add(COMMAND_NEXT)
                 .add(COMMAND_LIKE)
                 .build()
@@ -865,6 +935,13 @@ class MusicService : MediaSessionService() {
             when (customCommand.customAction) {
                 COMMAND_SHUFFLE.customAction  -> toggleShuffle(this@MusicService)
                 COMMAND_LIKE.customAction -> like(favourites, false)
+                COMMAND_PLAY.customAction -> playerInstance?.let{ player ->
+                    if (player.isPlaying) {
+                        player.pause()
+                    } else {
+                        player.play()
+                    }
+                }
                 COMMAND_PREVIOUS.customAction -> previous()
                 COMMAND_NEXT.customAction -> next()
             }
@@ -950,7 +1027,16 @@ class MusicService : MediaSessionService() {
         super.onCreate()
         instance = this
 
+        val defaultFactory = DefaultDataSource.Factory(this)
+        val dataSourceFactory = DataSource.Factory {
+            OrbitRoutingDataSource(
+                defaultFactory.createDataSource(),
+                OrbitDataSource { OrbitService.peekInstance()?.audioHostAddress() }
+            )
+        }
+
         val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
@@ -1002,8 +1088,13 @@ class MusicService : MediaSessionService() {
 
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                updateNotificationButtons(mediaSession!!)
                 isPlayingState.value = isPlaying
+                updateNotificationButtons(mediaSession!!)
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                    onUpdateNotification(mediaSession!!, false)
+                }
+
                 if (!isPlaying) {
                     settings.lastPositionMs = player.currentPosition
                     settings.lastDurationMs = player.duration.coerceAtLeast(0L)
@@ -1029,6 +1120,19 @@ class MusicService : MediaSessionService() {
                     }.getOrNull()
                 } ?: QueueItemSource.LOCAL
 
+                if (source == QueueItemSource.GUEST) {
+                    if (mediaItem.isUnavailableGuest()) {
+                        skipToAvailable(player, wrap = true)
+                        return
+                    }
+                    playCountJob?.cancel()
+                    isLiked = false
+                    currentIndexState.value = player.currentMediaItemIndex
+                    currentUriState.value = uri
+                    updateNotificationButtons(mediaSession!!)
+                    return
+                }
+
                 if (source == QueueItemSource.PODCAST) {
                     val isLocalFile = uri.scheme == "file"
                     if (!isLocalFile && !isNetworkAvailable()) {
@@ -1046,7 +1150,7 @@ class MusicService : MediaSessionService() {
 
                 val isLocal = source == QueueItemSource.LOCAL
 
-                isLiked = if (isLocal) favourites.isFavourite(uri) else false
+                isLiked = isLocal && favourites.isFavourite(uri)
 
                 currentIndexState.value =
                     instance?.mediaSession?.player?.currentMediaItemIndex ?: -1
@@ -1080,6 +1184,11 @@ class MusicService : MediaSessionService() {
                     runCatching { QueueItemSource.valueOf(it) }.getOrNull()
                 } ?: QueueItemSource.LOCAL
 
+                if (source == QueueItemSource.GUEST) {
+                    skipToAvailable(player, wrap = false)
+                    return
+                }
+
                 if (source == QueueItemSource.PODCAST) {
                     // Stream failed (network unavailable, blocked, etc.)
                     player.seekToNextMediaItem()
@@ -1096,11 +1205,17 @@ class MusicService : MediaSessionService() {
                 currentIndexState.value = player.currentMediaItemIndex
                 currentUriState.value = player.currentMediaItem?.localConfiguration?.uri
 
+                if (timeline.isEmpty) {
+                    seekTo(0)
+                    currentUriState.value = "".toUri()
+                    settings.lastSongUri = ""
+                }
+
                 timelineSaveJob?.cancel()
                 timelineSaveJob = serviceScope.launch {
                     delay((if (items.isEmpty()) 200L else 100L).milliseconds)
                     settings.lastPositionMs = player.currentPosition.coerceAtLeast(0L)
-                    settings.lastQueue = items.mapNotNull { item ->
+                    settings.lastQueue = items.filterNot { it.isGuest() }.mapNotNull { item ->
                         val uri = item.localConfiguration?.uri?.toString() ?: return@mapNotNull null
                         val extras = item.mediaMetadata.extras
                         QueueEntry(
@@ -1129,6 +1244,18 @@ class MusicService : MediaSessionService() {
                 attachVisualizer(audioSessionId)
             }
         })
+
+        serviceScope.launch {
+            OrbitRepository.getInstance().sessionEnded.collect { removeGuestItems() }
+        }
+        serviceScope.launch {
+            OrbitRepository.getInstance().loadedOwners.collect {
+                val p = mediaSession?.player ?: return@collect
+                if (p.currentMediaItem?.isUnavailableGuest() == true) {
+                    skipToAvailable(p, wrap = p.repeatMode == Player.REPEAT_MODE_ALL)
+                }
+            }
+        }
 
         queueState.value = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
         currentIndexState.value = player.currentMediaItemIndex
@@ -1217,6 +1344,7 @@ class MusicService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
     override fun onDestroy() {
+        OrbitService.peekInstance()?.shutdown()
         mediaSession?.player?.let { player ->
             settings.lastPositionMs = player.currentPosition
             settings.lastDurationMs = player.duration.coerceAtLeast(0L)
@@ -1238,6 +1366,7 @@ class MusicService : MediaSessionService() {
         super.onTaskRemoved(rootIntent)
         stopSelf()
     }
+
     // -- Helpers
 
     private fun setAndPlay(uri: String, title: String, artist: String, startPositionMs: Long = 0L) {
@@ -1269,6 +1398,11 @@ class MusicService : MediaSessionService() {
 
             CommandButton.Builder(CommandButton.ICON_PREVIOUS)
                 .setSessionCommand(COMMAND_PREVIOUS).setDisplayName("Previous").build(),
+
+            CommandButton.Builder(
+                if (isPlayingState.value) CommandButton.ICON_PAUSE
+                else CommandButton.ICON_PLAY
+            ).setSessionCommand(COMMAND_PLAY).setDisplayName("Play").build(),
 
             CommandButton.Builder(CommandButton.ICON_NEXT)
                 .setSessionCommand(COMMAND_NEXT).setDisplayName("Next").build(),

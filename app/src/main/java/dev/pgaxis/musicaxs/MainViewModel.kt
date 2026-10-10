@@ -12,7 +12,6 @@ import android.os.Looper
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
-import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.Timeline
 import dev.pgaxis.musicaxs.models.Album
 import dev.pgaxis.musicaxs.models.Playlist
 import dev.pgaxis.musicaxs.models.QueueItemSource
@@ -61,14 +59,15 @@ private val SUPPORTED_MIME_TYPES = setOf(
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val context = getApplication<Application>()
 
-    private val settings = SettingsSave.getInstance(application)
-    private val repo = PlaylistRepository.getInstance(application)
+    val settings = SettingsSave.getInstance(context)
+    private val repo = PlaylistRepository.getInstance(context)
     private val songRepo = SongRepository.getInstance()
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
 
-    val playlistToQueue = PlaylistToQueue(application)
+    val playlistToQueue = PlaylistToQueue(context)
 
     val visibleTabs get() = settings.tabs.filter { it.visible }
 
@@ -143,7 +142,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
-        val context = getApplication<Application>()
         val token = SessionToken(context, ComponentName(context, MusicService::class.java))
 
         getApplication<Application>().contentResolver.registerContentObserver(
@@ -157,11 +155,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         controllerFuture = MediaController.Builder(context, token).buildAsync()
         controllerFuture?.addListener({
             controller = controllerFuture?.get()
-            controller?.addListener(object : Player.Listener {
-                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                    if (timeline.isEmpty) MusicService.seekTo(0)
-                }
-            })
         }, ContextCompat.getMainExecutor(context))
     }
 
@@ -185,8 +178,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 albumRepo.update(albums)
                 artistRepo.update(artists)
                 prewarmAlbumArtCache(songs)
-
-                val context = getApplication<Application>()
 
                 playlistToQueue.syncQueueWithPlaylist()
 
@@ -224,14 +215,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun prewarmAlbumArtCache(songs: List<Song>) {
         viewModelScope.launch {
-            AlbumArtPreloader.preloadAll(context = getApplication(), songs = songs)
-            AlbumArtPreloader.cleanup(context = getApplication(), songs = songs)
+            AlbumArtPreloader.preloadAll(context = context, songs = songs)
+            AlbumArtPreloader.cleanup(context = context, songs = songs)
         }
     }
 
     private fun querySongs(): List<Song> {
-        val context = getApplication<Application>()
-
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -297,8 +286,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun queryAlbums(): List<Album> {
-        val context = getApplication<Application>()
-
         val projection = arrayOf(
             MediaStore.Audio.Albums._ID,
             MediaStore.Audio.Albums.ALBUM,

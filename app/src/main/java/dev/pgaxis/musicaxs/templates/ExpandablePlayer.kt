@@ -6,7 +6,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -58,8 +57,8 @@ import kotlin.time.Duration.Companion.milliseconds
 enum class PlayerState { Collapsed, Expanded }
 enum class QueuePanelState { Hidden, Visible }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("FrequentlyChangingValue")
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExpandablePlayer(
     currentSong: CurrentSong,
@@ -446,7 +445,7 @@ fun ExpandablePlayer(
                                 track = { sliderState ->
                                     SliderDefaults.Track(
                                         sliderState = sliderState,
-                                        modifier = Modifier.height(3.dp),
+                                        modifier = Modifier.height(4.dp),
                                         thumbTrackGapSize = 0.dp,
                                         colors = SliderDefaults.colors(
                                             activeTrackColor = MaterialTheme.colorScheme.primary,

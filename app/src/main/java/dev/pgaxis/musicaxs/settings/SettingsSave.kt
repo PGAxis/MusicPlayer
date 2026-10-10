@@ -51,14 +51,7 @@ class SettingsSave private constructor(context: Context): ISettings {
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
             state = value
-            if (::boundSettings.isInitialized && !isInitializing) {
-                try {
-                    boundSettings.setValue(prop, value)
-                } catch (e: Exception) {
-                    Log.e("SettingsSaveError", "Failed to write ${property.name}: $e")
-                    Log.e("SettingsSaveError", e.stackTraceToString())
-                }
-            }
+            if (::boundSettings.isInitialized && !isInitializing) boundSettings.setValue(prop, value)
         }
     }
 
@@ -111,6 +104,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var artistSeparator by setting(arrayOf(",").toList(), SettingsData::artistSeparator)
     override var smartLimit by intSetting(50, SettingsData::smartLimit)
     override var realBars by setting(false, SettingsData::realBars)
+    override var playFull by setting(false, SettingsData::playFull)
 
     // -- Data class
     @Keep
@@ -135,7 +129,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         var tabs: List<TitleVis> = DEFAULT_TABS,
         var artistSeparator: List<String> = arrayOf(",").toList(),
         var smartLimit: Int = 50,
-        var realBars: Boolean = false
+        var realBars: Boolean = false,
+        var playFull: Boolean = false
     )
 
     @Keep
@@ -186,6 +181,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             artistSeparator = s.artistSeparator
             smartLimit = s.smartLimit
             realBars = s.realBars
+            playFull = s.playFull
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }

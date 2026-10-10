@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -25,7 +24,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,7 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.models.TabType
 import dev.pgaxis.musicaxs.models.labelRes
-import dev.pgaxis.musicaxs.settings.SettingsSave
+import dev.pgaxis.musicaxs.orbit.PendingOrbitJoin
 import dev.pgaxis.musicaxs.tabs.AlbumsScreen
 import dev.pgaxis.musicaxs.tabs.FavouritesScreen
 import dev.pgaxis.musicaxs.tabs.ArtistsScreen
@@ -51,13 +49,16 @@ import dev.pgaxis.musicaxs.tabs.SongsScreen
 import dev.pgaxis.musicaxs.templates.ExpandablePlayer
 import dev.pgaxis.musicaxs.ui.theme.TextDarkPrimary
 import dev.pgaxis.musicaxs.ui.theme.TextWhitePrimary
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 @SuppressLint("FrequentlyChangingValue")
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(
     goToDetail: (uri: String) -> Unit,
@@ -70,7 +71,6 @@ fun MainScreen(
     onOpenPodcast: (feedUrl: String) -> Unit,
     vm: MainViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val currentSong by vm.currentSong.collectAsState()
     val initialPage by vm.currentPageIndex.collectAsStateWithLifecycle()
 
@@ -87,7 +87,7 @@ fun MainScreen(
             TabType.ALBUMS to { AlbumsScreen(onOpenAlbum = onOpenAlbum) },
             TabType.ARTISTS to { ArtistsScreen(onOpenArtist = onOpenArtist) },
             TabType.PODCASTS to { PodcastsScreen(showAddDialog = showAddFeedDialog, onAddDialogDismiss = { showAddFeedDialog = false }, onOpenPodcast = onOpenPodcast) },
-            //TabType.ORBIT to { OrbitScreen() }
+            TabType.ORBIT to { OrbitScreen() }
         )
     }
 
@@ -140,6 +140,17 @@ fun MainScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        PendingOrbitJoin.payload.collect { payload ->
+            if (payload != null) {
+                val orbitIndex = visibleTabs.indexOfFirst { it.tab == TabType.ORBIT.name }
+                if (orbitIndex >= 0) {
+                    scope.launch { pagerState.animateScrollToPage(orbitIndex) }
+                }
+            }
+        }
+    }
+
     BoxWithConstraints(Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background)
@@ -152,32 +163,43 @@ fun MainScreen(
         val tabWidthPx = with(density) { tabWidthDp.toPx() }
 
         var isDraggingTab by remember { mutableStateOf(false) }
-        LaunchedEffect(pagerState.currentPage, pagerState.currentPageOffsetFraction, tabWidthPx) {
+        var fingerDown by remember { mutableStateOf(false) }
+        var needsSnap by remember { mutableStateOf(false) }
+        var snapJob by remember { mutableStateOf<Job?>(null) }
+
+        LaunchedEffect(pagerState.currentPage, pagerState.currentPageOffsetFraction, tabWidthPx, isDraggingTab) {
             if (!isDraggingTab) {
                 val continuousPage = pagerState.currentPage + pagerState.currentPageOffsetFraction
                 tabScrollState.scrollTo((continuousPage * tabWidthPx).toInt())
             }
         }
 
-        LaunchedEffect(tabScrollState) {
-            snapshotFlow { tabScrollState.isScrollInProgress }
-                .filter { !it }
-                .collect {
-                    if (isDraggingTab) {
-                        val closestIndex = (tabScrollState.value / tabWidthPx)
-                            .roundToInt()
-                            .coerceIn(0, visibleTabs.size - 1)
-                        scope.launch { tabScrollState.animateScrollTo((closestIndex * tabWidthPx).toInt()) }
-                        scope.launch { pagerState.animateScrollToPage(closestIndex) }
+        LaunchedEffect(tabScrollState, tabWidthPx) {
+            snapshotFlow { needsSnap && !fingerDown && !tabScrollState.isScrollInProgress }
+                .collectLatest { idle ->
+                    if (!idle) return@collectLatest
+
+                    delay(100.milliseconds)
+
+                    if (snapJob?.isActive == true) return@collectLatest
+                    val closestIndex = (tabScrollState.value / tabWidthPx)
+                        .roundToInt()
+                        .coerceIn(0, visibleTabs.size - 1)
+
+                    snapJob = scope.launch {
+                        coroutineScope {
+                            launch { tabScrollState.animateScrollTo((closestIndex * tabWidthPx).toInt()) }
+                            launch { pagerState.animateScrollToPage(closestIndex) }
+                        }
+                        needsSnap = false
                         isDraggingTab = false
                     }
                 }
         }
 
-        val settings = remember { SettingsSave.getInstance(context) }
         val totalHeight by remember {
             derivedStateOf {
-                if (settings.lastSongUri.isEmpty()) 0.dp
+                if (vm.settings.lastSongUri.isEmpty()) 0.dp
                 else PlayerBarDefaults.Height + PlayerBarDefaults.VerticalMargin * 2
             }
         }
@@ -251,15 +273,21 @@ fun MainScreen(
                         .height(40.dp)
                         .pointerInput(Unit) {
                             awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false)
+                                val down = awaitFirstDown(requireUnconsumed = false)
 
+                                snapJob?.cancel()
                                 isDraggingTab = true
+                                fingerDown = true
 
                                 do {
                                     val event = awaitPointerEvent()
+                                    if (event.changes.any { abs(it.position.x - down.position.x) > viewConfiguration.touchSlop }) {
+                                        needsSnap = true
+                                    }
                                 } while (event.changes.any { it.pressed })
 
-                                if (!tabScrollState.isScrollInProgress) isDraggingTab = false
+                                fingerDown = false
+                                if (!needsSnap) isDraggingTab = false
                             }
                         }
                         .horizontalScroll(tabScrollState, enabled = true)

@@ -17,10 +17,10 @@ android {
 
     defaultConfig {
         applicationId = "dev.pgaxis.musicaxs"
-        minSdk = 26
+        minSdk = 25
         targetSdk = 37
-        versionCode = 35
-        versionName = "1.13.2"
+        versionCode = 36
+        versionName = "1.14.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+    implementation(libs.google.zxing.core)
+    implementation(libs.journeyapps.zxing.embedded)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

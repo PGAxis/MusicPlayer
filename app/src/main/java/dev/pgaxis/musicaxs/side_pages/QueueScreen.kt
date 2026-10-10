@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
@@ -48,6 +49,7 @@ fun QueueScreen(
     val currentIndex by vm.currentIndex.collectAsStateWithLifecycle()
     val lastIndex by vm.lastIndex.collectAsStateWithLifecycle()
     val currentTitle by vm.currentTitle.collectAsStateWithLifecycle()
+    val availableOwners by vm.availableOwners.collectAsStateWithLifecycle()
     val shuffleSave = remember { ShuffleSave.getInstance(context) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -171,6 +173,7 @@ fun QueueScreen(
             ) {
                 itemsIndexed(keyedQueueItems, key = { _, keyed -> keyed.first }) { index, keyed ->
                     val item = keyed.second
+                    val unavailable = item.source == QueueItemSource.GUEST && item.deviceId !in availableOwners
                     ReorderableItem(reorderableState, key = keyed.first) { _ ->
                         Column {
                             QueueItemRow(
@@ -184,8 +187,9 @@ fun QueueScreen(
                                 isPlaying = index == currentIndex,
                                 onRemoveFrom = { vm.removeAt(index) },
                                 dragHandleModifier = Modifier.draggableHandle(),
+                                unavailable = unavailable,
                                 onClick = {
-                                    MusicService.playerInstance?.let {
+                                    if (!unavailable) MusicService.playerInstance?.let {
                                         it.seekTo(index, 0)
                                         it.play()
                                     }

@@ -8,6 +8,7 @@ import androidx.media3.common.MediaItem
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.funcs.toQueueItem
 import dev.pgaxis.musicaxs.models.QueueItem
+import dev.pgaxis.musicaxs.repositories.OrbitRepository
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.QueueSource
@@ -34,6 +35,8 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _lastIndex = MutableStateFlow(_currentIndex.value)
     val lastIndex: StateFlow<Int> = _lastIndex.asStateFlow()
+
+    val availableOwners: StateFlow<Set<String>> = OrbitRepository.getInstance().loadedOwners
 
     val currentTitle: StateFlow<String> = combine(
         MusicService.queueSourceState,

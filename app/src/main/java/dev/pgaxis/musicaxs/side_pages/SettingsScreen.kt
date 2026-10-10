@@ -157,6 +157,16 @@ fun SettingsScreen(
                         softWrap = true
                     )
                 }
+
+                ListDivider(hasArt = false)
+
+                SettingsToggleRow(
+                    title = stringResource(R.string.set_scr_play_full),
+                    description = stringResource(R.string.set_scr_play_full_desc),
+                    checked = vm.settings.playFull
+                ) {
+                    vm.onPlayFullChanged(it)
+                }
             }
 
             SettingsGroup(title = stringResource(R.string.set_scr_customization), initiallyExpanded = false) {
@@ -214,6 +224,16 @@ fun SettingsScreen(
                         softWrap = true
                     )
                 }
+            }
+
+            SettingsGroup(title = stringResource(R.string.tab_orbit), initiallyExpanded = false) {
+                SettingsEntryRow(
+                    title = stringResource(R.string.set_scr_orbit_name),
+                    description = stringResource(R.string.set_scr_orbit_name_desc),
+                    value = vm.orbitDeviceName,
+                    onValueChange = vm::onOrbitDeviceNameChanged,
+                    type = SettingsEntryType.TEXT
+                )
             }
 
 

@@ -36,7 +36,6 @@ import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
 import kotlinx.coroutines.Dispatchers
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ModifierParameter")
 @Composable
 fun SongRow(
@@ -47,6 +46,7 @@ fun SongRow(
     showRemoveFrom: Boolean = false,
     extraText: String? = null,
     onRemoveFrom: () -> Unit = {},
+    onPlayList: (() -> Unit)? = null,
     dragHandleModifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -76,7 +76,7 @@ fun SongRow(
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
                 else Color.Transparent
             )
-            .clickable { MusicService.playSingular(context, song) }
+            .clickable { if (onPlayList != null) onPlayList() else MusicService.playSingular(context, song) }
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(15.dp)

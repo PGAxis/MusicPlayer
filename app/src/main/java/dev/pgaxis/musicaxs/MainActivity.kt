@@ -1,6 +1,7 @@
 package dev.pgaxis.musicaxs
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import dev.pgaxis.musicaxs.orbit.PendingOrbitJoin
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.settings.SettingsSave
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        handleIncomingIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -59,6 +62,18 @@ class MainActivity : AppCompatActivity() {
             MusicaxsTheme(colorScheme = colorScheme) {
                 AppNavigation()
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == "orbit" && data.host == "join") {
+            PendingOrbitJoin.set(data.toString())
         }
     }
 

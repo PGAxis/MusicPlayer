@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.services.MusicAxsContract
 import dev.pgaxis.musicaxs.services.MusicService
+import dev.pgaxis.musicaxs.services.OrbitService
 import dev.pgaxis.musicaxs.services.Theme
 import dev.pgaxis.musicaxs.settings.SettingsSave
 import java.util.Locale
@@ -70,6 +71,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun onRealBarsChanged(value: Boolean) {
         MusicService.setRealBarsEnabled(value)
+    }
+
+    fun onPlayFullChanged(value: Boolean) {
+        settings.playFull = value
+    }
+
+    private val orbitService = OrbitService.getInstance(context)
+
+    var orbitDeviceName by mutableStateOf(orbitService.rawDeviceName)
+        private set
+
+    fun onOrbitDeviceNameChanged(value: String) {
+        orbitService.deviceName = value
+        orbitDeviceName = orbitService.rawDeviceName
     }
 
     @Suppress("DEPRECATION")

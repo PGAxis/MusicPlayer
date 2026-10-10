@@ -1,11 +1,13 @@
 package dev.pgaxis.musicaxs.funcs
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
+import dev.pgaxis.musicaxs.models.OrbitSong
 import dev.pgaxis.musicaxs.models.PodcastEpisode
 import dev.pgaxis.musicaxs.models.PodcastFeed
 import dev.pgaxis.musicaxs.models.QueueItem
@@ -87,3 +89,35 @@ fun MediaItem.toQueueItem(): QueueItem {
         deviceId = deviceId
     )
 }
+
+fun OrbitSong.placeholderUri(): Uri = Uri.Builder()
+    .scheme("orbitsong")
+    .authority(ownerDeviceId)
+    .appendPath(localSongId.toString())
+    .build()
+
+fun OrbitSong.toMediaItem(): MediaItem = MediaItem.Builder()
+    .setMediaId(orbitId)
+    .setUri(placeholderUri())
+    .setMediaMetadata(
+        MediaMetadata.Builder()
+            .setTitle(title)
+            .setArtist(artist)
+            .setDurationMs(durationMs)
+            .setExtras(Bundle().apply {
+                putString("source", QueueItemSource.GUEST.name)
+                putString("deviceId", ownerDeviceId)
+            })
+            .build()
+    )
+    .build()
+
+fun OrbitSong.toQueueItem(): QueueItem = QueueItem(
+    uri = placeholderUri().toString(),
+    title = title,
+    artist = artist,
+    albumArtUri = null,
+    durationMs = durationMs,
+    source = QueueItemSource.GUEST,
+    deviceId = ownerDeviceId
+)
