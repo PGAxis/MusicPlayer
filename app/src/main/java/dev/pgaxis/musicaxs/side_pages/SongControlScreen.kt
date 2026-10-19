@@ -30,7 +30,6 @@ import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.templates.AddToSheet
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongControlScreen(
     currentSong: CurrentSong,

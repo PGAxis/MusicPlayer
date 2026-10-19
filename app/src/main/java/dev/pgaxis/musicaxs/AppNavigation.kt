@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -12,20 +13,24 @@ import androidx.navigation.compose.rememberNavController
 import dev.pgaxis.musicaxs.side_pages.SongDetailScreen
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.settings_screens.AppInfoScreen
 import dev.pgaxis.musicaxs.settings_screens.ArtistSeparatorsScreen
 import dev.pgaxis.musicaxs.settings_screens.TabOrderScreen
+import dev.pgaxis.musicaxs.settings_screens.ViewFilteredScreen
 import dev.pgaxis.musicaxs.side_pages.AlbumDetailScreen
 import dev.pgaxis.musicaxs.side_pages.ArtistDetailScreen
 import dev.pgaxis.musicaxs.side_pages.PlaylistDetailScreen
 import dev.pgaxis.musicaxs.side_pages.PodcastDetailScreen
 import dev.pgaxis.musicaxs.side_pages.SearchScreen
 import dev.pgaxis.musicaxs.side_pages.SettingsScreen
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
+    val songRepo = remember { SongRepository.getInstance() }
 
     fun popBack() {
         if (navController.previousBackStackEntry != null) {
@@ -89,13 +94,30 @@ fun AppNavigation() {
                     onOpenArtist = { name -> navController.navigate("artist/$name") }
                 )
             }
+            composable("search/filter") {
+                SearchScreen(
+                    onBack = {
+                        navController.navigate("settings") {
+                            popUpTo("settings") { inclusive = true }
+                        }
+                    },
+                    onScan = mainViewModel::scanAll,
+                    isChoosingForFilter = true,
+                    initialSongs = songRepo.filteredSongs.collectAsState().value,
+                    onSeeDetail = { songUri -> navController.navigate("songdetail/$songUri") },
+                    onOpenAlbum = { albumId -> navController.navigate("album/$albumId") },
+                    onOpenArtist = { name -> navController.navigate("artist/$name") }
+                )
+            }
             composable("settings") {
                 SettingsScreen(
                     onBack = { popBack() },
                     onScan = { mainViewModel.scanAll() },
                     onTabOrder = { navController.navigate("tabOrder") },
                     onArtistSeparators = { navController.navigate("artistSep") },
-                    onAppInfo = { navController.navigate("appInfo") }
+                    onAppInfo = { navController.navigate("appInfo") },
+                    onFilter = { navController.navigate("search/filter") },
+                    onViewFilter = { navController.navigate("viewFilter") }
                 )
             }
             composable("album/{albumId}") { backStackEntry ->
@@ -134,6 +156,12 @@ fun AppNavigation() {
             composable("appInfo") {
                 AppInfoScreen(
                     onBack = { popBack() }
+                )
+            }
+            composable("viewFilter") {
+                ViewFilteredScreen(
+                    onBack = { popBack() },
+                    onScan = mainViewModel::scanAll
                 )
             }
         }

@@ -67,6 +67,8 @@
     <string name="set_scr_tab_order">Set tab order</string>
     <string name="set_scr_play_full">Add full list to queue</string>
     <string name="set_scr_play_full_desc">When this is off, clicking on a song adds just that one song to the queue. When it\'s on, it adds whatever list it was added from to the queue (e.g. a playlist, album…)</string>
+    <string name="set_scr_filter">Filtered songs</string>
+    <string name="set_scr_filter_desc">Songs that will not be visible in the library</string>
     <string name="set_scr_customization">Customization</string>
     <string name="set_scr_theme">Color Theme</string>
     <string name="set_scr_artist_separators">Artist separators</string>
@@ -82,6 +84,7 @@
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">No albums found</string>
+    <string name="various_artists">Various Artists</string>
 
     <!-- Artists screen -->
     <string name="art_scr_no_found">No artists found</string>
@@ -93,6 +96,7 @@
     <string name="pls_scr_rec_added">Recently Added</string>
     <string name="pls_scr_rec_played">Recently Played</string>
     <string name="pls_scr_most_played">Most Played</string>
+    <string name="pls_scr_favourites">Favourite tracks</string>
     <string name="pls_scr_my_playlists">My playlists</string>
     <string name="pls_scr_no_found">No playlists yet</string>
     <string name="pls_scr_import">Import</string>
@@ -124,6 +128,12 @@
 
     <!-- Playlist detail screen -->
     <string name="pls_det_no_found">This playlist is empty</string>
+    <string name="pls_det_custom_ord">Custom</string>
+    <string name="pls_det_default">Default</string>
+    <string name="pls_det_alph">Alphabetical (A->Z)</string>
+    <string name="pls_det_alph_r">Alphabetical (Z->A)</string>
+    <string name="pls_det_date">Date added (0->9)</string>
+    <string name="pls_det_date_r">Date added (9->0)</string>
 
     <!-- Search screen -->
     <string name="search_scr_search">Search…</string>
@@ -169,6 +179,9 @@
     <string name="app_info_version">Version:</string>.
     <string name="app_info_vcode">Version code:</string>
     <string name="app_info_source">Source code:</string>
+
+    <!-- View Filtered screen -->
+    <string name="view_filt_scr_no_songs">No filtered songs</string>
 
     <!-- Orbit screen -->
     <string name="orb_perm_ask">Orbit needs nearby device access to find other Music.axs instances.</string>

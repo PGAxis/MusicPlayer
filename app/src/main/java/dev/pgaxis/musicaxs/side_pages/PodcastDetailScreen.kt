@@ -47,6 +47,7 @@ fun PodcastDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         SideScreenHeader(
             onBack = onBack
@@ -85,8 +86,6 @@ fun PodcastDetailScreen(
                 )
             }
         }
-
-        HorizontalDivider()
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -4,7 +4,9 @@ import android.content.res.Configuration
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -40,6 +42,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.models.AlwaysCrossfade
+import dev.pgaxis.musicaxs.models.Order
 import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.PlaylistToQueue
@@ -105,7 +108,7 @@ fun PlaylistDetailScreen(
             var songs by remember {
                 mutableStateOf(state.songs.mapIndexed { i, s -> KeyedSong(i.toLong(), s) })
             }
-            LaunchedEffect(state.songs.size) {
+            LaunchedEffect(state.songs.size, state.order) {
                 songs = state.songs.mapIndexed { i, s -> KeyedSong(i.toLong(), s) }
             }
             val listState = rememberLazyListState()
@@ -174,7 +177,8 @@ fun PlaylistDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(MaterialTheme.colorScheme.background)
+                    .windowInsetsPadding(WindowInsets.systemBars),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SideScreenHeader(
@@ -222,6 +226,8 @@ fun PlaylistDetailScreen(
                             .fillMaxSize()
                             .nestedScroll(nestedScrollConnection)
                     ) {
+                        val isOfficialPlaylist = remember { playlistId in longArrayOf(1L, 2L, 3L, 4L) }
+
                         PlaylistHeader(
                             song = state.songs.first(),
                             name = state.name,
@@ -235,37 +241,121 @@ fun PlaylistDetailScreen(
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            LazyColumn(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                state = listState
+                            Column(
+                                Modifier.fillMaxSize()
                             ) {
-                                itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
-                                    ReorderableItem(reorderState, key = keyed.key) { _ ->
-                                        Column {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                SongRow(
-                                                    song = keyed.song,
-                                                    onSeeDetails = onSeeDetail,
-                                                    onAddTo = { selectedSong = keyed.song },
-                                                    showRemoveFrom = playlistId !in longArrayOf(0L, 1L, 2L, 3L, 4L),
-                                                    extraText = if (playlistId == 3L) "${tracker.getCount(keyed.song.uri)}×" else null,
-                                                    onRemoveFrom = {
-                                                        vm.removeSong(playlistId, index)
-                                                        PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
-                                                    },
-                                                    onPlayList = if (vm.settings.playFull) {
-                                                        {
-                                                            MusicService.playNormal(context = context, songs = state.songs, playlistId = playlistId, index = index)
-                                                        }
-                                                    } else null,
-                                                    dragHandleModifier = Modifier.draggableHandle()
-                                                )
-                                            }
+                                if (!isOfficialPlaylist) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(10.dp)
+                                    ) {
+                                        var menuExpanded by remember { mutableStateOf(false) }
 
-                                            if (index < songs.lastIndex) {
-                                                ListDivider()
+                                        Row(
+                                            modifier = Modifier
+                                                .clickable { menuExpanded = true },
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Start,
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.order),
+                                                contentDescription = "Order options",
+                                                modifier = Modifier.size(25.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+
+                                            Spacer(modifier = Modifier.width(5.dp))
+
+                                            Text(
+                                                text = stringResource(
+                                                    when (state.order) {
+                                                        Order.CUSTOM -> R.string.pls_det_custom_ord
+                                                        Order.ALPHABETICAL -> R.string.pls_det_alph
+                                                        Order.ALPHABETICAL_R -> R.string.pls_det_alph_r
+                                                        Order.DATE_ADD -> R.string.pls_det_date
+                                                        Order.DATE_ADD_R -> R.string.pls_det_date_r
+                                                    }
+                                                ),
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        DropdownMenu(
+                                            expanded = menuExpanded,
+                                            onDismissRequest = { menuExpanded = false },
+                                            modifier = Modifier.background(MaterialTheme.colorScheme.secondary)
+                                        ) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.pls_det_custom_ord), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    vm.setOrder(playlistId, Order.CUSTOM)
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.pls_det_alph), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    vm.setOrder(playlistId, Order.ALPHABETICAL)
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.pls_det_alph_r), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    vm.setOrder(playlistId, Order.ALPHABETICAL_R)
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.pls_det_date), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    vm.setOrder(playlistId, Order.DATE_ADD)
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.pls_det_date_r), color = MaterialTheme.colorScheme.onSecondaryContainer) },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    vm.setOrder(playlistId, Order.DATE_ADD_R)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                LazyColumn(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    state = listState
+                                ) {
+                                    itemsIndexed(songs, key = { _, keyed -> keyed.key }) { index, keyed ->
+                                        ReorderableItem(reorderState, key = keyed.key) { _ ->
+                                            Column {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    SongRow(
+                                                        song = keyed.song,
+                                                        onSeeDetails = onSeeDetail,
+                                                        onAddTo = { selectedSong = keyed.song },
+                                                        showRemoveFrom = !isOfficialPlaylist && playlistId != 0L,
+                                                        showDragHandle = state.order == Order.CUSTOM && !isOfficialPlaylist,
+                                                        extraText = if (playlistId == 3L) "${tracker.getCount(keyed.song.uri)}×" else null,
+                                                        onRemoveFrom = {
+                                                            vm.removeSong(playlistId, index)
+                                                            PlaylistToQueue(context).removeIfCurrent(playlistId, keyed.song, index)
+                                                        },
+                                                        onPlayList = if (vm.settings.playFull) {
+                                                            {
+                                                                MusicService.playNormal(context = context, songs = state.songs, playlistId = playlistId, index = index)
+                                                            }
+                                                        } else null,
+                                                        dragHandleModifier = Modifier.draggableHandle()
+                                                    )
+                                                }
+
+                                                if (index < songs.lastIndex) {
+                                                    ListDivider()
+                                                }
                                             }
                                         }
                                     }
@@ -337,7 +427,7 @@ private fun AlbumArt(song: Song, size: Dp) {
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(if (useFallbackUri) song.uri else validAlbumArtUri)
-                .size(150)
+                .size(200)
                 .transitionFactory(AlwaysCrossfade)
                 .build(),
             contentDescription = "Album art",

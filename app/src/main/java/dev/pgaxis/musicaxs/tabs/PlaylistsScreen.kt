@@ -75,7 +75,7 @@ fun PlaylistsScreen(
         SmartInfo(stringResource(R.string.pls_scr_rec_added), recentlyAdded.size, recentlyAdded.firstOrNull()?.uri, 1),
         SmartInfo(stringResource(R.string.pls_scr_rec_played), recentlyPlayed.size, recentlyPlayed.firstOrNull()?.uri, 2),
         SmartInfo(stringResource(R.string.pls_scr_most_played), mostPlayed.size, mostPlayed.firstOrNull()?.uri, 3),
-        SmartInfo(stringResource(R.string.tab_favourites), favourites.size, favourites.firstOrNull()?.uri, 0)
+        SmartInfo(stringResource(R.string.pls_scr_favourites), favourites.size, favourites.firstOrNull()?.uri, 0)
     )
 
     val exportLauncher = rememberLauncherForActivityResult(

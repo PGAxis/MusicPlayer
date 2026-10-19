@@ -86,6 +86,8 @@ private fun PlaylistTile(playlist: Playlist, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val name = if (playlist.id == 0L) stringResource(R.string.pls_scr_favourites) else playlist.name
+
         AsyncImage(
             model = playlist.getImageUri(),
             contentDescription = "Album art for ${playlist.name}",
@@ -102,7 +104,7 @@ private fun PlaylistTile(playlist: Playlist, onClick: () -> Unit) {
 
         val songCount by playlist.songCount.collectAsStateWithLifecycle()
         Text(
-            text = playlist.name,
+            text = name,
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
             maxLines = 1,

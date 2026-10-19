@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -32,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +59,26 @@ import kotlin.time.Duration.Companion.milliseconds
 
 enum class PlayerState { Collapsed, Expanded }
 enum class QueuePanelState { Hidden, Visible }
+
+@Suppress("DEPRECATION")
+private fun newPlayerState(initial: PlayerState, density: Density) =
+    AnchoredDraggableState(
+        initialValue = initial,
+        positionalThreshold = { it * 0.4f },
+        velocityThreshold = { with(density) { 125.dp.toPx() } },
+        snapAnimationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
+        decayAnimationSpec = exponentialDecay()
+    )
+
+@Suppress("DEPRECATION")
+private fun newQueueState(initial: QueuePanelState, density: Density) =
+    AnchoredDraggableState(
+        initialValue = initial,
+        positionalThreshold = { it * 0.4f },
+        velocityThreshold = { with(density) { 125.dp.toPx() } },
+        snapAnimationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
+        decayAnimationSpec = exponentialDecay()
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("FrequentlyChangingValue")
@@ -88,26 +111,20 @@ fun ExpandablePlayer(
     var controlsHeightPx by remember { mutableIntStateOf(0) }
 
     @Suppress("DEPRECATION")
-    val playerState = remember {
-        AnchoredDraggableState(
-            initialValue = PlayerState.Collapsed,
-            positionalThreshold = { it * 0.4f },
-            velocityThreshold = { with(density) { 125.dp.toPx() } },
-            snapAnimationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
-            decayAnimationSpec = exponentialDecay()
+    val playerState = rememberSaveable(
+        saver = Saver(
+            save = { it.currentValue.name },
+            restore = { name -> newPlayerState(PlayerState.valueOf(name), density) }
         )
-    }
+    ) { newPlayerState(PlayerState.Collapsed, density) }
 
     @Suppress("DEPRECATION")
-    val queuePanelState = remember {
-        AnchoredDraggableState(
-            initialValue = QueuePanelState.Hidden,
-            positionalThreshold = { it * 0.4f },
-            velocityThreshold = { with(density) { 125.dp.toPx() } },
-            snapAnimationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
-            decayAnimationSpec = exponentialDecay()
+    val queuePanelState = rememberSaveable(
+        saver = Saver(
+            save = { it.currentValue.name },
+            restore = { name -> newQueueState(QueuePanelState.valueOf(name), density) }
         )
-    }
+    ) { newQueueState(QueuePanelState.Hidden, density) }
 
     BackHandler(enabled = queuePanelState.currentValue == QueuePanelState.Visible) {
         scope.launch { queuePanelState.animateTo(QueuePanelState.Hidden) }

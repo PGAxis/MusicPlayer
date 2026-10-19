@@ -27,12 +27,14 @@ import dev.pgaxis.musicaxs.models.Album
 import dev.pgaxis.musicaxs.models.Playlist
 import dev.pgaxis.musicaxs.models.QueueItemSource
 import dev.pgaxis.musicaxs.models.deriveArtists
+import dev.pgaxis.musicaxs.models.resolveAlbumArtists
 import dev.pgaxis.musicaxs.repositories.AlbumRepository
 import dev.pgaxis.musicaxs.repositories.ArtistRepository
 import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.repositories.SongRepository
 import dev.pgaxis.musicaxs.services.AlbumArtPreloader
 import dev.pgaxis.musicaxs.services.PlaylistToQueue
+import dev.pgaxis.musicaxs.settings.FavouritesSave
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -66,6 +68,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val songRepo = SongRepository.getInstance()
     private val albumRepo = AlbumRepository.getInstance()
     private val artistRepo = ArtistRepository.getInstance()
+    private val favRepo = FavouritesSave.getInstance(context)
 
     val playlistToQueue = PlaylistToQueue(context)
 
@@ -171,13 +174,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun scanAll() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val songs = querySongs()
-                val albums = queryAlbums()
+                val allSongs = querySongs()
+                val hidden = settings.filteredSongs.toSet()
+                val (filtered, songs) = allSongs.partition { it.id in hidden }
+
+                if (filtered.size != settings.filteredSongs.size) {
+                    settings.filteredSongs = filtered.map { it.id }
+                }
+
+                val albums = resolveAlbumArtists(queryAlbums(), songs, settings.artistSeparatorRegex)
                 val artists = deriveArtists(songs, albums, settings.artistSeparatorRegex)
-                songRepo.update(songs)
+                songRepo.update(songs, filtered)
                 albumRepo.update(albums)
                 artistRepo.update(artists)
-                prewarmAlbumArtCache(songs)
+                prewarmAlbumArtCache(allSongs)
+                favRepo.removeDeletedSongs(context)
 
                 playlistToQueue.syncQueueWithPlaylist()
 
@@ -231,6 +242,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.MIME_TYPE,
             MediaStore.Audio.Media.DATE_ADDED,
+            MediaStore.Audio.Media.DATE_MODIFIED,
         )
 
         val songs = mutableListOf<Song>()
@@ -255,6 +267,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
             val dateAddedCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
+            val dateModCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val mimeType = cursor.getString(mimeCol) ?: continue
@@ -276,7 +289,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         albumArtUri = ContentUris.withAppendedId(
                             "content://media/external/audio/albumart".toUri(), albumId),
                         track = cursor.getInt(trackCol) % 1000,
-                        dateAdded = cursor.getLong(dateAddedCol)
+                        dateAdded = cursor.getLong(dateAddedCol),
+                        dateModified = cursor.getLong(dateModCol)
                     )
                 )
             }

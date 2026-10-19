@@ -112,7 +112,7 @@ private fun AlbumTile(
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = album.artist,
+            text = album.artist ?: stringResource(R.string.various_artists),
             fontSize = 12.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

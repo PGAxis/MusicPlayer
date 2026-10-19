@@ -75,6 +75,8 @@
     <string name="set_scr_tab_order">Nastavit pořadí stránek</string>
     <string name="set_scr_play_full">Přidat plný list do fronty</string>
     <string name="set_scr_play_full_desc">Pokud je toto vypnuté, kliknutím na písničku přidáte pouze tuto písničku do fronty. Pokud je to zapnuté, přidá se celý list, ve kterém písnička je (např. playlist, album…)</string>
+    <string name="set_scr_filter">Filtrované písničky</string>
+    <string name="set_scr_filter_desc">Písničky, které se neukáží v knihovně</string>
     <string name="set_scr_customization">Přizpůsobení</string>
     <string name="set_scr_theme">Barevný motiv</string>
     <string name="set_scr_artist_separators">Oddělovače umělců</string>
@@ -90,6 +92,7 @@
 
     <!-- Albums screen -->
     <string name="alb_scr_no_found">Nenalezena žádná alba</string>
+    <string name="various_artists">Různí interpreti</string>
 
     <!-- Artists screen -->
     <string name="art_scr_no_found">Nenalezeni žádní interpreti</string>
@@ -101,6 +104,7 @@
     <string name="pls_scr_rec_added">Nedávno Přidané</string>
     <string name="pls_scr_rec_played">Nedávno Hrané</string>
     <string name="pls_scr_most_played">Nejvíce Hrané</string>
+    <string name="pls_scr_favourites">Oblíbené skladby</string>
     <string name="pls_scr_my_playlists">Moje playlisty</string>
     <string name="pls_scr_no_found">Zatím žádné playlisty</string>
     <string name="pls_scr_import">Importovat</string>
@@ -132,6 +136,12 @@
 
     <!-- Playlist detail screen -->
     <string name="pls_det_no_found">Tento playlist je prázdný</string>
+    <string name="pls_det_custom_ord">Vlastní</string>
+    <string name="pls_det_default">Základní</string>
+    <string name="pls_det_alph">Abecedně (A->Z)</string>
+    <string name="pls_det_alph_r">Abecedně (Z->A)</string>
+    <string name="pls_det_date">Datum přidání (0->9)</string>
+    <string name="pls_det_date_r">Datum přidání (9->0)</string>
 
     <!-- Search screen -->
     <string name="search_scr_search">Hledat…</string>
@@ -177,6 +187,9 @@
     <string name="app_info_version">Verze:</string>
     <string name="app_info_vcode">Kód verze:</string>
     <string name="app_info_source">Zdrojový kód:</string>
+
+    <!-- View Filtered screen -->
+    <string name="view_filt_scr_no_songs">Žádné filtrované písničky</string>
 
     <!-- Orbit screen -->
     <string name="orb_perm_ask">Funkce Orbit potřebuje přístup k nedalekým zařízením aby našla další Music.axs instance.</string>

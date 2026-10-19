@@ -21,9 +21,11 @@ sealed interface FavouritesUiState {
 }
 
 class FavouritesViewModel(app: Application) : AndroidViewModel(app) {
-    private val favourites = FavouritesSave.getInstance(getApplication())
-    private val favPlaylists = FavouritedPlaylistsSave.getInstance(getApplication())
-    private val repo = PlaylistRepository.getInstance(getApplication())
+    val context = getApplication<Application>()
+
+    private val favourites = FavouritesSave.getInstance(context)
+    private val favPlaylists = FavouritedPlaylistsSave.getInstance(context)
+    private val repo = PlaylistRepository.getInstance(context)
 
     private val _uiState = MutableStateFlow<FavouritesUiState>(FavouritesUiState.Loading)
     val uiState: StateFlow<FavouritesUiState> = _uiState.asStateFlow()
@@ -37,7 +39,7 @@ class FavouritesViewModel(app: Application) : AndroidViewModel(app) {
             ) { trackIds, favPlaylistIds, allPlaylists ->
                 buildList {
                     if (trackIds.isNotEmpty())
-                        add(Playlist(id = 0, name = "Favourite tracks", songIds = trackIds))
+                        add(Playlist(id = 0, name = "", songIds = trackIds))
                     favPlaylistIds.forEach { id ->
                         allPlaylists.find { it.id == id }?.let { add(it) }
                     }

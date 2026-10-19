@@ -105,6 +105,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var smartLimit by intSetting(50, SettingsData::smartLimit)
     override var realBars by setting(false, SettingsData::realBars)
     override var playFull by setting(false, SettingsData::playFull)
+    override var filteredSongs by setting(emptyList(), SettingsData::filteredSongs)
 
     // -- Data class
     @Keep
@@ -130,7 +131,8 @@ class SettingsSave private constructor(context: Context): ISettings {
         var artistSeparator: List<String> = arrayOf(",").toList(),
         var smartLimit: Int = 50,
         var realBars: Boolean = false,
-        var playFull: Boolean = false
+        var playFull: Boolean = false,
+        var filteredSongs: List<Long> = emptyList(),
     )
 
     @Keep
@@ -182,6 +184,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             smartLimit = s.smartLimit
             realBars = s.realBars
             playFull = s.playFull
+            filteredSongs = s.filteredSongs
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }

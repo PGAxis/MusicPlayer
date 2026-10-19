@@ -1,0 +1,10 @@
+Bug fixes:
+- Header on side screens (playlist detail, song detail, album detail,...) had an unneeded padding
+- If a light mode was selected, but the device had dark mode set, the status bar icons remained white
+
+Additions:
+- Songs in user-created playlists and in favourites can now be sorted without breaking the original order
+- Favourites can now be reordered
+- Albums' artists are now derived from the songs that they contain
+- Songs can be filtered, so that they are not seen in the app (but can be put back from settings)
+- Automatic playlists now have translated titles

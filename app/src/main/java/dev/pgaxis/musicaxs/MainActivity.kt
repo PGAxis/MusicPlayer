@@ -3,12 +3,15 @@ package dev.pgaxis.musicaxs
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -59,6 +62,22 @@ class MainActivity : AppCompatActivity() {
                 Theme.BORDO -> MusicAxsBordoScheme
                 Theme.VOID -> MusicAxsVoidScheme
             }
+
+            val isDarkTheme = !(colorScheme == MusicAxsChalkScheme || colorScheme == MusicAxsSoleilScheme)
+            DisposableEffect(isDarkTheme) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(
+                        Color.TRANSPARENT,
+                        Color.TRANSPARENT
+                    ) { isDarkTheme },
+                    navigationBarStyle = SystemBarStyle.auto(
+                        Color.TRANSPARENT,
+                        Color.TRANSPARENT
+                    ) { isDarkTheme }
+                )
+                onDispose { }
+            }
+
             MusicaxsTheme(colorScheme = colorScheme) {
                 AppNavigation()
             }

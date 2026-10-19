@@ -121,12 +121,15 @@ fun QueueScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp, vertical = 8.dp)
-                .windowInsetsPadding(WindowInsets.systemBars)
         ) {
             IconButton(
                 onClick = onBack,

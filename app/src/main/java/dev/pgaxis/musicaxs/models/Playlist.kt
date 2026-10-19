@@ -8,9 +8,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+enum class Order {
+    CUSTOM, ALPHABETICAL, ALPHABETICAL_R, DATE_ADD, DATE_ADD_R
+}
+
 data class Playlist(
     val id: Long,
     val name: String,
+    val order: Order = Order.CUSTOM,
     val songIds: List<Long>
 ) {
     fun getSongCount(): Int {

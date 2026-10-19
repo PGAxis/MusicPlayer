@@ -15,13 +15,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,8 +37,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -44,10 +47,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
@@ -84,6 +89,8 @@ fun SettingsScreen(
     onTabOrder: () -> Unit,
     onArtistSeparators: () -> Unit,
     onAppInfo: () -> Unit,
+    onFilter: () -> Unit,
+    onViewFilter: () -> Unit,
     vm: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -93,6 +100,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         SideScreenHeader(
             onBack = onBack
@@ -106,8 +114,6 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
         }
-
-        HorizontalDivider()
 
         Column(
             modifier = Modifier
@@ -166,6 +172,18 @@ fun SettingsScreen(
                     checked = vm.settings.playFull
                 ) {
                     vm.onPlayFullChanged(it)
+                }
+
+                ListDivider(hasArt = false)
+
+                SettingsActionButtonRow(
+                    title = stringResource(R.string.set_scr_filter),
+                    onRowClick = onFilter,
+                    onButtonClick = onViewFilter
+                ) {
+                    DescriptionText(
+                        description = stringResource(R.string.set_scr_filter_desc)
+                    )
                 }
             }
 
@@ -273,7 +291,7 @@ fun SettingsGroup(
     initiallyExpanded: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    var expanded by remember { mutableStateOf(initiallyExpanded) }
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -320,6 +338,20 @@ fun SettingsGroup(
 }
 
 @Composable
+fun DescriptionText(
+    description: String?
+) {
+    if (description != null) {
+        Text(
+            description,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
 fun SettingsToggleRow(
     title: String,
     description: String? = null,
@@ -343,6 +375,7 @@ fun SettingsToggleRow(
                 modifier = Modifier.weight(1f)
             )
             Switch(
+                modifier = Modifier.height(10.dp).scale(0.7f),
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
@@ -353,14 +386,7 @@ fun SettingsToggleRow(
                 )
             )
         }
-        if (description != null) {
-            Text(
-                description,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        DescriptionText(description)
     }
 }
 
@@ -452,14 +478,7 @@ fun SettingsDropdownRow(
                 }
             }
         }
-        if (description != null) {
-            Text(
-                description,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        DescriptionText(description)
     }
 }
 
@@ -480,6 +499,45 @@ fun SettingsActionRow(
             fontSize = 15.sp,
             color = MaterialTheme.colorScheme.onSecondaryContainer
         )
+        Spacer(modifier = Modifier.height(4.dp))
+        content()
+    }
+}
+
+@Composable
+fun SettingsActionButtonRow(
+    title: String,
+    onRowClick: () -> Unit,
+    onButtonClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onRowClick)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = onButtonClick,
+                shape = RoundedCornerShape(0.dp)
+            ) {
+                Icon(
+                    painterResource(R.drawable.eye), "View filtered songs",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(38.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(4.dp))
         content()
     }
@@ -565,13 +623,6 @@ fun SettingsEntryRow(
                     }
             )
         }
-        if (description != null) {
-            Text(
-                description,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        DescriptionText(description)
     }
 }

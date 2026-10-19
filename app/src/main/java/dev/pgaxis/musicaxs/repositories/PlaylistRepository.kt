@@ -6,6 +6,7 @@ import androidx.annotation.Keep
 import com.google.gson.JsonParser
 import dev.pgaxis.axs.AxsBoundObject
 import dev.pgaxis.axs.AxsFile
+import dev.pgaxis.musicaxs.models.Order
 import dev.pgaxis.musicaxs.models.Playlist
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -97,9 +98,14 @@ class PlaylistRepository private constructor(context: Context) {
         save(playlist.copy(songIds = songIds))
     }
 
+    fun changeDefOrder(playlistId: Long, order: Order) {
+        val playlist = _playlists.value.find { it.id == playlistId } ?: return
+        save(playlist.copy(order = order))
+    }
+
     private fun save(playlist: Playlist) {
         val bound = boundPlaylists[playlist.id]
-            ?: bindPlaylist(playlist.id, PlaylistData(id = playlist.id, name = playlist.name, songIds = playlist.songIds))
+            ?: bindPlaylist(playlist.id, PlaylistData(id = playlist.id, name = playlist.name, order = playlist.order, songIds = playlist.songIds))
 
         bound.setValue(PlaylistData::name, playlist.name)
         bound.setValue(PlaylistData::songIds, playlist.songIds)
@@ -200,8 +206,9 @@ class PlaylistRepository private constructor(context: Context) {
     data class PlaylistData(
         var id: Long = 0,
         var name: String = "",
+        var order: Order = Order.CUSTOM,
         var songIds: List<Long> = emptyList()
     ) {
-        fun toPlaylist() = Playlist(id = id, name = name, songIds = songIds)
+        fun toPlaylist() = Playlist(id = id, name = name, order = order, songIds = songIds)
     }
 }

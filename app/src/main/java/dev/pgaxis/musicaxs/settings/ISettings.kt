@@ -29,4 +29,5 @@ interface ISettings {
     var smartLimit: Int
     var realBars: Boolean
     var playFull: Boolean
+    var filteredSongs: List<Long>
 }

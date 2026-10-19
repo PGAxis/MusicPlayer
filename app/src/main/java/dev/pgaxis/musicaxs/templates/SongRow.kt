@@ -44,6 +44,7 @@ fun SongRow(
     onAddTo: () -> Unit,
     showsImage: Boolean = true,
     showRemoveFrom: Boolean = false,
+    showDragHandle: Boolean = false,
     extraText: String? = null,
     onRemoveFrom: () -> Unit = {},
     onPlayList: (() -> Unit)? = null,
@@ -123,15 +124,15 @@ fun SongRow(
             )
         }
 
-        // Drag handle — only shown in queue/playlist
-        if (showRemoveFrom) {
+        // Drag handle — only shown in playlist
+        if (showDragHandle) {
             Icon(
                 painter = painterResource(R.drawable.drag_handle),
                 contentDescription = "Reorder",
                 modifier = dragHandleModifier
                     .size(24.dp)
                     .padding(4.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (showRemoveFrom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
 

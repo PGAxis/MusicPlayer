@@ -84,106 +84,54 @@ fun SongDetailScreen(
     }
 
     val info = @Composable {
-        OutlinedTextField(
-            value = vm.title,
-            onValueChange = vm::updateTitle,
+        InfoEditableRow(
+            content = vm.title,
+            onUpdateTitle = vm::updateTitle,
             enabled = vm.isEditable,
-            label = { Text(stringResource(R.string.song_det_title)) },
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
-            ),
-            modifier = Modifier.fillMaxWidth()
+            label = stringResource(R.string.song_det_title)
         )
 
-        OutlinedTextField(
-            value = vm.artist,
-            onValueChange = vm::updateArtist,
+        InfoEditableRow(
+            content = vm.artist,
+            onUpdateTitle = vm::updateArtist,
             enabled = vm.isEditable,
-            label = { Text(stringResource(R.string.song_det_artist)) },
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
-            ),
-            modifier = Modifier.fillMaxWidth()
+            label = stringResource(R.string.song_det_artist)
         )
 
-        OutlinedTextField(
-            value = vm.album,
-            onValueChange = vm::updateAlbum,
+        InfoEditableRow(
+            content = vm.album,
+            onUpdateTitle = vm::updateAlbum,
             enabled = vm.isEditable,
-            label = { Text(stringResource(R.string.song_det_album)) },
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
-            ),
-            modifier = Modifier.fillMaxWidth()
+            label = stringResource(R.string.song_det_album)
         )
 
-        OutlinedTextField(
-            value = vm.track,
-            onValueChange = vm::updateTrack,
+        InfoEditableRow(
+            content = vm.track,
+            onUpdateTitle = vm::updateTrack,
             enabled = vm.isEditable,
-            label = { Text(stringResource(R.string.song_det_track)) },
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
-            ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+            number = true,
+            label = stringResource(R.string.song_det_track)
         )
 
-        OutlinedTextField(
-            value = vm.duration,
-            onValueChange = { },
-            label = { Text(stringResource(R.string.song_det_duration)) },
-            readOnly = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                cursorColor = Color.Transparent
-            ),
-            modifier = Modifier.fillMaxWidth()
+        InfoRow(
+            content = vm.duration,
+            label = stringResource(R.string.song_det_duration)
         )
 
-        OutlinedTextField(
-            value = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
-            onValueChange = { },
-            label = { Text(stringResource(R.string.song_det_file)) },
-            readOnly = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                cursorColor = Color.Transparent
-            ),
-            modifier = Modifier.fillMaxWidth()
+        InfoRow(
+            content = "${MIME_TO_EXTENSION.getOrDefault(vm.mimeType, "Unknown")} (${vm.mimeType})",
+            label = stringResource(R.string.song_det_file)
         )
 
-        OutlinedTextField(
-            value = vm.fileSize,
-            onValueChange = { },
-            label = { Text(stringResource(R.string.song_det_size)) },
-            readOnly = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                cursorColor = Color.Transparent
-            ),
-            modifier = Modifier.fillMaxWidth()
+        InfoRow(
+            content = vm.fileSize,
+            label = stringResource(R.string.song_det_size)
         )
 
         vm.filePath?.let {
-            OutlinedTextField(
-                value = it,
-                onValueChange = { },
-                label = { Text(stringResource(R.string.song_det_path)) },
-                readOnly = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    cursorColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth()
+            InfoRow(
+                content = it,
+                label = stringResource(R.string.song_det_path)
             )
         }
     }
@@ -209,7 +157,9 @@ fun SongDetailScreen(
                 IconButton(
                     onClick = onBack,
                     shape = RoundedCornerShape(0.dp),
-                    modifier = Modifier.size(45.dp).padding(horizontal = 5.dp)
+                    modifier = Modifier
+                        .size(45.dp)
+                        .padding(horizontal = 5.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.back),
@@ -229,10 +179,11 @@ fun SongDetailScreen(
 
             if (isLandscape) {
                 Row(Modifier.weight(1f)) {
-                    Column(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
                     ) {
                         albumArt()
                     }
@@ -290,4 +241,46 @@ fun SongDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun InfoEditableRow(
+    label: String,
+    content: String,
+    enabled: Boolean,
+    number: Boolean = false,
+    onUpdateTitle: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = content,
+        onValueChange = onUpdateTitle,
+        enabled = enabled,
+        label = { Text(label) },
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary
+        ),
+        keyboardOptions = if (number) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Composable
+fun InfoRow(
+    label: String,
+    content: String
+) {
+    OutlinedTextField(
+        value = content,
+        onValueChange = { },
+        label = { Text(label) },
+        readOnly = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            cursorColor = Color.Transparent
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
 }

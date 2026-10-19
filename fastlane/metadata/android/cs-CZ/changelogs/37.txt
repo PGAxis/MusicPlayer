@@ -1,0 +1,10 @@
+Opravy chyb:
+- Záhlaví na vedlejších obrazovkách (detail playlistu, detail skladby, detail alba atd.) mělo zbytečné odsazení
+- Pokud byl zvolen světlý režim, ale zařízení mělo nastavený tmavý režim, ikony ve stavovém řádku zůstávaly bílé
+
+Co je nového:
+- Skladby v uživatelských playlistech a v oblíbených lze nově řadit, aniž by se narušilo původní pořadí
+- Oblíbené lze nově přeuspořádat
+- Interpreti alb se nově odvozují ze skladeb, které album obsahuje
+- Skladby lze filtrovat, aby se v aplikaci nezobrazovaly (v nastavení je lze vrátit zpět)
+- Automatické playlisty mají nově přeložené názvy
