@@ -18,8 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jaudiotagger.audio.AudioFileIO
+import org.jaudiotagger.audio.mp3.MP3File
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
+import org.jaudiotagger.tag.id3.ID3v24Tag
 import java.io.File
 import kotlin.arrayOf
 import kotlin.math.pow
@@ -147,7 +149,8 @@ class SongDetailViewModel(app: Application) : AndroidViewModel(app) {
                         File(path).copyTo(cacheFile, overwrite = true)
 
                         val audio = AudioFileIO.read(cacheFile)
-                        val tag = audio.tagOrCreateAndSetDefault
+                        val tag = (audio as? MP3File)?.let { it.iD3v2Tag ?: ID3v24Tag().also { t -> it.iD3v2Tag = t } }
+                            ?: audio.tagOrCreateAndSetDefault
                         safeSet(tag, FieldKey.TITLE, title)
                         safeSet(tag, FieldKey.ARTIST, artist)
                         safeSet(tag, FieldKey.ALBUM, album)

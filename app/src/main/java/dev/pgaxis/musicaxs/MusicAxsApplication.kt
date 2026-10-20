@@ -13,6 +13,8 @@ import coil.memory.MemoryCache
 import dev.pgaxis.musicaxs.services.AlbumArtFetcher
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.settings.SettingsSave
+import org.jaudiotagger.tag.TagOptionSingleton
+import org.jaudiotagger.tag.id3.valuepair.TextEncoding
 
 class MusicAxsApplication : Application(), ImageLoaderFactory {
     companion object {
@@ -38,6 +40,13 @@ class MusicAxsApplication : Application(), ImageLoaderFactory {
 
         MusicService.initFromSettings(this)
         MusicService.initializeService(this)
+
+        TagOptionSingleton.getInstance().apply {
+            isAndroid = true
+            id3v23DefaultTextEncoding = TextEncoding.UTF_16
+            id3v24DefaultTextEncoding = TextEncoding.UTF_8
+            isResetTextEncodingForExistingFrames = true
+        }
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {

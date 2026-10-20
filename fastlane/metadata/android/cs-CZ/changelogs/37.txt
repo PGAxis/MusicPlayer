@@ -1,6 +1,7 @@
 Opravy chyb:
 - Záhlaví na vedlejších obrazovkách (detail playlistu, detail skladby, detail alba atd.) mělo zbytečné odsazení
 - Pokud byl zvolen světlý režim, ale zařízení mělo nastavený tmavý režim, ikony ve stavovém řádku zůstávaly bílé
+- Editování metadat písničky nyní podporuje většinu speciálních znaků
 
 Co je nového:
 - Skladby v uživatelských playlistech a v oblíbených lze nově řadit, aniž by se narušilo původní pořadí

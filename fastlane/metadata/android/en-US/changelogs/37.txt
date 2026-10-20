@@ -1,6 +1,7 @@
 Bug fixes:
 - Header on side screens (playlist detail, song detail, album detail,...) had an unneeded padding
 - If a light mode was selected, but the device had dark mode set, the status bar icons remained white
+- Editing a song's metadata now supports most special characters
 
 Additions:
 - Songs in user-created playlists and in favourites can now be sorted without breaking the original order
