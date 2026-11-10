@@ -5,13 +5,29 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,15 +39,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
-import dev.pgaxis.musicaxs.models.Song
+import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.funcs.groupAlphabetically
 import dev.pgaxis.musicaxs.models.AlphabetScroller
+import dev.pgaxis.musicaxs.models.Song
 import dev.pgaxis.musicaxs.templates.AddToSheet
+import dev.pgaxis.musicaxs.templates.ListDivider
+import dev.pgaxis.musicaxs.templates.SectionHeader
 import dev.pgaxis.musicaxs.templates.SongRow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import dev.pgaxis.musicaxs.R
-import dev.pgaxis.musicaxs.templates.ListDivider
-import dev.pgaxis.musicaxs.templates.SectionHeader
 import kotlin.time.Duration.Companion.milliseconds
 
 private sealed interface SongListItem {
@@ -39,28 +56,13 @@ private sealed interface SongListItem {
     data class Item(val song: Song) : SongListItem
 }
 
-private fun groupSongs(songs: List<Song>): Pair<List<SongListItem>, Map<String, Int>> {
-    val items = mutableListOf<SongListItem>()
-    val letterIndex = mutableMapOf<String, Int>()
-
-    songs
-        .groupBy { song ->
-            val first = song.title.firstOrNull()?.uppercaseChar()
-            when {
-                first == null -> "#"
-                first.isLetter() -> first.toString()
-                else -> "#"
-            }
-        }
-        .toSortedMap(compareBy { if (it == "#") "\u0000" else it })
-        .forEach { (letter, group) ->
-            letterIndex[letter] = items.size
-            items.add(SongListItem.Header(letter))
-            group.forEach { items.add(SongListItem.Item(it)) }
-        }
-
-    return items to letterIndex
-}
+private fun groupSongs(songs: List<Song>) =
+    groupAlphabetically(
+        items = songs,
+        nameOf = { it.title },
+        makeHeader = { SongListItem.Header(it) },
+        makeItem = { SongListItem.Item(it) }
+    )
 
 @Composable
 fun SongsScreen(

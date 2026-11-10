@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.templates.SideScreenHeader
 
 private val MIME_TO_EXTENSION = mapOf(
     "audio/mpeg" to "MP3",       // mp3
@@ -77,7 +78,7 @@ fun SongDetailScreen(
             error = painterResource(R.drawable.default_cover),
             placeholder = painterResource(R.drawable.default_cover),
             modifier = Modifier
-                .size(150.dp)
+                .size(200.dp)
                 .clip(RoundedCornerShape(10.dp)),
             contentScale = ContentScale.Crop
         )
@@ -149,26 +150,10 @@ fun SongDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(25.dp)
+            SideScreenHeader(
+                onBack = onBack
             ) {
-                IconButton(
-                    onClick = onBack,
-                    shape = RoundedCornerShape(0.dp),
-                    modifier = Modifier
-                        .size(45.dp)
-                        .padding(horizontal = 5.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.back),
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Spacer(Modifier.width(5.dp))
+                Spacer(Modifier.width(4.dp))
 
                 Text(
                     text = stringResource(R.string.song_det_detail),

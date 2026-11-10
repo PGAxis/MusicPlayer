@@ -3,13 +3,26 @@ package dev.pgaxis.musicaxs.tabs
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,41 +36,28 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
+import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.funcs.groupAlphabetically
 import dev.pgaxis.musicaxs.models.AlphabetScroller
 import dev.pgaxis.musicaxs.models.Artist
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import dev.pgaxis.musicaxs.R
 import dev.pgaxis.musicaxs.templates.ListDivider
 import dev.pgaxis.musicaxs.templates.SectionHeader
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private sealed interface ArtistListItem {
     data class Header(val letter: String) : ArtistListItem
     data class Item(val artist: Artist) : ArtistListItem
 }
 
-private fun groupArtists(artists: List<Artist>): Pair<List<ArtistListItem>, Map<String, Int>> {
-    val items = mutableListOf<ArtistListItem>()
-    val letterIndex = mutableMapOf<String, Int>()
-
-    artists
-        .groupBy { artist ->
-            val first = artist.name.firstOrNull()?.uppercaseChar()
-            when {
-                first == null -> "#"
-                first.isLetter() -> first.toString()
-                else -> "#"
-            }
-        }
-        .toSortedMap(compareBy { if (it == "#") "\u0000" else it })
-        .forEach { (letter, group) ->
-            letterIndex[letter] = items.size
-            items.add(ArtistListItem.Header(letter))
-            group.forEach { items.add(ArtistListItem.Item(it)) }
-        }
-
-    return items to letterIndex
-}
+private fun groupArtists(artists: List<Artist>) =
+    groupAlphabetically(
+        items = artists,
+        nameOf = { it.name },
+        makeHeader = { ArtistListItem.Header(it) },
+        makeItem = { ArtistListItem.Item(it) }
+    )
 
 @Composable
 fun ArtistsScreen(
@@ -143,7 +143,7 @@ private fun InterpretsListScreen(interprets: List<Artist>, onOpenArtist: (name: 
             },
             onScrubEnd = {
                 scope.launch {
-                    delay(600)
+                    delay(600.milliseconds)
                     activeLetter = null
                 }
             }

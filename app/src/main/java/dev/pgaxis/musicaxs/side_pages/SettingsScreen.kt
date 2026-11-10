@@ -146,6 +146,17 @@ fun SettingsScreen(
 
                 ListDivider(hasArt = false)
 
+                SettingsEntryRow(
+                    title = stringResource(R.string.set_scr_art_limit),
+                    description = stringResource(R.string.set_scr_art_limit_desc),
+                    value = vm.settings.maxArtItemsInput,
+                    onValueChange = vm::onMaxArtChanged,
+                    onCleared = vm::onMaxArtCleared,
+                    type = SettingsEntryType.NUMBER
+                )
+
+                ListDivider(hasArt = false)
+
                 SettingsActionRow(
                     title = stringResource(R.string.set_scr_tab_order),
                     onClick = onTabOrder

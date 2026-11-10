@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,7 +93,7 @@ fun AlbumDetailScreen(
 
     val density = LocalDensity.current
     val headerCollapseRangePx = with(density) { ART_FULL_SIZE.toPx() }
-    var imageOffsetPx by remember { mutableFloatStateOf(0f) }
+    var imageOffsetPx by rememberSaveable { mutableFloatStateOf(0f) }
 
     val nestedScrollConnection = remember(headerCollapseRangePx) {
         object : NestedScrollConnection {

@@ -118,13 +118,15 @@ class EmbeddedArtBitmapLoader(
 
     private fun cachedArtFor(uri: Uri): Bitmap? {
         if (uri.authority != "media") return null
-        val songId = uri.lastPathSegment ?: return null
+        val repo = SongRepository.getInstance()
+        val song = repo.resolveSong(uri) ?: repo.resolveSong(context, uri) ?: return null
+
         val dir = File(context.cacheDir, "album_art")
+        val key = AlbumArtPreloader.cacheKey(song)
 
-        val sentinel = File(dir, "song_$songId.none")
-        if (sentinel.exists()) return null
+        if (File(dir, "$key.none").exists()) return null
 
-        val cacheFile = File(dir, "song_$songId.jpg")
+        val cacheFile = File(dir, "$key.jpg")
         if (!cacheFile.exists() || cacheFile.length() == 0L) return null
 
         return try {
@@ -198,6 +200,13 @@ class MusicService : MediaSessionService() {
     private var playStartTime: Long = 0L
     private var wasPlayingBeforeTransition = false
 
+    private var pendingFrom = -1
+    private var pendingTo = -1
+    private var moveJob: Job? = null
+
+    private val artUris = LinkedHashSet<String>()
+    private val BACKWARD_PENALTY = 2
+
     private val favourites by lazy { FavouritesSave.getInstance(applicationContext) }
     private val shuffleSave by lazy { ShuffleSave.getInstance(applicationContext) }
     private val settings by lazy { SettingsSave.getInstance(applicationContext) }
@@ -222,6 +231,7 @@ class MusicService : MediaSessionService() {
         val audioBandsState = MutableStateFlow(Triple(0f, 0f, 0f)) // bass, mid, treble
         val realBarsEnabledState = MutableStateFlow(false)
         val visualizerActiveState = MutableStateFlow(false)
+        val hasPendingMove get() = instance?.let { it.pendingFrom != -1 } ?: false
 
         var isShuffleOn = false
             private set
@@ -382,10 +392,11 @@ class MusicService : MediaSessionService() {
         }
 
         fun moveQueueItem(from: Int, to: Int) {
-            instance?.mediaSession?.player?.moveMediaItem(from, to)
+            instance?.moveItemDebounced(from, to)
         }
 
         fun removeFromQueue(context: Context, index: Int) {
+            flushPendingMove()
             val settings = SettingsSave.getInstance(context)
             val player = instance?.mediaSession?.player ?: return
             if (index >= player.mediaItemCount) return
@@ -414,6 +425,7 @@ class MusicService : MediaSessionService() {
         }
 
         private fun applyQueueReorder(targetUris: List<String>? = null) {
+            flushPendingMove()
             val player = instance?.mediaSession?.player ?: return
             val currentItem = player.currentMediaItem ?: return
             val currentUri = currentItem.localConfiguration?.uri?.toString() ?: return
@@ -446,11 +458,8 @@ class MusicService : MediaSessionService() {
             }
         }
 
-        fun reorderQueue(from: Int, to: Int) {
-            instance?.mediaSession?.player?.moveMediaItem(from, to)
-        }
-
         fun reorderQueueTo(context: Context, targetUris: List<String>) {
+            flushPendingMove()
             if (ShuffleSave.getInstance(context).isShuffled) {
                 ShuffleSave.getInstance(context).setOriginalQueue(targetUris)
                 return
@@ -461,12 +470,13 @@ class MusicService : MediaSessionService() {
                     .firstOrNull { player.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri }
                     ?: return@forEachIndexed
                 if (currentIndex != targetIndex) {
-                    reorderQueue(currentIndex, targetIndex)
+                    player.moveMediaItem(currentIndex, targetIndex)
                 }
             }
         }
 
         fun syncMissingFromPlaylist(context: Context, missing: List<Pair<Int, Song>>) {
+            flushPendingMove()
             val player = playerInstance ?: return
             val save = ShuffleSave.getInstance(context)
             val settings = SettingsSave.getInstance(context)
@@ -551,6 +561,8 @@ class MusicService : MediaSessionService() {
             else player.seekToNextMediaItem()
         }
 
+        fun flushPendingMove() { instance?.commitPendingMove() }
+
         private const val EXTRA_URI = "extra_uri"
         private const val EXTRA_TITLE = "extra_title"
         private const val EXTRA_ARTIST = "extra_artist"
@@ -562,7 +574,7 @@ class MusicService : MediaSessionService() {
         private const val EXTRA_SHUFFLED = "extra_shuffled"
     }
 
-    // -- Internal queue operations
+    // -- Private helpers
 
     private fun setRepeatInternal(repeatMode: Int) {
         settings.repeatMode = repeatMode
@@ -659,6 +671,105 @@ class MusicService : MediaSessionService() {
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
+    private fun moveItemDebounced(from: Int, to: Int) {
+        val player = mediaSession?.player ?: return
+        val cur = player.currentMediaItemIndex
+
+        // Different item than the one being dragged -> commit the previous move
+        if (pendingFrom != -1 && from != pendingTo) commitPendingMove()
+
+        if (pendingFrom == -1) pendingFrom = from
+        pendingTo = to
+
+        val lo = minOf(pendingFrom, to)
+        val hi = maxOf(pendingFrom, to)
+        if (cur in (lo - 1)..(hi + 1)) {
+            commitPendingMove()
+            return
+        }
+
+        moveJob?.cancel()
+        moveJob = serviceScope.launch {
+            delay(500.milliseconds)
+            commitPendingMove()
+        }
+    }
+
+    private fun commitPendingMove() {
+        moveJob?.cancel()
+        val from = pendingFrom
+        val to = pendingTo
+        pendingFrom = -1
+        pendingTo = -1
+        if (from == -1 || from == to) return
+        mediaSession?.player?.moveMediaItem(from, to)
+    }
+
+    private fun hasArt(player: Player, uri: String): Boolean =
+        (0 until player.mediaItemCount).any { i ->
+            player.getMediaItemAt(i).let {
+                it.localConfiguration?.uri?.toString() == uri && it.mediaMetadata.artworkData != null
+            }
+        }
+
+    private fun trackArt(uri: String) {
+        val limit = settings.maxArtItems
+        if (limit <= 0) {          // 0 (or a bad negative value) = unlimited
+            artUris.clear()
+            return
+        }
+
+        artUris.remove(uri)   // replay -> move to end
+        artUris.add(uri)
+
+        val player = mediaSession?.player ?: return
+
+        var total = 0
+        for (i in 0 until player.mediaItemCount) {
+            if (player.getMediaItemAt(i).mediaMetadata.artworkData != null) total++
+        }
+        if (total <= limit) return
+
+        for (victim in artUris.toList()) {
+            if (total <= limit) break
+            total -= stripArt(player, victim, total - limit)
+            if (!hasArt(player, victim)) artUris.remove(victim)
+        }
+    }
+
+    private fun stripArt(player: Player, uri: String, max: Int): Int {
+        val cur = player.currentMediaItemIndex
+
+        val victims = (0 until player.mediaItemCount)
+            .filter { i ->
+                i != cur &&
+                        player.getMediaItemAt(i).let {
+                            it.localConfiguration?.uri?.toString() == uri && it.mediaMetadata.artworkData != null
+                        }
+            }
+            .sortedByDescending { i -> if (i < cur) (cur - i) * BACKWARD_PENALTY else i - cur }
+            .take(max)
+
+        for (i in victims) {
+            val item = player.getMediaItemAt(i)
+            player.replaceMediaItem(
+                i,
+                item.buildUpon()
+                    .setMediaMetadata(item.mediaMetadata.buildUpon().setArtworkData(null, null).build())
+                    .build()
+            )
+        }
+        return victims.size
+    }
+
+    private fun pruneArtTracking(items: List<MediaItem>) {
+        if (artUris.isEmpty()) return
+        val present = items.mapNotNullTo(HashSet()) { it.localConfiguration?.uri?.toString() }
+        artUris.retainAll(present)
+    }
+
+    // -- Internal queue operations
+
     private fun removeGuestItems() {
         val player = mediaSession?.player ?: return
         for (i in player.mediaItemCount - 1 downTo 0) {
@@ -749,6 +860,7 @@ class MusicService : MediaSessionService() {
         addItemToQueue(song.toMediaItem(), applyShuffleRandomness, resetPlaylist)
 
     private fun addItemToQueue(item: MediaItem, applyShuffleRandomness: Boolean, resetPlaylist: Boolean) {
+        flushPendingMove()
         val player = mediaSession?.player ?: return
         val insertIndex = if (applyShuffleRandomness && player.mediaItemCount > 0)
             (0 until player.mediaItemCount).random()
@@ -1071,16 +1183,20 @@ class MusicService : MediaSessionService() {
                     if (index !in 0 until player.mediaItemCount) return@post
                     val item = player.getMediaItemAt(index)
                     if (item.localConfiguration?.uri == uri) {
-                        player.replaceMediaItem(
-                            index,
-                            item.buildUpon()
-                                .setMediaMetadata(
-                                    item.mediaMetadata.buildUpon()
-                                        .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-                                        .build()
-                                )
-                                .build()
-                        )
+                        val existing = item.mediaMetadata.artworkData
+                        if (existing == null || !existing.contentEquals(artworkData)) {
+                            player.replaceMediaItem(
+                                index,
+                                item.buildUpon()
+                                    .setMediaMetadata(
+                                        item.mediaMetadata.buildUpon()
+                                            .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                                            .build()
+                                    )
+                                    .build()
+                            )
+                        }
+                        trackArt(uri.toString())
                     }
                 }
             })
@@ -1108,6 +1224,8 @@ class MusicService : MediaSessionService() {
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                flushPendingMove()
+
                 if (mediaItem == null) {
                     currentUriState.value = null
                     return
@@ -1200,6 +1318,7 @@ class MusicService : MediaSessionService() {
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 val player = instance?.mediaSession?.player ?: return
                 val items = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
+                pruneArtTracking(items)
 
                 queueState.value = items
                 currentIndexState.value = player.currentMediaItemIndex
@@ -1349,6 +1468,7 @@ class MusicService : MediaSessionService() {
             settings.lastPositionMs = player.currentPosition
             settings.lastDurationMs = player.duration.coerceAtLeast(0L)
         }
+        flushPendingMove()
         settings.flush()
         releaseVisualizer()
         instance = null

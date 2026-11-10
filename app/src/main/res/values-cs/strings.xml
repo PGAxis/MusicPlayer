@@ -72,6 +72,8 @@
     <string name="set_scr_hide_wa_audio_desc">Skryje skladby z "WhatsApp Audio" alba</string>
     <string name="set_scr_smart_limit">Nastavit chytrý limit</string>
     <string name="set_scr_smart_limit_desc">Nastaví maximální počet skladeb zobrazených v chytrých playlistech. Nastavením na 0 limit odstraníte.</string>
+    <string name="set_scr_art_limit">Nastavit limit obalů alb</string>
+    <string name="set_scr_art_limit_desc">Maximální počet skladeb ve frontě, které mají v paměti načtený obal alba. Nižší hodnoty šetří paměť a udrží frontu svižnější. Po překročení limitu se obaly odebírají skladbám, které se nejspíš nebudou brzy přehrávat, a v případě potřeby se načtou znovu. Hodnota 0 znamená bez omezení.</string>
     <string name="set_scr_tab_order">Nastavit pořadí stránek</string>
     <string name="set_scr_play_full">Přidat plný list do fronty</string>
     <string name="set_scr_play_full_desc">Pokud je toto vypnuté, kliknutím na písničku přidáte pouze tuto písničku do fronty. Pokud je to zapnuté, přidá se celý list, ve kterém písnička je (např. playlist, album…)</string>

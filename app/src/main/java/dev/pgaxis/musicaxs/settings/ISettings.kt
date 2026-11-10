@@ -19,6 +19,7 @@ interface ISettings {
     var queueSource: QueueSource
     var podcastFeeds: List<PodcastFeed>
     var smartLimitInput: String
+    var maxArtItemsInput: String
 
     // settings
     var hideWhatsAppAudio: Boolean
@@ -30,4 +31,5 @@ interface ISettings {
     var realBars: Boolean
     var playFull: Boolean
     var filteredSongs: List<Long>
+    var maxArtItems: Int
 }

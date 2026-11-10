@@ -30,6 +30,7 @@ Music player that mimics default Samsung Music app... except with fixed/added th
 - Shuffle mode
 - Support for RSS feeds
 - *Playlist aware* queue
+- **Orbit** - song *sharing* over Wi-Fi Direct
 
 ## Building
 

@@ -13,7 +13,6 @@ import dev.pgaxis.musicaxs.repositories.PlaylistRepository
 import dev.pgaxis.musicaxs.services.MusicService
 import dev.pgaxis.musicaxs.services.QueueSource
 import dev.pgaxis.musicaxs.settings.SettingsSave
-import dev.pgaxis.musicaxs.settings.SettingsSave.QueueEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +55,8 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             MusicService.queueState.collectLatest { items ->
+                if (MusicService.hasPendingMove) return@collectLatest
+
                 queue.clear()
                 queue.addAll(items)
                 queueItems.clear()
@@ -74,20 +75,6 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         queue.add(to, queue.removeAt(from))
         queueItems.add(to, queueItems.removeAt(from))
         MusicService.moveQueueItem(from, to)
-
-        settings.lastQueue = queue.mapNotNull {
-            val item = it.toQueueItem()
-            val uri = it.localConfiguration?.uri?.toString() ?: return@mapNotNull null
-            QueueEntry(
-                uri = uri,
-                title = item.title,
-                artist = item.artist,
-                albumArtUri = item.albumArtUri,
-                durationMs = item.durationMs,
-                source = item.source,
-                deviceId = item.deviceId
-            )
-        }
     }
 
     fun removeAt(index: Int) {

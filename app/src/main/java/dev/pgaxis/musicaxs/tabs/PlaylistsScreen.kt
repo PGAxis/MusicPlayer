@@ -16,12 +16,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,7 +71,8 @@ fun PlaylistsScreen(
     var showSheet by remember { mutableStateOf(false) }
     var showNameDialog by remember { mutableStateOf(false) }
     var pendingImportSongIds by remember { mutableStateOf<List<Long>>(emptyList()) }
-    var importedName by remember { mutableStateOf("") }
+    var importedName by remember { mutableStateOf(TextFieldValue("")) }
+    val nameFocusRequester = remember { FocusRequester() }
 
     var exportTargetPlaylist by remember { mutableStateOf<Playlist?>(null) }
 
@@ -99,7 +104,8 @@ fun PlaylistsScreen(
         } ?: emptyList()
         if (songIds.isNotEmpty()) {
             pendingImportSongIds = songIds
-            importedName = ""
+            val name = M3uHandler.playlistNameFrom(context, uri)
+            importedName = TextFieldValue(name, selection = TextRange(0, name.length))
             showNameDialog = true
         }
     }
@@ -242,13 +248,16 @@ fun PlaylistsScreen(
                         value = importedName,
                         onValueChange = { importedName = it },
                         label = { Text(stringResource(R.string.pls_scr_playlist_name)) },
-                        singleLine = true
+                        singleLine = true,
+                        modifier = Modifier.focusRequester(nameFocusRequester)
                     )
+                    LaunchedEffect(Unit) { nameFocusRequester.requestFocus() }
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        if (importedName.isNotBlank()) {
-                            vm.createFromImport(importedName, pendingImportSongIds)
+                        val name = importedName.text.trim()
+                        if (name.isNotBlank()) {
+                            vm.createFromImport(name, pendingImportSongIds)
                             showNameDialog = false
                         }
                     }) { Text(stringResource(R.string.create)) }

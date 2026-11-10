@@ -31,17 +31,16 @@ class AlbumArtFetcher(
 
         val songId = uri.lastPathSegment?.toLongOrNull() ?: return null
         val song = songRepo.resolveSong(songId) ?: return null
-        val key = "song_${song.id}_${song.dateModified}"
+        val key = AlbumArtPreloader.cacheKey(song)
 
         Log.d("AlbumArtFetcher", "fetch called for $key uri=$uri")
 
-        val cacheFile = cacheFileFor(key)
-
+        val cacheFile = AlbumArtPreloader.cacheFile(context, song)
         if (cacheFile.exists() && cacheFile.length() > 0) {
             return sourceResult(cacheFile, DataSource.DISK)
         }
 
-        val sentinel = noArtSentinelFor(key)
+        val sentinel = AlbumArtPreloader.sentinelFile(context, song)
         if (sentinel.exists()) {
             Log.d("AlbumArtFetcher", "sentinel exists, skipping: $key")
             return null
@@ -78,15 +77,11 @@ class AlbumArtFetcher(
         }
 
         withContext(Dispatchers.IO) {
-            sentinel.parentFile?.mkdirs()
             sentinel.createNewFile()
         }
 
         return null
     }
-
-    private fun noArtSentinelFor(key: String) =
-        File(context.cacheDir, "album_art/$key.none")
 
     private fun resolveAlbumId(uri: Uri): String? {
         val projection = arrayOf(MediaStore.Audio.Media.ALBUM_ID)
@@ -96,11 +91,6 @@ class AlbumArtFetcher(
                 if (cursor.moveToFirst()) cursor.getLong(0).toString()
                 else null
             }
-    }
-
-    private fun cacheFileFor(key: String): File {
-        val dir = File(context.cacheDir, "album_art").also { it.mkdirs() }
-        return File(dir, "$key.jpg")
     }
 
     private fun sourceResult(file: File, dataSource: DataSource): SourceResult {

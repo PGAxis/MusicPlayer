@@ -1,0 +1,10 @@
+Bug fixes:
+- Cover art in the notification and on the lock screen now loads faster, since the cover art cache was not being used
+- Songs, albums and artists are now sorted case-insensitively and by your device language (e.g. in Czech, Č now comes after C, not after Z like before). Accented letters are listed with their base letter (Á with A)
+
+Additions:
+- Importing a playlist now pre-fills and selects its name from the file name
+- The cover art on the song detail screen is now much bigger
+- New setting to limit how many songs in the queue keep their album art loaded (explanation in settings)
+- Reordering the queue is smoother: the move is applied when you drop the song (or immediately if the currently playing song is moved, or if the song being moved gets immediately before/after the currently playing song)
+- The settings file is now defragmented automatically when it gets bloated (mine shrank about 20x after almost a year without defragmentation)

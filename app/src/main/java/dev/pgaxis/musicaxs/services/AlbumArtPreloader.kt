@@ -27,6 +27,15 @@ object AlbumArtPreloader {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val cacheMutex = Mutex()
 
+    private fun idPrefix(songId: Long) = "song_${songId}_"
+    fun cacheKey(song: Song) = "${idPrefix(song.id)}${song.dateModified}"
+
+    fun cacheDir(context: Context): File =
+        File(context.cacheDir, "album_art").also { it.mkdirs() }
+
+    fun cacheFile(context: Context, song: Song) = File(cacheDir(context), "${cacheKey(song)}.jpg")
+    fun sentinelFile(context: Context, song: Song) = File(cacheDir(context), "${cacheKey(song)}.none")
+
     fun preloadAll(context: Context, songs: List<Song>) {
         preloadJob?.cancel()
 
@@ -43,8 +52,8 @@ object AlbumArtPreloader {
                 coroutineScope {
                     requestedSongs
                         .filter {
-                            !File(dir, "song_${it.id}_${it.dateModified}.jpg").exists() &&
-                            !File(dir, "song_${it.id}_${it.dateModified}.none").exists()
+                            val key = cacheKey(it)
+                            !File(dir, "$key.jpg").exists() && !File(dir, "$key.none").exists()
                         }
                         .forEach { song ->
                             ensureActive()
@@ -73,10 +82,8 @@ object AlbumArtPreloader {
 
                 if (dir != null) {
                     val validCacheFiles = requestedSongs.flatMap { song ->
-                        listOf(
-                            "song_${song.id}_${song.dateModified}.jpg",
-                            "song_${song.id}_${song.dateModified}.none"
-                        )
+                        val key = cacheKey(song)
+                        listOf("$key.jpg", "$key.none")
                     }.toSet()
 
                     dir.listFiles()?.forEach { file ->
@@ -105,8 +112,9 @@ object AlbumArtPreloader {
     }
 
     private fun extractAndCache(context: Context, song: Song, dir: File) {
-        val cacheFile = File(dir, "song_${song.id}_${song.dateModified}.jpg")
-        val sentinel = File(dir, "song_${song.id}_${song.dateModified}.none")
+        val key = cacheKey(song)
+        val cacheFile = File(dir, "$key.jpg")
+        val sentinel = File(dir, "$key.none")
 
         val mmr = MediaMetadataRetriever()
         try {
@@ -152,7 +160,7 @@ object AlbumArtPreloader {
 
     private fun deleteOldCacheFiles(dir: File, songId: Long) {
         dir.listFiles { file ->
-            file.name.startsWith("song_${songId}") &&
+            file.name.startsWith(idPrefix(songId)) &&
                     (file.extension == "jpg" || file.extension == "none")
         }?.forEach { it.delete() }
     }

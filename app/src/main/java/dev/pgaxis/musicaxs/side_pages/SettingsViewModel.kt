@@ -60,13 +60,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun onSmartLimitChanged(raw: String) {
-        settings.smartLimitInput = raw
-        raw.toIntOrNull()?.let { settings.smartLimit = it }
+        val clean = sanitizeCount(raw)
+        settings.smartLimitInput = clean
+        clean.toIntOrNull()?.let { settings.smartLimit = it }
     }
 
     fun onSmartLimitCleared() {
         settings.smartLimitInput = "50"
         settings.smartLimit = 50
+    }
+
+    fun onMaxArtChanged(raw: String) {
+        val clean = sanitizeCount(raw)
+        settings.maxArtItemsInput = clean
+        clean.toIntOrNull()?.let { settings.maxArtItems = it }
+    }
+
+    fun onMaxArtCleared() {
+        settings.maxArtItemsInput = "10"
+        settings.maxArtItems = 10
     }
 
     fun onRealBarsChanged(value: Boolean) {
@@ -97,5 +109,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         } catch (_: PackageManager.NameNotFoundException) {
             false
         }
+    }
+
+    private fun sanitizeCount(raw: String, max: Int = Int.MAX_VALUE): String {
+        if (raw.startsWith("-")) return "0"
+        val digits = raw.filter { it in '0'..'9' }
+        if (digits.isEmpty()) return if (raw.isEmpty()) "" else "0"
+        val value = digits.toLongOrNull() ?: Long.MAX_VALUE
+        return value.coerceAtMost(max.toLong()).toString()
     }
 }

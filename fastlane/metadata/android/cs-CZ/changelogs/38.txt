@@ -1,0 +1,10 @@
+Opravy chyb:
+- Načítání obrázků alb v oznámeních a na zamykací obrazovce je nyní rychlejší, protože se dosud nevyužívala jejich mezipaměť
+- Skladby, alba a interpreti se nyní řadí bez ohledu na velikost písmen a podle jazyka zařízení (např. v češtině se Č řadí hned za C, nikoli až za Z jako doteď). Písmena s diakritikou se řadí společně se svými základními písmeny (Á společně s A)
+
+Co je nového:
+- Při importu playlistu se nyní jeho název automaticky předvyplní podle názvu souboru a rovnou se označí k úpravě
+- Obrázek alba na obrazovce s podrobnostmi o skladbě je nyní výrazně větší
+- Nové nastavení umožňující omezit počet skladeb ve frontě, jejichž obrázky alb zůstávají načtené v paměti (podrobnosti najdete přímo v nastavení)
+- Přesouvání skladeb ve frontě je nyní plynulejší: změna pořadí se provede až po puštění skladby (nebo okamžitě, pokud se přesouvá právě přehrávaná skladba nebo pokud se přesouvaná skladba dostane bezprostředně před ni či za ni)
+- Soubor s nastavením se nyní automaticky defragmentuje, když příliš naroste (mně se po téměř roce bez defragmentace zmenšil přibližně 20krát)

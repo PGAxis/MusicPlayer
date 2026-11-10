@@ -64,6 +64,8 @@
     <string name="set_scr_hide_wa_audio_desc">Hides songs from the "WhatsApp Audio" album</string>
     <string name="set_scr_smart_limit">Set smart limit</string>
     <string name="set_scr_smart_limit_desc">Sets the maximum number of songs shown in Smart Playlists. Setting this to 0 removes the limit.</string>
+    <string name="set_scr_art_limit">Set album art limit</string>
+    <string name="set_scr_art_limit_desc">Maximum number of songs in the queue that keep their album art loaded in memory. Lower values use less memory and keep the queue snappier. When the limit is exceeded, art is dropped from songs least likely to play soon and reloaded when needed. Set to 0 for no limit.</string>
     <string name="set_scr_tab_order">Set tab order</string>
     <string name="set_scr_play_full">Add full list to queue</string>
     <string name="set_scr_play_full_desc">When this is off, clicking on a song adds just that one song to the queue. When it\'s on, it adds whatever list it was added from to the queue (e.g. a playlist, album…)</string>

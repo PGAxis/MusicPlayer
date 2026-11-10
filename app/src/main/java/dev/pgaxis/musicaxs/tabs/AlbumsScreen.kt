@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import dev.pgaxis.musicaxs.LocalPlayerBarTotalHeight
 import dev.pgaxis.musicaxs.R
+import dev.pgaxis.musicaxs.funcs.sortedAlphabetically
 import dev.pgaxis.musicaxs.models.Album
 
 @Composable
@@ -54,6 +56,8 @@ fun AlbumsScreen(
                         Text(stringResource(R.string.alb_scr_no_found))
                     }
                 } else {
+                    val sortedAlbums = remember(state.albums) { state.albums.sortedAlphabetically { it.name } }
+
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(if (isLandscape) 4 else 2),
                         modifier = Modifier.fillMaxSize(),
@@ -66,7 +70,7 @@ fun AlbumsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(state.albums, key = { it.id }) { album ->
+                        items(sortedAlbums, key = { it.id }) { album ->
                             AlbumTile(
                                 album = album,
                                 onClick = { onOpenAlbum(album.id.toString()) }

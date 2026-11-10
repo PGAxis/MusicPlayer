@@ -19,8 +19,8 @@ android {
         applicationId = "dev.pgaxis.musicaxs"
         minSdk = 25
         targetSdk = 37
-        versionCode = 37
-        versionName = "1.14.1"
+        versionCode = 38
+        versionName = "1.14.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -3,6 +3,7 @@ package dev.pgaxis.musicaxs.services
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import dev.pgaxis.musicaxs.models.Song
 import java.io.InputStream
 import java.io.OutputStream
@@ -47,5 +48,16 @@ object M3uHandler {
             if (!cursor.moveToFirst()) return null
             cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
         }
+    }
+
+    fun playlistNameFrom(context: Context, uri: Uri): String {
+        val name = context.contentResolver
+            .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { c ->
+                if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)) else null
+            }
+            ?: uri.lastPathSegment?.substringAfterLast('/')
+            ?: ""
+        return name.replace(Regex("\\.m3u8?$", RegexOption.IGNORE_CASE), "").trim()
     }
 }

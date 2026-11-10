@@ -96,6 +96,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var queueSource by setting(QueueSource.MANUAL, SettingsData::queueSource)
     override var podcastFeeds by setting(emptyList(), SettingsData::podcastFeeds)
     override var smartLimitInput by setting("50", SettingsData::smartLimitInput)
+    override var maxArtItemsInput by setting("10", SettingsData::maxArtItemsInput)
     // settings
     override var hideWhatsAppAudio by setting(false, SettingsData::hideWhatsAppAudio)
     override var allowYTCnv by setting(false, SettingsData::allowYTCnv)
@@ -106,6 +107,7 @@ class SettingsSave private constructor(context: Context): ISettings {
     override var realBars by setting(false, SettingsData::realBars)
     override var playFull by setting(false, SettingsData::playFull)
     override var filteredSongs by setting(emptyList(), SettingsData::filteredSongs)
+    override var maxArtItems by setting(10, SettingsData::maxArtItems)
 
     // -- Data class
     @Keep
@@ -123,6 +125,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var queueSource: QueueSource = QueueSource.MANUAL,
         var podcastFeeds: List<PodcastFeed> = emptyList(),
         var smartLimitInput: String = "50",
+        var maxArtItemsInput: String = "10",
         // settings
         var hideWhatsAppAudio: Boolean = false,
         var allowYTCnv: Boolean = false,
@@ -133,6 +136,7 @@ class SettingsSave private constructor(context: Context): ISettings {
         var realBars: Boolean = false,
         var playFull: Boolean = false,
         var filteredSongs: List<Long> = emptyList(),
+        var maxArtItems: Int = 10,
     )
 
     @Keep
@@ -185,6 +189,7 @@ class SettingsSave private constructor(context: Context): ISettings {
             realBars = s.realBars
             playFull = s.playFull
             filteredSongs = s.filteredSongs
+            maxArtItems = s.maxArtItems
 
             val missingTabs = DEFAULT_TABS.filter { default ->
                 tabs.none { it.tab == default.tab }

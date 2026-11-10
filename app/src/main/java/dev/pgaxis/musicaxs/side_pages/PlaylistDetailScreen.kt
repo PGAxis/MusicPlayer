@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -121,7 +122,7 @@ fun PlaylistDetailScreen(
             val density = LocalDensity.current
             // Range (in px) the art (and with it, the whole header) collapses over.
             val headerCollapseRangePx = with(density) { ART_FULL_SIZE.toPx() }
-            var imageOffsetPx by remember { mutableFloatStateOf(0f) }
+            var imageOffsetPx by rememberSaveable { mutableFloatStateOf(0f) }
 
             val nestedScrollConnection = remember(headerCollapseRangePx) {
                 object : NestedScrollConnection {

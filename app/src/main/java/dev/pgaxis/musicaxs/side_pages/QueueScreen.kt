@@ -189,7 +189,9 @@ fun QueueScreen(
                                 },
                                 isPlaying = index == currentIndex,
                                 onRemoveFrom = { vm.removeAt(index) },
-                                dragHandleModifier = Modifier.draggableHandle(),
+                                dragHandleModifier = Modifier.draggableHandle(
+                                    onDragStopped = { MusicService.flushPendingMove() }
+                                ),
                                 unavailable = unavailable,
                                 onClick = {
                                     if (!unavailable) MusicService.playerInstance?.let {
